@@ -11,19 +11,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: ["22.x"]
-
     steps:
       - uses: actions/checkout@v4
-      # pnpm/action-setup@v3 automatically installs version defined in `package.json`
-      - uses: pnpm/action-setup@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
-      - run: pnpm install
-      - run: pnpm test
-      - run: pnpm run build
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun test
+        working-directory: apps/backend/
+      - run: bun run build
+        working-directory: apps/backend/
