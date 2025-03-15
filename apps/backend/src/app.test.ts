@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import app from "./main";
+import app from "./app";
 
 describe("main", () => {
   it("Should return 200 Response", async () => {

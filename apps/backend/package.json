@@ -3,8 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "build": "bun build --target=bun --outdir=dist/ --outfile=main.js ./src/main.ts",
-    "dev": "bun run --hot src/main.ts",
+    "start": "bun run dist/server.js",
+    "build": "bun build --target=bun --outdir=dist/ --outfile=server.js ./src/server.ts",
+    "dev": "bun run --hot src/server.ts",
     "test": "bun test"
   },
   "dependencies": {
