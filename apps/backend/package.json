@@ -9,6 +9,10 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@prisma/client": "^6.5.0",
     "hono": "4.7.4"
+  },
+  "devDependencies": {
+    "prisma": "^6.5.0"
   }
 }
