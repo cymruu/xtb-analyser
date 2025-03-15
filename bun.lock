@@ -14,7 +14,7 @@
       "name": "xtb-analyser",
       "version": "0.0.1",
       "dependencies": {
-        "hono": "^4.7.4",
+        "hono": "4.7.4",
       },
     },
   },
