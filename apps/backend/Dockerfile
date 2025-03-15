@@ -5,15 +5,15 @@ COPY . .
 
 FROM build_base AS build
 RUN bun install --frozen-lockfile
-RUN cd apps/backend/ && bun run build
+RUN bun run build
 
-FROM build_base AS prod_deps
+FROM build AS prod_deps
 RUN bun install --frozen-lockfile --production
 
 FROM base AS app 
 COPY --from=prod_deps /tmp/build/node_modules/ node_modules/
-COPY --from=build /tmp/build/apps/backend/dist/ dist/
-COPY --from=build /tmp/build/apps/backend/package.json .
+COPY --from=build /tmp/build/dist/ dist/
+COPY --from=build /tmp/build/package.json .
 
 USER bun
 ENTRYPOINT [ "bun", "start" ]
