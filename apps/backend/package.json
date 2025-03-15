@@ -2,5 +2,10 @@
   "name": "xtb-analyser",
   "private": true,
   "version": "0.0.1",
-  "scripts": {}
+  "scripts": {
+    "dev": "bun run --hot src/main.ts"
+  },
+  "dependencies": {
+    "hono": "^4.7.4"
+  }
 }
