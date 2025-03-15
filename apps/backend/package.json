@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
+    "build": "bun build --target=bun --outdir=dist/ --outfile=main.js ./src/main.ts",
     "dev": "bun run --hot src/main.ts",
     "test": "bun test"
   },
