@@ -4,16 +4,19 @@
     "type": "git",
     "url": "git+https://github.com/cymruu/xtb-analyser.git"
   },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "private": true,
   "version": "0.0.1",
-  "packageManager": "pnpm@10.6.3",
-  "scripts": {
-    "build": "turbo run build",
-    "test": "turbo run test",
-    "lint": "turbo run lint",
-    "format": "turbo run format"
-  },
   "devDependencies": {
-    "turbo": "2.4.4"
+    "@types/bun": "latest"
+  },
+  "module": "index.ts",
+  "type": "module",
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }
+
