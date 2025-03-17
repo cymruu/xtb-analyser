@@ -17,7 +17,8 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+        working-directory: ./apps/backend
       - run: bun test
-        working-directory: apps/backend/
+        working-directory: ./apps/backend/
       - run: bun run build
-        working-directory: apps/backend/
+        working-directory: ./apps/backend/
