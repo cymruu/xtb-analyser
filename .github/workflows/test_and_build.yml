@@ -1,0 +1,51 @@
+name: test & build
+
+on: push
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+        working-directory: ./apps/backend
+      - run: bun test
+        working-directory: ./apps/backend/
+      - run: bun run build
+        working-directory: ./apps/backend/
+      - run: bun install --frozen-lockfile
+        working-directory: ./apps/frontend/
+      - run: bun test
+        working-directory: ./apps/frontend/
+      - run: bun run build
+        working-directory: ./apps/frontend/
+      - name: prepare build
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cp node_modules/excelize-wasm/excelize.wasm.gz ./dist/
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          BUILD_TIME=$(date +"%Y-%m-%d %H:%M:%S %Z")
+          sed -i'' -e "s/{{VERSION}}/$SHA_SHORT/" index.html
+          sed -i'' -e "s/{{BUILD_TIME}}/$BUILD_TIME/" index.html
+      - name: Upload build-artifacts
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            index.html
+
+  trigger-deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy.yml

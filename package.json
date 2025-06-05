@@ -1,5 +1,5 @@
 {
-  "name": "xtb-analyser",
+  "name": "xtb-analyser-monorepo",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cymruu/xtb-analyser.git"
