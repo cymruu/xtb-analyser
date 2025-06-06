@@ -1,7 +1,7 @@
-import { parseCostPerShare } from "./parsers/parseCostPerShare";
-import { parseDate } from "./parsers/parseDate";
-import { parseQuantity } from "./parsers/parseQuantity";
-import { parseTicker } from "./parsers/parseTicker";
+import { parseCostPerShare } from "../XTBParser/cashOperationHistory/parseCostPerShare";
+import { parseDate } from "../XTBParser/cashOperationHistory/parseDate";
+import { parseQuantity } from "../XTBParser/cashOperationHistory/parseQuantity";
+import { parseTicker } from "../XTBParser/cashOperationHistory/parseTicker";
 
 const textEncoder = new TextEncoder();
 

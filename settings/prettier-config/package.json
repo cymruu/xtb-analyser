@@ -1,0 +1,15 @@
+{
+  "name": "prettier-config",
+  "version": "0.0.1",
+  "main": "prettier.config.js",
+  "bin": {
+    "prettier": "./node_modules/prettier/bin/prettier.cjs"
+  },
+  "scripts": {
+    "format": "prettier --check .",
+    "format:write": "bun run format --write"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  }
+}

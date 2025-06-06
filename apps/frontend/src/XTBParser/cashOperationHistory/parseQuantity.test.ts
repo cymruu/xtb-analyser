@@ -1,5 +1,4 @@
-import { equal } from "node:assert";
-import { describe, it } from "node:test";
+import { describe, it, expect } from "bun:test";
 
 import { parseQuantity } from "./parseQuantity";
 
@@ -16,7 +15,7 @@ describe("parseQuantity", () => {
     it(`should properly parse ${testCase.input}`, async () => {
       const result = parseQuantity(testCase.input);
 
-      equal(result, testCase.expected);
+      expect(result).toEqual(testCase.expected);
     });
   }
 });

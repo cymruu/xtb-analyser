@@ -1,5 +1,4 @@
-import { equal } from "node:assert";
-import { describe, it } from "node:test";
+import { describe, it, expect } from "bun:test";
 
 import { parseCostPerShare } from "./parseCostPerShare";
 
@@ -16,7 +15,7 @@ describe("parseCostPerShare", () => {
     it(`should properly parse ${testCase.input}`, async () => {
       const result = parseCostPerShare(testCase.input);
 
-      equal(result, testCase.expected);
+      expect(result).toEqual(testCase.expected);
     });
   }
 });

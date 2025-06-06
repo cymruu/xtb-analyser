@@ -4,6 +4,10 @@
     "type": "git",
     "url": "git+https://github.com/cymruu/xtb-analyser.git"
   },
+  "workspaces": [
+    "apps/*",
+    "settings/*"
+  ],
   "private": true,
   "version": "0.0.1"
 }
