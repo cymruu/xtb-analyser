@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>XTB history to DivTracker</title>
+    <title>xtb-analyser</title>
     <style>
       html,
       body {
@@ -31,7 +31,7 @@
         background-color: #f4f4f4;
         padding: 10px;
       }
-      .error-message{
+      .error-message {
         color: red;
       }
       footer {
@@ -42,28 +42,30 @@
   </head>
   <body>
     <div id="content">
-      <h2>
-        Drop the XLSX file exported from XTB to generate DivTracker import sheet
-      </h2>
-      <h3>1. Please select a currency of the imported wallet</h3>
-      <select name="currency" id="currency">
-        <option value="PLN">PLN</option>
-        <option value="EUR">EUR</option>
-        <option value="USD">USD</option>
-      </select>
-
-      <h3>2. Drop a XLSX file exported from XTB</h3>
+      <center>
+        <h1>xtb-analyser</h1>
+      </center>
+      <h2>Drop the XLSX file exported from XTB to analyse your portfolio</h2>
       <div id="drop-area">Drop your XLSX transaction history file here</div>
+      <details>
+        <summary>Optional Settings</summary>
+        <label>
+          Hide value
+          <input id="hide_value" type="checkbox" name="checkbox" />
+        </label>
+      </details>
 
       <div id="error-message"></div>
+      <div id="container">generated portfolio treemap will appear here</div>
     </div>
 
-    <script src="dist/main.js"></script>
+    <script type="module" src="dist/main.js"></script>
 
     <footer>
       <p>
-        The accuracy and completeness of the processed data are not guaranteed. Use at your own risk.
-       Source code available at <a href="https://github.com/cymruu/xtb-analyser"/>GitHub</a><br />
+        The accuracy and completeness of the processed data are not guaranteed.
+        Use at your own risk. Source code available at
+        <a href="https://github.com/cymruu/xtb-analyser">GitHub</a><br />
         version: {{VERSION}} built at: {{BUILD_TIME}}
       </p>
     </footer>

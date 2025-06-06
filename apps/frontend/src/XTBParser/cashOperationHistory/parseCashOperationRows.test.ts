@@ -1,7 +1,6 @@
-import { deepEqual, equal } from "node:assert";
-import { describe, it } from "node:test";
+import { describe, it, expect } from "bun:test";
 
-import { createCashOperationRow } from "../../tests/utils/index.ts";
+import { createCashOperationRow } from "./tests/utils/createCashOperationRow.ts";
 import { parseCashOperationRows } from "./parseCashOperationRows.ts";
 
 describe("parseCashOperationRows", () => {
@@ -10,8 +9,8 @@ describe("parseCashOperationRows", () => {
       Array.from({ length: 12 }).map((_, i) => createCashOperationRow(i)),
     );
 
-    equal(result.error, null);
-    deepEqual(result.result, [
+    expect(result.error).toEqual(null);
+    expect(result.result).toEqual([
       [
         "transaction_id: 11",
         "transaction_type: 11",
@@ -33,10 +32,9 @@ describe("parseCashOperationRows", () => {
 
     const result = parseCashOperationRows(rawRows);
 
-    equal(result.error, null);
-    equal(result.result.length, expectedNumberOfParsedRows);
-    deepEqual(
-      result.result,
+    expect(result.error).toEqual(null);
+    expect(result.result.length).toEqual(expectedNumberOfParsedRows);
+    expect(result.result).toEqual(
       Array.from({ length: expectedNumberOfParsedRows }).map((_, i) => [
         `transaction_id: ${i + 11}`,
         `transaction_type: ${i + 11}`,

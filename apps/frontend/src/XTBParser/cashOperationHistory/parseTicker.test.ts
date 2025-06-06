@@ -1,5 +1,4 @@
-import { equal } from "node:assert";
-import { describe, it } from "node:test";
+import { describe, it, expect } from "bun:test";
 
 import { parseTicker, TICKER_MAP } from "./parseTicker";
 
@@ -16,7 +15,7 @@ describe("parseQuantity", () => {
     it(`should properly parse ${testCase.input.ticker} to ${testCase.expected}`, async () => {
       const result = parseTicker(testCase.input.ticker);
 
-      equal(result, testCase.expected);
+      expect(result).toEqual(testCase.expected);
     });
   }
 
@@ -25,7 +24,7 @@ describe("parseQuantity", () => {
       it(`should properly parse ${ticker} to ${expected}`, () => {
         const result = parseTicker(ticker);
 
-        equal(result, expected);
+        expect(result).toEqual(expected);
       });
     }
   });

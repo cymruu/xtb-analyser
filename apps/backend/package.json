@@ -4,17 +4,17 @@
   "version": "0.0.1",
   "scripts": {
     "start": "bun run dist/server.js",
-    "build": "bun build --target=bun --outdir=dist/ --outfile=server.js ./src/server.ts",
-    "dev": "bun run --hot src/server.ts",
+    "build": "bun build --target=bun --sourcemap=linked --outdir=dist/ --outfile=server.js ./src/server.ts",
+    "dev": "bun --watch run src/server.ts",
     "test": "bun test"
   },
   "dependencies": {
-    "@prisma/client": "^6.5.0",
-    "hono": "4.7.4"
+    "@prisma/client": "^6.9.0",
+    "hono": "^4.7.11"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "typescript": "^5",
-    "prisma": "^6.5.0"
+    "prisma": "^6.9.0",
+    "typescript": "^5"
   }
 }

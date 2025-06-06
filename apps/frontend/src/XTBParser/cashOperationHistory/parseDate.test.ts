@@ -1,5 +1,4 @@
-import { equal } from "node:assert";
-import { describe, it } from "node:test";
+import { describe, it, expect } from "bun:test";
 
 import { parseDate } from "./parseDate";
 
@@ -14,7 +13,7 @@ describe("parseDate", () => {
     it(`should properly parse ${testCase.input}`, async () => {
       const result = parseDate(testCase.input);
 
-      equal(result, testCase.expected);
+      expect(result).toEqual(testCase.expected);
     });
   }
 });

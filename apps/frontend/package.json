@@ -1,22 +1,27 @@
 {
-  "name": "xtb-to-divtracker",
+  "name": "xtb-analyser-frontend",
   "version": "0.0.1",
   "main": "dist/main.js",
-  "packageManager": "pnpm@10.6.3",
   "scripts": {
-    "build": "esbuild src/main.ts --bundle --loader:.wasm.gz=file --format=esm --external:fs --external:crypto --outfile=./dist/main.js",
-    "test": "node --import tsx --test $(find . -name \"*.test.ts\")"
+    "build": "bun build --target=browser --loader:.wasm.gz=file --outdir=./dist/ ./src/main.ts",
+    "test": "bun test",
+    "format": "prettier --check .",
+    "format:write": "bun run format --write"
   },
   "files": [
     "./dist"
   ],
   "devDependencies": {
-    "@types/node": "22.13.10",
-    "esbuild": "0.25.1",
-    "tsx": "4.19.3",
-    "typescript": "5.8.2"
+    "@types/bun": "latest",
+    "@types/d3": "^7.4.3",
+    "typescript": "^5",
+    "prettier-config": "workspace:settings"
   },
   "dependencies": {
-    "excelize-wasm": "0.0.7"
+    "@observablehq/stdlib": "^5.8.8",
+    "d3": "^7.9.0",
+    "date-fns": "^4.1.0",
+    "excelize-wasm": "0.0.9",
+    "zod": "^3.25.51"
   }
 }
