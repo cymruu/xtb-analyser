@@ -1,6 +1,21 @@
-import { Hono } from "hono";
+import { Context, Hono, Next } from "hono";
+import { createMiddleware } from "hono/factory";
+import { logger } from "hono/logger";
+import { IServices } from "./services";
+import { HonoEnv } from "./types";
 
-const app = new Hono();
-app.get("/", (c) => c.text("Hello Bun!"));
+export const useServices = (services: IServices) =>
+  createMiddleware<HonoEnv>(async (c: Context<HonoEnv>, next: Next) => {
+    c.set("services", services);
+    await next();
+  });
 
-export default app;
+export const createApp = (services: IServices) => {
+  const app = new Hono<HonoEnv>();
+  app.use(logger());
+  app.use(useServices(services));
+
+  app.get("/health", (c) => c.text("OK", 200));
+
+  return app;
+};

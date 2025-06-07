@@ -1,6 +1,22 @@
-name: test & build
+name: cicd
 
-on: push
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select the deployment environment"
+        required: true
+        type: choice
+        default: "development"
+        options:
+          - "development"
+
+      force_deploy:
+        description: "Force deployment even if no changes detected"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -32,7 +48,7 @@ jobs:
         working-directory: ./apps/frontend/
         # deploy
       - name: prepare build
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy)
         run: |
           cp ./node_modules/excelize-wasm/excelize.wasm.gz ./apps/frontend/dist/
           SHA_SHORT=$(git rev-parse --short HEAD)
@@ -40,7 +56,7 @@ jobs:
           sed -i'' -e "s/{{VERSION}}/$SHA_SHORT/" ./apps/frontend/index.html
           sed -i'' -e "s/{{BUILD_TIME}}/$BUILD_TIME/" ./apps/frontend/index.html
       - name: Upload build-artifacts
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy)
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
@@ -48,7 +64,14 @@ jobs:
             ./apps/frontend/dist/
             ./apps/frontend/index.html
 
-  trigger-deploy:
+  trigger-deploy-backend:
     needs: build
-    if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/deploy.yml
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy)
+    uses: ./.github/workflows/deploy_backend.yml
+    secrets: inherit # This passes all accessible secrets
+
+  trigger-deploy-frontend:
+    needs: trigger-deploy-backend
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy)
+    uses: ./.github/workflows/deploy_frontend.yml
+    secrets: inherit # This passes all accessible secrets

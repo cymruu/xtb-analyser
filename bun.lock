@@ -10,6 +10,7 @@
       "dependencies": {
         "@prisma/client": "^6.9.0",
         "hono": "^4.7.11",
+        "zod": "^3.25.56",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -30,7 +31,7 @@
       "devDependencies": {
         "@types/bun": "latest",
         "@types/d3": "^7.4.3",
-        "prettier-config": "workspace:*",
+        "prettier-config": "workspace:settings",
         "typescript": "^5",
       },
     },
