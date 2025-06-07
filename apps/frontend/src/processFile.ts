@@ -35,6 +35,9 @@ export const processFile = async (
           symbol: "portfolio",
           market_value: 0,
           children: portfolioSummary,
+          percentage_gross_profit: 0,
+          market_price: 0,
+          open_price: 0,
         },
         settings,
       );

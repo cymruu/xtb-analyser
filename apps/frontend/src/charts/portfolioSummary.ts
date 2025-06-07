@@ -4,8 +4,11 @@ import { ProcessFileSettings } from "../processFile";
 export type PortfolioTreemapNode = {
   symbol: string;
   market_value: number;
+  market_price: number;
+  open_price: number;
   children?: PortfolioTreemapNode[];
-  percentage?: number;
+  percentage_of_total?: number;
+  percentage_gross_profit?: number;
 };
 
 export const portfolioSummaryPieChart = (
@@ -26,14 +29,30 @@ export const portfolioSummaryPieChart = (
     .sort((a, b) => d3.descending(a.data.market_value, b.data.market_value));
 
   root.each((d) => {
-    d.data.percentage = (d!.value / root!.value) * 100;
+    d.data.percentage_of_total = (d!.value / root!.value) * 100;
+  });
+  root.each((d) => {
+    d.data.percentage_gross_profit =
+      ((d!.data.market_price - d!.data.open_price) / d!.data.open_price) * 100;
   });
 
-  d3.treemap<PortfolioTreemapNode>().size([width, height]).padding(4)(root);
-  const color = d3.scaleOrdinal(
-    root!.children.map((d) => d.data.symbol),
-    d3.schemeCategory10,
+  const minProfit = d3.min(
+    root.leaves().map((x) => x.data.percentage_gross_profit || 0),
   );
+  const maxProfit = d3.max(
+    root.leaves().map((x) => x.data.percentage_gross_profit || 0),
+  );
+
+  const colorScale = d3
+    .scaleDiverging()
+    // The domain defines the input range: [min_value, central_value, max_value]
+    // We want 0 to be the central point (where color transitions)
+    .domain([Math.min(0, minProfit), 0, Math.max(0, maxProfit)])
+    // The interpolator defines the color range.
+    // d3.interpolateRdYlGn goes from Red (low) -> Yellow (mid) -> Green (high)
+    .interpolator(d3.interpolateRdYlGn);
+
+  d3.treemap<PortfolioTreemapNode>().size([width, height]).padding(4)(root);
 
   const cell = svg.selectAll("g").data(root.leaves()).enter().append("g");
 
@@ -52,7 +71,7 @@ export const portfolioSummaryPieChart = (
       return d.y1 - d.y0;
     })
     .style("stroke", "black")
-    .style("fill", (d) => color(d.data.symbol));
+    .style("fill", (d) => colorScale(d.data.percentage_gross_profit));
 
   cell
     .append("text")
@@ -72,22 +91,35 @@ export const portfolioSummaryPieChart = (
         .attr("font-weight", "bold")
         .attr("x", d.x0 + 5)
         .attr("dy", "0.3em")
-        .text(`${d.data.symbol}`);
+        .text(`${d.data.symbol} `);
 
       if (!settings.hideValue) {
         textElement
           .append("tspan")
           .attr("x", d.x0 + 5)
           .attr("dy", "1.2em")
-          .text(`Value: ${d.value?.toFixed(2)}`);
+          .text(`Value: ${d.value?.toFixed(2)} `);
       }
 
-      // Line 3: percentage
       textElement
         .append("tspan")
         .attr("x", d.x0 + 5)
         .attr("dy", "1.2em")
-        .text(`${d.data!.percentage.toFixed(2)}%`);
+        .text(`${d.data!.percentage_of_total.toFixed(2)}% of total portfolio `);
+
+      if (!settings.hideValue) {
+        textElement
+          .append("tspan")
+          .attr("x", d.x0 + 5)
+          .attr("dy", "1.2em")
+          .text(`Gross profit or lose: ${d.value?.toFixed(2)} `);
+      }
+
+      textElement
+        .append("tspan")
+        .attr("x", d.x0 + 5)
+        .attr("dy", "1.2em")
+        .text(`${d.data!.percentage_gross_profit.toFixed(2)}% profit`);
     });
 
   return svg;
