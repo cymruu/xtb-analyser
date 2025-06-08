@@ -2,7 +2,7 @@ import { checkWASMSupport } from "./checkWASMSupport";
 import { processFile } from "./processFile";
 
 (() => {
-  const dropArea = document.getElementById("drop-area")!;
+  const dropArea = document.body!;
   const errorMessageDiv = document.getElementById("error-message")!;
 
   dropArea.addEventListener("dragover", (event) => {
