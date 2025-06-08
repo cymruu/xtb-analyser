@@ -127,7 +127,7 @@ export const portfolioSummaryPieChart = (
           .attr("font-size", textSizeScale)
           .attr("x", d.x0 + 5)
           .attr("dy", "1.2em")
-          .text(`Gross profit or lose: ${d.value?.toFixed(2)} `);
+          .text(`Gross profit: ${d.data.gross_profit.toFixed(2)} `);
       }
 
       textElement
