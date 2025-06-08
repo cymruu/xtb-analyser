@@ -1,9 +1,30 @@
 import { checkWASMSupport } from "./checkWASMSupport";
 import { processFile } from "./processFile";
 
+const getSettings = () => {
+  const hideValue = (<HTMLInputElement>document.getElementById("hide_value"))
+    .checked;
+
+  const settings = { hideValue };
+
+  return settings;
+};
+
 (() => {
+  let fileRef: File | null = null;
   const dropArea = document.body!;
   const errorMessageDiv = document.getElementById("error-message")!;
+  const configControls = document.getElementsByClassName(
+    "extra-config-control",
+  );
+
+  for (const control of configControls) {
+    control.addEventListener("change", () => {
+      if (fileRef) {
+        processFile(fileRef, getSettings());
+      }
+    });
+  }
 
   dropArea.addEventListener("dragover", (event) => {
     event.preventDefault();
@@ -19,17 +40,13 @@ import { processFile } from "./processFile";
     dropArea.style.borderColor = "#ccc";
     const file = event.dataTransfer?.files[0];
 
-    const hideValue = (<HTMLInputElement>document.getElementById("hide_value"))
-      .checked;
-
-    const settings = { hideValue };
-
     if (
       file &&
       file.type ===
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     ) {
-      processFile(file, settings);
+      fileRef = file;
+      processFile(file, getSettings());
     } else {
       errorMessageDiv.textContent = "Please select a valid XLSX file.";
     }
