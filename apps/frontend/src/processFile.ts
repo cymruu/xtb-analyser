@@ -1,10 +1,12 @@
 import { init } from "excelize-wasm";
+// @ts-ignore
+import excelizeModule from "../../../node_modules/excelize-wasm/excelize.wasm.gz";
 import { getOpenPositionRowsSummary } from "./XTBAnalyser/analyseOpenPositionRows";
 import { findOpenPositionsSheet } from "./XTBParser/openPositions/findOpenPositionsSheet";
 import { parseOpenPositionRows } from "./XTBParser/openPositions/parseOpenPositionRows";
 import { portfolioSummaryTreemap } from "./charts/portfolioSummary";
 
-const excelizePromise = init("./dist/excelize.wasm.gz");
+const excelizePromise = init(excelizeModule);
 
 export type ProcessFileSettings = { hideValue: boolean };
 
