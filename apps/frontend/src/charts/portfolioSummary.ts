@@ -11,7 +11,7 @@ export type PortfolioTreemapNode = {
   percentage_gross_profit?: number;
 };
 
-export const portfolioSummaryPieChart = (
+export const portfolioSummaryTreemap = (
   data: PortfolioTreemapNode,
   settings: ProcessFileSettings,
 ) => {

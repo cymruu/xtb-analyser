@@ -2,7 +2,7 @@ import { init } from "excelize-wasm";
 import { getOpenPositionRowsSummary } from "./XTBAnalyser/analyseOpenPositionRows";
 import { findOpenPositionsSheet } from "./XTBParser/openPositions/findOpenPositionsSheet";
 import { parseOpenPositionRows } from "./XTBParser/openPositions/parseOpenPositionRows";
-import { portfolioSummaryPieChart } from "./charts/portfolioSummary";
+import { portfolioSummaryTreemap } from "./charts/portfolioSummary";
 
 const excelizePromise = init("./dist/excelize.wasm.gz");
 
@@ -30,7 +30,7 @@ export const processFile = async (
       const portfolioSummary = getOpenPositionRowsSummary(parsedRows.result);
       console.log("Portfolio Summary:", portfolioSummary);
       const container = document.getElementById("container");
-      const svg = portfolioSummaryPieChart(
+      const svg = portfolioSummaryTreemap(
         {
           symbol: "portfolio",
           market_value: 0,
