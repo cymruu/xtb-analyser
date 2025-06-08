@@ -55,7 +55,10 @@ export const portfolioSummaryTreemap = (
   const textSizeScale = (d) => {
     const width = d.x1 - d.x0,
       height = d.y1 - d.y0;
-    return Math.max(Math.min(width / 16, height / 8), 6);
+    return Math.max(
+      Math.min(Math.sqrt(width * width + height * height) / 26, 35),
+      8,
+    );
   };
 
   d3
@@ -101,7 +104,7 @@ export const portfolioSummaryTreemap = (
         .attr("font-size", textSizeScale)
         .attr("font-weight", "bold")
         .attr("x", d.x0 + 5)
-        .attr("dy", "0.3em")
+        .attr("dy", "0.5em")
         .text(`${d.data.symbol} `);
 
       if (!settings.hideValue) {
