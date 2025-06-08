@@ -71,7 +71,8 @@ export const portfolioSummaryPieChart = (
       return d.y1 - d.y0;
     })
     .style("stroke", "black")
-    .style("fill", (d) => colorScale(d.data.percentage_gross_profit));
+    .style("fill", (d) => colorScale(d.data.percentage_gross_profit))
+    .style("opacity", 0.6);
 
   cell
     .append("text")
