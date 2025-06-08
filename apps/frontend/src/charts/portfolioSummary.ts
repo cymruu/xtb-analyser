@@ -55,17 +55,14 @@ export const portfolioSummaryPieChart = (
   const textSizeScale = (d) => {
     const width = d.x1 - d.x0,
       height = d.y1 - d.y0;
-    return Math.max(
-      Math.min(
-        width / 12,
-        height / 12,
-        Math.sqrt(width * width + height * height) / 12,
-      ),
-      6,
-    );
+    return Math.max(Math.min(width / 16, height / 8), 6);
   };
 
-  d3.treemap<PortfolioTreemapNode>().size([width, height]).padding(4)(root);
+  d3
+    .treemap<PortfolioTreemapNode>()
+    .tile(d3.treemapBinary)
+    .size([width, height])
+    .padding(4)(root);
 
   const cell = svg.selectAll("g").data(root.leaves()).enter().append("g");
 
