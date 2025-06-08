@@ -52,6 +52,19 @@ export const portfolioSummaryPieChart = (
     // d3.interpolateRdYlGn goes from Red (low) -> Yellow (mid) -> Green (high)
     .interpolator(d3.interpolateRdYlGn);
 
+  const textSizeScale = (d) => {
+    const width = d.x1 - d.x0,
+      height = d.y1 - d.y0;
+    return Math.max(
+      Math.min(
+        width / 12,
+        height / 12,
+        Math.sqrt(width * width + height * height) / 12,
+      ),
+      6,
+    );
+  };
+
   d3.treemap<PortfolioTreemapNode>().size([width, height]).padding(4)(root);
 
   const cell = svg.selectAll("g").data(root.leaves()).enter().append("g");
@@ -88,7 +101,7 @@ export const portfolioSummaryPieChart = (
 
       textElement
         .append("tspan")
-        .attr("font-size", "18px")
+        .attr("font-size", textSizeScale)
         .attr("font-weight", "bold")
         .attr("x", d.x0 + 5)
         .attr("dy", "0.3em")
@@ -97,6 +110,8 @@ export const portfolioSummaryPieChart = (
       if (!settings.hideValue) {
         textElement
           .append("tspan")
+
+          .attr("font-size", textSizeScale)
           .attr("x", d.x0 + 5)
           .attr("dy", "1.2em")
           .text(`Value: ${d.value?.toFixed(2)} `);
@@ -104,6 +119,7 @@ export const portfolioSummaryPieChart = (
 
       textElement
         .append("tspan")
+        .attr("font-size", textSizeScale)
         .attr("x", d.x0 + 5)
         .attr("dy", "1.2em")
         .text(`${d.data!.percentage_of_total.toFixed(2)}% of total portfolio `);
@@ -111,6 +127,7 @@ export const portfolioSummaryPieChart = (
       if (!settings.hideValue) {
         textElement
           .append("tspan")
+          .attr("font-size", textSizeScale)
           .attr("x", d.x0 + 5)
           .attr("dy", "1.2em")
           .text(`Gross profit or lose: ${d.value?.toFixed(2)} `);
@@ -118,6 +135,7 @@ export const portfolioSummaryPieChart = (
 
       textElement
         .append("tspan")
+        .attr("font-size", textSizeScale)
         .attr("x", d.x0 + 5)
         .attr("dy", "1.2em")
         .text(`${d.data!.percentage_gross_profit.toFixed(2)}% profit`);
