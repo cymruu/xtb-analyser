@@ -1,5 +1,7 @@
 services:
   backend:
+    environment:
+      - DATABASE_URL=postgresql://root:root@localhost:5432/analyser?schema=market-data
     build:
       context: .
       dockerfile: ./apps/backend/Dockerfile
