@@ -1,5 +1,11 @@
+import { drawTreemap } from "./charts/drawTreemap";
 import { checkWASMSupport } from "./checkWASMSupport";
-import { processFile } from "./processFile";
+import { processFiles } from "./processFiles";
+
+const container = document.getElementById("container");
+const dropArea = document.body!;
+const errorMessageDiv = document.getElementById("error-message")!;
+const configControls = document.getElementsByClassName("extra-config-control");
 
 const getSettings = () => {
   const hideValue = (<HTMLInputElement>document.getElementById("hide_value"))
@@ -10,49 +16,41 @@ const getSettings = () => {
   return settings;
 };
 
+const renderTreemap = async (files: FileList | null) => {
+  if (!files) {
+    errorMessageDiv.textContent = "Please drop a file to render the treemap.";
+    return;
+  }
+  const result = await processFiles(files);
+
+  if (!result.ok) {
+    errorMessageDiv.textContent = result.error.message;
+    return;
+  }
+  const svg = drawTreemap(result.treeMapData, getSettings());
+  container!.firstChild?.remove();
+  container!.append(svg.node()!);
+};
+
 (() => {
-  let fileRef: File | null = null;
-  const dropArea = document.body!;
-  const errorMessageDiv = document.getElementById("error-message")!;
-  const configControls = document.getElementsByClassName(
-    "extra-config-control",
-  );
+  let fileListRef: FileList | null = null;
 
   for (const control of configControls) {
     control.addEventListener("change", () => {
-      if (fileRef) {
-        processFile(fileRef, getSettings());
-      }
+      renderTreemap(fileListRef);
     });
   }
 
   dropArea.addEventListener("dragover", (event) => {
     event.preventDefault();
-    dropArea.style.borderColor = "#333";
-  });
-
-  dropArea.addEventListener("dragleave", () => {
-    dropArea.style.borderColor = "#ccc";
   });
 
   dropArea.addEventListener("drop", async (event) => {
     event.preventDefault();
-    dropArea.style.borderColor = "#ccc";
-    const file = event.dataTransfer?.files[0];
-
-    if (
-      file &&
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    ) {
-      fileRef = file;
-      processFile(file, getSettings());
-    } else {
-      errorMessageDiv.textContent = "Please select a valid XLSX file.";
-    }
+    const files = event.dataTransfer?.files;
+    fileListRef = files || null;
+    renderTreemap(fileListRef);
   });
-
-  const container = document.getElementById("container");
 
   const isWASMEnabled = checkWASMSupport();
   if (!isWASMEnabled) {

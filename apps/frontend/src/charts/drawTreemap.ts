@@ -1,10 +1,9 @@
 import * as d3 from "d3";
-import { ProcessFileSettings } from "../processFile";
 
 const formatNumber = d3.format(",.2f");
 
 const createMakeTileLabels =
-  ({ hideValue }: ProcessFileSettings) =>
+  ({ hideValue }: DrawTreemapSettings) =>
   (d) => {
     return [
       d.data.name,
@@ -19,8 +18,9 @@ const createMakeTileLabels =
     ];
   };
 
-export function drawTreemap(data: unknown, settings: ProcessFileSettings) {
-  const width = 1200,
+export type DrawTreemapSettings = { hideValue: boolean };
+export function drawTreemap(data: unknown, settings: DrawTreemapSettings) {
+  const width = 1600,
     height = 800;
 
   const root = d3
