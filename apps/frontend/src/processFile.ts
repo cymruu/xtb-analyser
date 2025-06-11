@@ -4,7 +4,7 @@ import excelizeModule from "../../../node_modules/excelize-wasm/excelize.wasm.gz
 import { getOpenPositionRowsSummary } from "./XTBAnalyser/analyseOpenPositionRows";
 import { findOpenPositionsSheet } from "./XTBParser/openPositions/findOpenPositionsSheet";
 import { parseOpenPositionRows } from "./XTBParser/openPositions/parseOpenPositionRows";
-import { portfolioSummaryTreemap } from "./charts/portfolioSummary";
+import { drawTreemap } from "./charts/drawTreemap";
 
 const excelizePromise = init(excelizeModule);
 
@@ -32,18 +32,31 @@ export const processFile = async (
       const portfolioSummary = getOpenPositionRowsSummary(parsedRows.result);
       console.log("Portfolio Summary:", portfolioSummary);
       const container = document.getElementById("container");
-      const svg = portfolioSummaryTreemap(
-        {
-          symbol: "portfolio",
-          market_value: 0,
-          children: portfolioSummary,
-          percentage_gross_profit: 0,
-          market_price: 0,
-          open_price: 0,
-        },
-        settings,
+
+      const total = portfolioSummary.reduce(
+        (sum, item) => sum + (item.market_value || 0),
+        0,
       );
-      // Append the SVG element.
+
+      const treeMapData = {
+        name: "root",
+        children: [
+          {
+            name: "Portfolio Summary",
+            children: portfolioSummary.map((x) => {
+              return {
+                name: x.symbol,
+                value: x.market_value,
+                performance: (x.market_price - x.open_price) / x.open_price,
+                grossProfit: x.gross_profit,
+                weight: x.market_value / total,
+              };
+            }),
+          },
+        ],
+      };
+
+      const svg = drawTreemap(treeMapData, settings); // Append the SVG element.
       container!.firstChild?.remove();
       container!.append(svg.node()!);
     })

@@ -52,6 +52,8 @@ const getSettings = () => {
     }
   });
 
+  const container = document.getElementById("container");
+
   const isWASMEnabled = checkWASMSupport();
   if (!isWASMEnabled) {
     errorMessageDiv.innerHTML =
