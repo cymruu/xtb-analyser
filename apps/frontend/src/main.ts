@@ -1,5 +1,6 @@
 import { checkWASMSupport } from "./checkWASMSupport";
 import { createLoadExampleHandler } from "./loadExample";
+import { metricsService } from "./metricsService";
 import { processFiles } from "./processFiles";
 import { createRenderer } from "./renderer";
 
@@ -38,6 +39,7 @@ const processFilesAndAnalyse = async (files: FileList | null) => {
 };
 
 (() => {
+  metricsService.collectMetrics("page_load", {});
   const renderer = createRenderer({ container, getSettings });
   createLoadExampleHandler(renderer);
 
@@ -56,6 +58,8 @@ const processFilesAndAnalyse = async (files: FileList | null) => {
     const files = event.dataTransfer?.files;
     const fileListRef = files || null;
     const renderContext = await processFilesAndAnalyse(fileListRef);
+    metricsService.collectMetrics("files_dropped", { count: files?.length });
+
     if (renderContext) {
       renderer.setRenderContext(renderContext);
       renderer.render();

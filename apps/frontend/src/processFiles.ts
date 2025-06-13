@@ -1,7 +1,8 @@
 import { processFile } from "./processFile";
+import { TreemapLeaf } from "./renderer";
 
 type ProcessFileResult =
-  | { error: null; ok: true; treeMapData: unknown }
+  | { error: null; ok: true; treeMapData: TreemapLeaf }
   | { error: Error; ok: false };
 
 export const processFiles = async (
@@ -21,7 +22,7 @@ export const processFiles = async (
     processed.push({ name: file.name, processed: await processFile(file) });
   }
 
-  const treeMapData = {
+  const treeMapData: TreemapLeaf = {
     name: "root",
     children: processed.map((f) => {
       return {

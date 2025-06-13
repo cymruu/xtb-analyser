@@ -1,7 +1,18 @@
 import { drawTreemap } from "./charts/drawTreemap";
 import { DrawTreemapSettings } from "./main";
+import { metricsService } from "./metricsService";
 
-export type RenderContext = { root: unknown | null; render: unknown | null };
+//TODO: find a nice house for this type
+export type TreemapLeaf = {
+  name: string;
+  children?: TreemapLeaf[];
+  [key: string]: unknown;
+};
+
+export type RenderContext = {
+  root: TreemapLeaf | null;
+  render: TreemapLeaf | null;
+};
 
 export type Renderer = ReturnType<typeof createRenderer>;
 export const createRenderer = ({
@@ -27,8 +38,15 @@ export const createRenderer = ({
       if (!renderContext.root || !renderContext.render) {
         throw new Error("Render context is not properly initialized.");
       }
+      const settings = getSettings();
 
-      const svg = drawTreemap(renderContext, this, getSettings());
+      metricsService.collectMetrics("render", {
+        settings,
+        //TODO: introduce TreemapLeafRoot type
+        count: renderContext.root?.children?.length,
+      });
+
+      const svg = drawTreemap(renderContext, this, settings);
       container!.firstChild?.remove();
       container!.append(svg.node()!);
     },
