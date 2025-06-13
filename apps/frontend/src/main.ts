@@ -1,13 +1,15 @@
-import { drawTreemap } from "./charts/drawTreemap";
 import { checkWASMSupport } from "./checkWASMSupport";
 import { processFiles } from "./processFiles";
+import { createRenderer } from "./renderer";
 
 const container = document.getElementById("container");
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
 const configControls = document.getElementsByClassName("extra-config-control");
 
-const getSettings = () => {
+export type DrawTreemapSettings = { hideValue: boolean };
+
+const getSettings = (): DrawTreemapSettings => {
   const hideValue = (<HTMLInputElement>document.getElementById("hide_value"))
     .checked;
 
@@ -16,7 +18,7 @@ const getSettings = () => {
   return settings;
 };
 
-const renderTreemap = async (files: FileList | null) => {
+const processFilesAndAnalyse = async (files: FileList | null) => {
   if (!files) {
     errorMessageDiv.textContent = "Please drop a file to render the treemap.";
     return;
@@ -27,17 +29,19 @@ const renderTreemap = async (files: FileList | null) => {
     errorMessageDiv.textContent = result.error.message;
     return;
   }
-  const svg = drawTreemap(result.treeMapData, getSettings());
-  container!.firstChild?.remove();
-  container!.append(svg.node()!);
+
+  return {
+    root: result.treeMapData,
+    render: result.treeMapData,
+  };
 };
 
 (() => {
-  let fileListRef: FileList | null = null;
+  const renderer = createRenderer({ container, getSettings });
 
   for (const control of configControls) {
     control.addEventListener("change", () => {
-      renderTreemap(fileListRef);
+      renderer.render();
     });
   }
 
@@ -48,8 +52,12 @@ const renderTreemap = async (files: FileList | null) => {
   dropArea.addEventListener("drop", async (event) => {
     event.preventDefault();
     const files = event.dataTransfer?.files;
-    fileListRef = files || null;
-    renderTreemap(fileListRef);
+    const fileListRef = files || null;
+    const renderContext = await processFilesAndAnalyse(fileListRef);
+    if (renderContext) {
+      renderer.setRenderContext(renderContext);
+      renderer.render();
+    }
   });
 
   const isWASMEnabled = checkWASMSupport();
