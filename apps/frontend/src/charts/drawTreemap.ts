@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 
-const formatNumber = d3.format(",.2f");
+const formatNumber = d3.format(".2f");
 
 const createMakeTileLabels =
   ({ hideValue }: DrawTreemapSettings) =>
@@ -11,7 +11,7 @@ const createMakeTileLabels =
       `${formatNumber(d.data.performance * 100)}% profit`,
       ...(!hideValue
         ? [
-            `Value: ${d.data.value}`,
+            `Value: ${formatNumber(d.data.value)}`,
             `${formatNumber(d.data.grossProfit)} gross profit`,
           ]
         : []),
