@@ -1,4 +1,5 @@
 import { checkWASMSupport } from "./checkWASMSupport";
+import { createLoadExampleHandler } from "./loadExample";
 import { processFiles } from "./processFiles";
 import { createRenderer } from "./renderer";
 
@@ -38,6 +39,7 @@ const processFilesAndAnalyse = async (files: FileList | null) => {
 
 (() => {
   const renderer = createRenderer({ container, getSettings });
+  createLoadExampleHandler(renderer);
 
   for (const control of configControls) {
     control.addEventListener("change", () => {
