@@ -1,9 +1,8 @@
 import { init } from "excelize-wasm";
 // @ts-ignore
 import excelizeModule from "../../../node_modules/excelize-wasm/excelize.wasm.gz";
-import { getOpenPositionRowsSummary } from "./XTBAnalyser/analyseOpenPositionRows";
 import { findOpenPositionsSheet } from "./XTBParser/openPositions/findOpenPositionsSheet";
-import { parseOpenPositionRows } from "./XTBParser/openPositions/parseOpenPositionRows";
+import { processOpenPositions } from "./XTBParser/openPositions/processOpenPositions";
 
 const excelizePromise = init(excelizeModule).catch((err) => {
   console.error(err);
@@ -23,26 +22,11 @@ export const processFile = async (file: File) => {
     const sheets = xlsxFile.GetSheetList();
     const operationsSheetIndex = findOpenPositionsSheet(sheets.list);
 
-    const result = xlsxFile.GetRows(sheets.list[operationsSheetIndex]!);
-    const parsedRows = parseOpenPositionRows(result.result);
-
-    const portfolioSummary = getOpenPositionRowsSummary(parsedRows.result);
-    console.log("Portfolio Summary:", portfolioSummary);
-
-    const total = portfolioSummary.reduce(
-      (sum, item) => sum + (item.market_value || 0),
-      0,
+    const operationsSheet = xlsxFile.GetRows(
+      sheets.list[operationsSheetIndex]!,
     );
 
-    const portfolio = portfolioSummary.map((x) => {
-      return {
-        name: x.symbol,
-        value: x.market_value,
-        performance: (x.market_price - x.open_price) / x.open_price,
-        grossProfit: x.gross_profit,
-        weight: x.market_value / total,
-      };
-    });
+    const portfolio = processOpenPositions(operationsSheet.result);
 
     return { portfolio };
   });
