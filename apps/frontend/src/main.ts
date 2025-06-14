@@ -1,3 +1,4 @@
+import { drawInvestmentsArena } from "./charts/investmentsArea";
 import { checkWASMSupport } from "./checkWASMSupport";
 import { createLoadExampleHandler } from "./loadExample";
 import { metricsService } from "./metricsService";
@@ -65,6 +66,15 @@ const processFilesAndAnalyse = async (files: FileList | null) => {
       renderer.render();
     }
   });
+
+  const svg = drawInvestmentsArena([
+    { date: new Date("2024-01-01"), amount: 0 },
+    { date: new Date("2024-01-02"), amount: 5000 },
+    { date: new Date("2024-04-03"), amount: 15000 },
+    { date: new Date("2024-08-01"), amount: 25000 },
+  ]);
+
+  container?.appendChild(svg.node());
 
   const isWASMEnabled = checkWASMSupport();
   if (!isWASMEnabled) {
