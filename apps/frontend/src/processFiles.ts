@@ -19,7 +19,8 @@ export const processFiles = async (
         ok: false,
       };
 
-    processed.push({ name: file.name, processed: await processFile(file) });
+    const result = await processFile(file);
+    processed.push({ name: file.name, result });
   }
 
   const treeMapData: TreemapLeaf = {
@@ -27,7 +28,7 @@ export const processFiles = async (
     children: processed.map((f) => {
       return {
         name: f.name,
-        children: f.processed,
+        children: f.result.portfolio,
       };
     }),
   };

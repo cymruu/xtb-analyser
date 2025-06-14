@@ -12,7 +12,7 @@ const excelizePromise = init(excelizeModule).catch((err) => {
 });
 
 export const processFile = async (file: File) => {
-  console.info("processing file");
+  console.info("processing file", file.name);
 
   const arrayBuffer = await file.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
@@ -34,7 +34,7 @@ export const processFile = async (file: File) => {
       0,
     );
 
-    return portfolioSummary.map((x) => {
+    const portfolio = portfolioSummary.map((x) => {
       return {
         name: x.symbol,
         value: x.market_value,
@@ -43,5 +43,7 @@ export const processFile = async (file: File) => {
         weight: x.market_value / total,
       };
     });
+
+    return { portfolio };
   });
 };
