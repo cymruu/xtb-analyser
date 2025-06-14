@@ -23,6 +23,7 @@ export function drawInvestmentsArena(data: { date: Date; amount: number }[]) {
     [marginLeft, width - marginRight],
   );
 
+  console.log("domain", [0, d3.max(data, (d) => d.amount)]);
   // Declare the y (vertical position) scale.
   const y = d3.scaleLinear(
     [0, d3.max(data, (d) => d.amount)],

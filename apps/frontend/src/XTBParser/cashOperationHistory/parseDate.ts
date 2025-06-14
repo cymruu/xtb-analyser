@@ -3,5 +3,5 @@ export const parseDate = (v: string) => {
   const date = parts[0];
   const dateElements = date.split("/");
 
-  return dateElements.reverse().join("-");
+  return new Date(dateElements.reverse().join("-"));
 };

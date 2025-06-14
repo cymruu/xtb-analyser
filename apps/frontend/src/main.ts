@@ -36,6 +36,7 @@ const processFilesAndAnalyse = async (files: FileList | null) => {
   return {
     root: result.treeMapData,
     render: result.treeMapData,
+    deposits: result.deposits,
   };
 };
 
@@ -64,17 +65,18 @@ const processFilesAndAnalyse = async (files: FileList | null) => {
     if (renderContext) {
       renderer.setRenderContext(renderContext);
       renderer.render();
+      console.log({ deposits: renderContext.deposits });
+
+      const svg = drawInvestmentsArena(
+        renderContext.deposits[0].deposits.map((x) => ({
+          date: x.Time,
+          amount: x.Amount,
+        })),
+      );
+
+      container?.appendChild(svg.node());
     }
   });
-
-  const svg = drawInvestmentsArena([
-    { date: new Date("2024-01-01"), amount: 0 },
-    { date: new Date("2024-01-02"), amount: 5000 },
-    { date: new Date("2024-04-03"), amount: 15000 },
-    { date: new Date("2024-08-01"), amount: 25000 },
-  ]);
-
-  container?.appendChild(svg.node());
 
   const isWASMEnabled = checkWASMSupport();
   if (!isWASMEnabled) {

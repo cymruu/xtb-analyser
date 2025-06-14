@@ -3,6 +3,8 @@ import { init } from "excelize-wasm";
 import excelizeModule from "../../../node_modules/excelize-wasm/excelize.wasm.gz";
 import { findOpenPositionsSheet } from "./XTBParser/openPositions/findOpenPositionsSheet";
 import { processOpenPositions } from "./XTBParser/openPositions/processOpenPositions";
+import { findCashOperationSheet } from "./XTBParser/cashOperationHistory/findCashOperationSheet";
+import { processCashOperationHistory } from "./XTBParser/cashOperationHistory/procesCashOperationHistory";
 
 const excelizePromise = init(excelizeModule).catch((err) => {
   console.error(err);
@@ -22,12 +24,17 @@ export const processFile = async (file: File) => {
     const sheets = xlsxFile.GetSheetList();
     const operationsSheetIndex = findOpenPositionsSheet(sheets.list);
 
-    const operationsSheet = xlsxFile.GetRows(
-      sheets.list[operationsSheetIndex]!,
-    );
+    const operationsSheet = xlsxFile.GetRows(sheets.list[operationsSheetIndex]);
 
     const portfolio = processOpenPositions(operationsSheet.result);
 
-    return { portfolio };
+    const cashOperationSheetIndex = findCashOperationSheet(sheets.list);
+    const cashOperationSheet = xlsxFile.GetRows(
+      sheets.list[cashOperationSheetIndex],
+    );
+
+    const { deposits } = processCashOperationHistory(cashOperationSheet.result);
+
+    return { portfolio, deposits };
   });
 };

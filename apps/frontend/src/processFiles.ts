@@ -2,7 +2,7 @@ import { processFile } from "./processFile";
 import { TreemapLeaf } from "./renderer";
 
 type ProcessFileResult =
-  | { error: null; ok: true; treeMapData: TreemapLeaf }
+  | { error: null; ok: true; treeMapData: TreemapLeaf; deposits: unknown[] }
   | { error: Error; ok: false };
 
 export const processFiles = async (
@@ -33,5 +33,10 @@ export const processFiles = async (
     }),
   };
 
-  return { error: null, ok: true, treeMapData };
+  const deposits = processed.map((f) => ({
+    name: f.name,
+    deposits: f.result.deposits,
+  }));
+
+  return { error: null, ok: true, treeMapData, deposits };
 };
