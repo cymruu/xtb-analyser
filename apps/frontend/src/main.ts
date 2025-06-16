@@ -70,6 +70,7 @@ const processFilesAndAnalyse = async (files: FileList | null) => {
       const svg = drawInvestmentsArena(
         renderContext.deposits[0].deposits.map((x) => ({
           date: x.Time,
+          total: x.Total,
           amount: x.Amount,
         })),
       );

@@ -11,14 +11,17 @@ export const processCashOperationHistory = (cashOperationSheet: string[][]) => {
     Comment: r[3],
     Symbol: r[4],
     Amount: Number(r[5]),
+    Total: 0,
   }));
 
   const deposits = objects
     .filter((r) => r.Type === "deposit")
     .sort((a, b) => a.Time.getTime() - b.Time.getTime())
     .map((x, i, array) => {
-      const prev = array[i - 1]?.Amount || 0;
-      x.Amount = prev + x.Amount;
+      const prev = array[i - 1]?.Total || 0;
+      x.Total = prev + x.Amount;
+      console.log({ total: x.Total });
+
       return x;
     });
 

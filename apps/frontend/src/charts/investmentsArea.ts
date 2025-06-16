@@ -1,6 +1,8 @@
 import * as d3 from "d3";
 
-export function drawInvestmentsArena(data: { date: Date; amount: number }[]) {
+export function drawInvestmentsArena(
+  data: { date: Date; amount: number; total: number }[],
+) {
   console.log("drawInvestmentsArena called with data:", data);
 
   const width = 1600,
@@ -18,15 +20,17 @@ export function drawInvestmentsArena(data: { date: Date; amount: number }[]) {
     .attr("style", "max-width: 100%; height: auto;");
 
   // Declare the x (horizontal position) scale.
-  const x = d3.scaleUtc(
-    d3.extent(data, (d) => d.date),
-    [marginLeft, width - marginRight],
-  );
+  const x = d3
+    .scaleUtc(
+      d3.extent(data, (d) => d.date),
+      [marginLeft, width - marginRight],
+    )
+    .nice();
 
-  console.log("domain", [0, d3.max(data, (d) => d.amount)]);
+  console.log("domain", [0, d3.max(data, (d) => d.total)]);
   // Declare the y (vertical position) scale.
   const y = d3.scaleLinear(
-    [0, d3.max(data, (d) => d.amount)],
+    [0, d3.max(data, (d) => d.total)],
     [height - marginBottom, marginTop],
   );
 
@@ -35,7 +39,7 @@ export function drawInvestmentsArena(data: { date: Date; amount: number }[]) {
     .area()
     .x((d) => x(d.date))
     .y0(y(0))
-    .y1((d) => y(d.amount));
+    .y1((d) => y(d.total));
 
   // Append a path for the area (under the axes).
   svg.append("path").attr("fill", "steelblue").attr("d", area(data));
@@ -56,7 +60,6 @@ export function drawInvestmentsArena(data: { date: Date; amount: number }[]) {
     .append("g")
     .attr("transform", `translate(${marginLeft},0)`)
     .call(d3.axisLeft(y).ticks(height / 40))
-    .call((g) => g.select(".domain").remove())
     .call((g) =>
       g
         .selectAll(".tick line")
@@ -73,6 +76,18 @@ export function drawInvestmentsArena(data: { date: Date; amount: number }[]) {
         .attr("text-anchor", "start")
         .text("↑ Daily close ($)"),
     );
+
+  // Add the circles
+  svg
+    .selectAll("data-point")
+    .data(data)
+    .join("circle")
+    .attr("fill", "red")
+    .attr("stroke", "none")
+    .attr("transform", (d) => `translate(${x(d.date)},${y(d.total)})`)
+    .attr("x", (d) => x(d.date))
+    .attr("y", (d) => y(d.total))
+    .attr("r", 3);
 
   return svg;
 }

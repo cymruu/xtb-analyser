@@ -1,3 +1,4 @@
+// TODO: also parse time
 export const parseDate = (v: string) => {
   const parts = v.split(" ");
   const date = parts[0];
