@@ -46,6 +46,8 @@ jobs:
         working-directory: ./apps/frontend/
       - run: bun run build
         working-directory: ./apps/frontend/
+        env:
+          BACKEND_HOST: "https://api.dev.xtb-analyser.com/"
         # deploy
       - name: prepare build
         if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy)

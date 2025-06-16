@@ -1,6 +1,7 @@
 import { checkWASMSupport } from "./checkWASMSupport";
+import { config } from "./config";
 import { createLoadExampleHandler } from "./loadExample";
-import { metricsService } from "./metricsService";
+import { createMetricsService } from "./metricsService";
 import { processFiles } from "./processFiles";
 import { createRenderer } from "./renderer";
 
@@ -39,8 +40,14 @@ const processFilesAndAnalyse = async (files: FileList | null) => {
 };
 
 (() => {
+  const appConfig = config;
+  const metricsService = createMetricsService(appConfig.backendHost);
+  const renderer = createRenderer({ metricsService })({
+    container,
+    getSettings,
+  });
+
   metricsService.collectMetrics("page_load", {});
-  const renderer = createRenderer({ container, getSettings });
   createLoadExampleHandler(renderer);
 
   for (const control of configControls) {
