@@ -5,7 +5,7 @@ import { getOpenPositionRowsSummary } from "./XTBAnalyser/analyseOpenPositionRow
 import { findOpenPositionsSheet } from "./XTBParser/openPositions/findOpenPositionsSheet";
 import { parseOpenPositionRows } from "./XTBParser/openPositions/parseOpenPositionRows";
 
-const excelizePromise = init(excelizeModule).catch((err) => {
+const excelizePromise = init("/js/" + excelizeModule).catch((err) => {
   console.error(err);
   alert("failed to load WASM excelize module");
   throw new Error("Failed to load excelize-wasm module");

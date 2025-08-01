@@ -44,7 +44,7 @@ jobs:
         working-directory: ./apps/frontend/
       - run: bun test
         working-directory: ./apps/frontend/
-      - run: bun run build
+      - run: bun run build:zola
         working-directory: ./apps/frontend/
         env:
           BACKEND_HOST: "https://api.dev.xtb-analyser.com/"
@@ -54,15 +54,20 @@ jobs:
         run: |
           SHA_SHORT=$(git rev-parse --short HEAD)
           BUILD_TIME=$(date +"%Y-%m-%d %H:%M:%S %Z")
-          sed -i'' -e "s/{{VERSION}}/$SHA_SHORT/" ./apps/frontend/dist/index.html
-          sed -i'' -e "s/{{BUILD_TIME}}/$BUILD_TIME/" ./apps/frontend/dist/index.html
+          echo "build_time = \"$BUILD_TIME\"" >> build_info.toml
+          echo "version = \"$SHA_SHORT\"" >> build_info.toml
+        working-directory: ./apps/frontend2/
+      - name: build static website
+        # if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy)
+        run: docker run -v $PWD:/app --workdir /app ghcr.io/getzola/zola:v0.21.0 build
+        working-directory: ./apps/frontend2/
       - name: Upload build-artifacts
         if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy)
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build-artifacts
           path: |
-            ./apps/frontend/dist/
+            ./apps/frontend2/public/
 
   trigger-deploy-backend:
     needs: build

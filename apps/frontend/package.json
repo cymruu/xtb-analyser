@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "main": "dist/main.js",
   "scripts": {
-    "build": "bun build --target=browser --env=inline --outdir=./dist/ index.html",
+    "build": "bun build --target=browser --env=inline --outdir=./dist/ src/main.ts",
+    "build:zola": "bun run build -- --outdir=../frontend2/static/js/",
     "test": "bun test",
     "format": "prettier --check .",
     "format:write": "bun run format --write"
