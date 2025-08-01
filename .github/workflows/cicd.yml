@@ -58,7 +58,7 @@ jobs:
           echo "version = \"$SHA_SHORT\"" >> build_info.toml
         working-directory: ./apps/frontend2/
       - name: build static website
-        # if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy)
+        if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy)
         run: docker run -v $PWD:/app --workdir /app ghcr.io/getzola/zola:v0.21.0 build
         working-directory: ./apps/frontend2/
       - name: Upload build-artifacts
