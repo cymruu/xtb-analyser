@@ -57,7 +57,7 @@ export const parseCashOperationRows = (
 
 const CashOperationRowSchema = z.object({
   id: z.coerce.number(),
-  type: z.literal(["deposit", "IKE deposit"]),
+  type: z.string(), // TODO: collect unmatched values and report via metrics service
   time: z.string().transform((transaction_date) => {
     const parsed = parse(transaction_date, XTB_DATE_FORMAT, new Date());
     if (!isValid(parsed)) {
