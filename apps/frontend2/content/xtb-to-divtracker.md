@@ -1,4 +1,4 @@
 +++
 title = "XTB to DivTracker"
-template = "xtb-to-divtracker.html"
+template = "pages/xtb-to-divtracker.html"
 +++

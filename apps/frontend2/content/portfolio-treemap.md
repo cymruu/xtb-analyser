@@ -1,4 +1,4 @@
 +++
 title = "Portfolio Treemap"
-template = "portfolio-treemap.html"
+template = "pages/portfolio-treemap.html"
 +++
