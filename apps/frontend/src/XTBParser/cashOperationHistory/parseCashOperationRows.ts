@@ -1,3 +1,7 @@
+import { isValid, parse } from "date-fns";
+import z from "zod";
+import { XTB_DATE_FORMAT } from "../openPositions/parseOpenPositionRows";
+
 type TransactionIdCell = string;
 type TransactionTypeCell = string;
 type TransactionTimeCell = string;
@@ -48,5 +52,70 @@ export const parseCashOperationRows = (
   return {
     error: null,
     result: data,
+  };
+};
+
+const CashOperationRowSchema = z.object({
+  id: z.coerce.number(),
+  type: z.literal(["deposit", "IKE deposit"]),
+  time: z.string().transform((transaction_date) => {
+    const parsed = parse(transaction_date, XTB_DATE_FORMAT, new Date());
+    if (!isValid(parsed)) {
+      return null;
+    }
+
+    return parsed;
+  }),
+  comment: z.string(),
+  symbol: z.string(),
+  amount: z.coerce.number(),
+});
+
+export type ParsedCashOperationRow = z.infer<typeof CashOperationRowSchema>;
+
+type UnparsedCashOperationRow = {
+  [K in keyof ParsedCashOperationRow]: unknown;
+};
+
+type ParsedCashOperationRowsResult = {
+  result: ParsedCashOperationRow[];
+  error: string | null;
+};
+
+const mapCashoperationRowToObject = (
+  row: string[],
+): UnparsedCashOperationRow => {
+  const [_empty_cell, id, type, time, comment, symbol, amount] = row;
+
+  return {
+    id,
+    type,
+    time,
+    comment,
+    symbol,
+    amount,
+  };
+};
+
+const parseOpenPositionRow = (row: UnparsedCashOperationRow) => {
+  return CashOperationRowSchema.safeParse(row);
+};
+
+export const parseCashOperationRowsV2 = (
+  rows: string[][],
+): ParsedCashOperationRowsResult => {
+  const data = rows.map(mapCashoperationRowToObject).map(parseOpenPositionRow);
+
+  const groupedResults = Object.groupBy(data, (v) =>
+    v.success ? "ok" : "nok",
+  );
+
+  if (data.length === 0) {
+    return { error: "No valid rows found", result: [] };
+  }
+
+  return {
+    error: null,
+    result: (groupedResults.ok || []).map((row) => row.data!),
   };
 };
