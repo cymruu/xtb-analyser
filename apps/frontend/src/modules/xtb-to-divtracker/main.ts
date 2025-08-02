@@ -1,18 +1,9 @@
-import { init } from "excelize-wasm";
-import excelizeModulePath from "../../../../../node_modules/excelize-wasm/excelize.wasm.gz";
 import { processRowStream } from "../../DivTrackerCSVSerializer/stream";
 import { parseCashOperationRows } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
-import { checkWASMSupport } from "../../utils/checkWASMSupport";
 import { config } from "../../config";
 import { createMetricsService } from "../../services/metricsService";
-
-const excelizeModuleName = excelizeModulePath.replace("../", "./");
-
-const excelizePromise = init("/js/" + excelizeModuleName).catch((err) => {
-  console.error(err);
-  alert("failed to load WASM excelize module");
-  throw new Error("Failed to load excelize-wasm module");
-});
+import { checkWASMSupport } from "../../utils/checkWASMSupport";
+import { loadExcelize } from "../../utils/loadExcelize";
 
 function arrayToReadableStream(array: string[][]): ReadableStream<string[]> {
   let index = 0;
@@ -33,7 +24,7 @@ const processFile = async (file: File, currency: string) => {
   const arrayBuffer = await file.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
 
-  excelizePromise.then(async (excelize) => {
+  loadExcelize().then(async (excelize) => {
     const xlsxFile = excelize.OpenReader(bytes);
 
     const result = xlsxFile.GetRows("CASH OPERATION HISTORY");

@@ -1,16 +1,7 @@
-import { init } from "excelize-wasm";
-import excelizeModulePath from "../../../../../node_modules/excelize-wasm/excelize.wasm.gz";
-import { getOpenPositionRowsSummary } from "./analyseOpenPositionRows";
 import { findOpenPositionsSheet } from "../../XTBParser/openPositions/findOpenPositionsSheet";
 import { parseOpenPositionRows } from "../../XTBParser/openPositions/parseOpenPositionRows";
-
-const excelizeModuleName = excelizeModulePath.replace("../", "./");
-
-const excelizePromise = init("/js/" + excelizeModuleName).catch((err) => {
-  console.error(err);
-  alert("failed to load WASM excelize module");
-  throw new Error("Failed to load excelize-wasm module");
-});
+import { loadExcelize } from "../../utils/loadExcelize";
+import { getOpenPositionRowsSummary } from "./analyseOpenPositionRows";
 
 export const processFile = async (file: File) => {
   console.info("processing file");
@@ -18,7 +9,7 @@ export const processFile = async (file: File) => {
   const arrayBuffer = await file.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
 
-  return excelizePromise.then(async (excelize) => {
+  return loadExcelize().then(async (excelize) => {
     const xlsxFile = excelize.OpenReader(bytes);
 
     const sheets = xlsxFile.GetSheetList();
