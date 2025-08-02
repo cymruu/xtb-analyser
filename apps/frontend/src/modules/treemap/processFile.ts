@@ -1,11 +1,12 @@
 import { init } from "excelize-wasm";
-// @ts-ignore
-import excelizeModule from "../../../node_modules/excelize-wasm/excelize.wasm.gz";
-import { getOpenPositionRowsSummary } from "./XTBAnalyser/analyseOpenPositionRows";
-import { findOpenPositionsSheet } from "./XTBParser/openPositions/findOpenPositionsSheet";
-import { parseOpenPositionRows } from "./XTBParser/openPositions/parseOpenPositionRows";
+import excelizeModulePath from "../../../../../node_modules/excelize-wasm/excelize.wasm.gz";
+import { getOpenPositionRowsSummary } from "./analyseOpenPositionRows";
+import { findOpenPositionsSheet } from "../../XTBParser/openPositions/findOpenPositionsSheet";
+import { parseOpenPositionRows } from "../../XTBParser/openPositions/parseOpenPositionRows";
 
-const excelizePromise = init("/js/" + excelizeModule).catch((err) => {
+const excelizeModuleName = excelizeModulePath.replace("../", "./");
+
+const excelizePromise = init("/js/" + excelizeModuleName).catch((err) => {
   console.error(err);
   alert("failed to load WASM excelize module");
   throw new Error("Failed to load excelize-wasm module");

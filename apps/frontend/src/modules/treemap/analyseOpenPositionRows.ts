@@ -1,4 +1,4 @@
-import { ParsedOpenPositionRow } from "../XTBParser/openPositions/parseOpenPositionRows";
+import { ParsedOpenPositionRow } from "../../XTBParser/openPositions/parseOpenPositionRows";
 
 type OpenPositionSummaryRow = {
   volume: number;

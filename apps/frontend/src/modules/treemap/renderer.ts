@@ -1,6 +1,6 @@
-import { drawTreemap } from "./charts/drawTreemap";
-import { DrawTreemapSettings } from "./main";
-import { IMetricsService } from "./metricsService";
+import { drawTreemap } from "./drawTreemap";
+import { IMetricsService } from "../../services/metricsService";
+import { DrawTreemapSettings } from "./portfolio-treemap";
 
 //TODO: find a nice house for this type
 export type TreemapLeaf = {
@@ -43,6 +43,7 @@ export const createRenderer =
         const settings = getSettings();
 
         deps.metricsService.collectMetrics("render", {
+          name: "treemap",
           settings,
           //TODO: introduce TreemapLeafRoot type
           count: renderContext.root?.children?.length,

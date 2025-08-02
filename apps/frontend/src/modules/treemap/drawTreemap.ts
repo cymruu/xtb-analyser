@@ -1,6 +1,6 @@
 import * as d3 from "d3";
-import { DrawTreemapSettings } from "../main";
-import { RenderContext, Renderer } from "../renderer";
+import { DrawTreemapSettings } from "../modules/treemap/main";
+import { RenderContext, Renderer } from "../modules/treemap/renderer";
 
 const formatNumber = d3.format(".2f");
 

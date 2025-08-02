@@ -1,7 +1,7 @@
-import { checkWASMSupport } from "./checkWASMSupport";
-import { config } from "./config";
+import { checkWASMSupport } from "../../checkWASMSupport";
+import { config } from "../../config";
+import { createMetricsService } from "../../services/metricsService";
 import { createLoadExampleHandler } from "./loadExample";
-import { createMetricsService } from "./metricsService";
 import { processFiles } from "./processFiles";
 import { createRenderer } from "./renderer";
 
@@ -47,7 +47,9 @@ const processFilesAndAnalyse = async (files: FileList | null) => {
     getSettings,
   });
 
-  metricsService.collectMetrics("page_load", {});
+  metricsService.collectMetrics("page_load", {
+    path: window.location.pathname,
+  });
   createLoadExampleHandler(renderer);
 
   for (const control of configControls) {
@@ -65,7 +67,9 @@ const processFilesAndAnalyse = async (files: FileList | null) => {
     const files = event.dataTransfer?.files;
     const fileListRef = files || null;
     const renderContext = await processFilesAndAnalyse(fileListRef);
-    metricsService.collectMetrics("files_dropped", { count: files?.length });
+    metricsService.collectMetrics("files_dropped", {
+      count: files?.length || 0,
+    });
 
     if (renderContext) {
       renderer.setRenderContext(renderContext);

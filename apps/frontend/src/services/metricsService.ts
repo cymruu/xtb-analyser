@@ -1,9 +1,19 @@
 const noOp = () => {};
 
+type EventName = keyof EventPayloadMap;
+
+type EventPayloadMap = {
+  page_load: {
+    path: string;
+  };
+  files_dropped: { count: number };
+  render: { name: string; [key: string]: unknown };
+};
+
 export interface IMetricsService {
-  collectMetrics: (
-    name: string,
-    payload: Record<string, any>,
+  collectMetrics: <T extends EventName>(
+    name: EventName,
+    payload: EventPayloadMap[T],
   ) => Promise<Response | void>;
 }
 
