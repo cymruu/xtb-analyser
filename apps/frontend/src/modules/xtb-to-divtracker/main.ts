@@ -1,4 +1,4 @@
-import { processRowStream } from "../../DivTrackerCSVSerializer/stream";
+import { processRowStream } from "./stream";
 import { parseCashOperationRows } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { config } from "../../config";
 import { createMetricsService } from "../../services/metricsService";
