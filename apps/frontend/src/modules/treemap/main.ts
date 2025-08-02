@@ -1,4 +1,4 @@
-import { checkWASMSupport } from "../../checkWASMSupport";
+import { checkWASMSupport } from "../../utils/checkWASMSupport";
 import { config } from "../../config";
 import { createMetricsService } from "../../services/metricsService";
 import { createLoadExampleHandler } from "./loadExample";
