@@ -26,6 +26,7 @@ const processFile = async (file: File) => {
     const parsedRowsResult = parseCashOperationRowsV2(rowsWithoutHeader);
     console.log({ parsedRowsResult });
 
+    //TODO: report invalid types
     if (parsedRowsResult.errors) {
       errorMessageDiv.textContent = parsedRowsResult.errors
         .map((err) => err.message)

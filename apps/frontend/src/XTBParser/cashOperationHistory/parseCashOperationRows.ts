@@ -55,9 +55,18 @@ export const parseCashOperationRows = (
   };
 };
 
+const KnownTypes = z.enum(["deposit"]);
+
 const CashOperationRowSchema = z.object({
   id: z.coerce.number(),
-  type: z.string(), // TODO: collect unmatched values and report via metrics service
+  type: z.string().superRefine((v, ctx) => {
+    if (!KnownTypes.safeParse(v).success) {
+      ctx.addIssue({
+        code: "invalid_value",
+        values: ["deposit"],
+      });
+    }
+  }),
   time: z.string().transform((transaction_date, ctx) => {
     const parsed = parse(transaction_date, XTB_DATE_FORMAT, new Date());
     if (!isValid(parsed)) {

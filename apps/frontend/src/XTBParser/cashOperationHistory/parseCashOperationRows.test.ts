@@ -74,5 +74,21 @@ describe("parseCashOperationRowsV2", () => {
     );
   });
 
-  // TODO: error and error reporting tests
+  //TODO: finish
+  describe("errors", () => {
+    it("should return an error if type is invalid", () => {
+      const rows = [createCashOperationRowV2(1)];
+      rows[0][2] = "invalid_type";
+      const result = parseCashOperationRowsV2(rows);
+
+      expect(result.errors.flatMap((x) => x.issues)).toEqual([
+        {
+          code: "invalid_value",
+          path: ["type"],
+          values: ["deposit"],
+          message: 'Invalid input: expected "deposit"',
+        },
+      ]);
+    });
+  });
 });
