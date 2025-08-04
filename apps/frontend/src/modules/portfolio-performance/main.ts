@@ -1,8 +1,5 @@
 import { processRows } from "./processRows";
-import {
-  parseCashOperationRows,
-  parseCashOperationRowsV2,
-} from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
+import { parseCashOperationRowsV2 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { config } from "../../config";
 import { createMetricsService } from "../../services/metricsService";
 import { checkWASMSupport } from "../../utils/checkWASMSupport";
@@ -39,7 +36,6 @@ const processFile = async (file: File) => {
 
     console.log({ csvLines });
     const resultFile = generateCSV(csvLines);
-    console.log({ resultFile });
 
     const link = downloadFile(resultFile, resultFile.name);
     link.click();

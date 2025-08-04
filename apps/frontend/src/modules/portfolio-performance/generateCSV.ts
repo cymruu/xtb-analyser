@@ -18,7 +18,6 @@ const createCSVLine = (values: string[]) => {
 };
 
 export const generateCSV = (csvLines: string[][]) => {
-  // write
   const chunks: string[] = [createCSVLine(OUTPUT_FILE_HEADER)];
 
   for (const line of csvLines) {

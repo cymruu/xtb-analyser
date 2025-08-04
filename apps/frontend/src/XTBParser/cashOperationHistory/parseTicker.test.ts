@@ -6,7 +6,7 @@ const testCases = [
   { input: { ticker: "UPS.US" }, expected: "UPS" },
   { input: { ticker: "IVG.IT" }, expected: "IVG.IT" },
   { input: { ticker: "JMT.PT" }, expected: "JMT.PT" },
-  { input: { ticker: "XTB.PL" }, expected: "XTB.PL" },
+  { input: { ticker: "XTB.PL" }, expected: "XTB.WA" },
   { input: { ticker: "RBOT.UK" }, expected: "RBOT.GB" },
 ];
 
@@ -24,7 +24,7 @@ describe("parseQuantity", () => {
       it(`should properly parse ${ticker} to ${expected}`, () => {
         const result = parseTicker(ticker);
 
-        expect(result).toEqual(expected);
+        expect(result).toEqual(expected!);
       });
     }
   });
