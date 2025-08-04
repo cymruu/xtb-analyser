@@ -5,6 +5,7 @@ import { createMetricsService } from "../../services/metricsService";
 import { checkWASMSupport } from "../../utils/checkWASMSupport";
 import { loadExcelize } from "../../utils/loadExcelize";
 import { generateCSV } from "./generateCSV";
+import { removeXLSXHeaderColumns } from "../../XTBParser/utils/removeXLSXHeaderRows";
 
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
@@ -21,8 +22,8 @@ const processFile = async (file: File) => {
       throw result.error;
     }
 
-    //TODO: add utility to remove XTB header and footer rows
-    const parsedRowsResult = parseCashOperationRowsV2(result.result);
+    const rowsWithoutHeader = removeXLSXHeaderColumns(result.result);
+    const parsedRowsResult = parseCashOperationRowsV2(rowsWithoutHeader);
     console.log({ parsedRowsResult });
 
     if (parsedRowsResult.errors) {
