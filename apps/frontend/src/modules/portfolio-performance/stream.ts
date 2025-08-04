@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { ParsedCashOperationRow } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { parseCostPerShare } from "../../XTBParser/cashOperationHistory/parseCostPerShare";
 import { parseDate } from "../../XTBParser/cashOperationHistory/parseDate";
@@ -9,14 +10,16 @@ import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
 const textEncoder = new TextEncoder();
 
 const OUTPUT_FILE_HEADER = [
-  "Ticker",
-  "Quantity",
-  "Cost Per Share",
-  "Currency",
   "Date",
-  "Commission",
-  "Commission Currency",
-  "DRIP Confirmed",
+  "Type",
+  "Shares",
+  "Security Name",
+  "Value",
+  "Exchange rate",
+  "fees",
+  "taxes",
+  "Securities Account",
+  "Cash Account",
 ];
 
 const createCSVLine = (values: string[]) => {
@@ -24,25 +27,48 @@ const createCSVLine = (values: string[]) => {
 };
 
 export const processRows = async (rows: ParsedCashOperationRow[]) => {
-  const timeStamp = new Date().toISOString();
-  const fileName = `wallet_${timeStamp}.csv`;
-  console.log(rows);
+  const filtered = rows.filter(
+    (row) => row.type === "Stock purchase" || row.type === "Stock sale",
+  );
 
-  const resultFile = new File([JSON.stringify(rows)], fileName);
+  console.log({ filtered });
 
+  const mapped = filtered.map((row) => {
+    return {
+      Date: row.time,
+      Type: row.type === "Stock purchase" ? "Buy" : "Sell",
+      Shares: row.amount,
+      "Security Name": parseTicker(row.symbol),
+      Value: row.amount,
+      "Exchange rate": null,
+      fees: null,
+      taxes: null,
+      "Securities Account": null,
+      "Cash Account": null,
+    };
+  });
+
+  console.log({ mapped });
+
+  // write
+  const chunks: string[] = [createCSVLine(OUTPUT_FILE_HEADER)];
+
+  for (const row of mapped) {
+    const csvLine = createCSVLine([
+      format(row.Date, "yyyy-MM-dd"),
+      row.Type,
+      row.Shares.toString(),
+      row["Security Name"],
+      Math.abs(row.Value).toString(),
+      row["Exchange rate"] || "",
+      row.fees || "",
+      row.taxes || "",
+      row["Securities Account"] || "",
+      row["Cash Account"] || "",
+    ]);
+    chunks.push(csvLine);
+  }
+
+  const resultFile = new File(chunks, "test.csv");
   return resultFile;
 };
-
-// const chunks: string[] = [];
-//
-// const outputStream = new WritableStream({
-//   write(chunk) {
-//     chunks.push(chunk);
-//   },
-// });
-//
-// const writer = outputStream.getWriter();
-// const headerBytes = textEncoder.encode(createCSVLine(OUTPUT_FILE_HEADER));
-//
-// await writer.write(headerBytes);
-// writer.releaseLock();
