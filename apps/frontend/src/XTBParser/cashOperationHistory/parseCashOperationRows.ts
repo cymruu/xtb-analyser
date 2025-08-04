@@ -1,5 +1,5 @@
 import { isValid, parse } from "date-fns";
-import z from "zod";
+import z, { ZodError } from "zod";
 import { XTB_DATE_FORMAT } from "../openPositions/parseOpenPositionRows";
 
 type TransactionIdCell = string;
@@ -84,7 +84,7 @@ type UnparsedCashOperationRow = {
 
 type ParsedCashOperationRowsResult = {
   result: ParsedCashOperationRow[];
-  error: string | null;
+  errors: ZodError<ParsedCashOperationRow>[];
 };
 
 const mapCashoperationRowToObject = (
@@ -115,12 +115,8 @@ export const parseCashOperationRowsV2 = (
     v.success ? "ok" : "nok",
   );
 
-  if (data.length === 0) {
-    return { error: "No valid rows found", result: [] };
-  }
-
   return {
-    error: null,
+    errors: (groupedResults.nok || []).map((row) => row.error!),
     result: (groupedResults.ok || []).map((row) => row.data!),
   };
 };

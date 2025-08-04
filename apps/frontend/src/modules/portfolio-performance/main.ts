@@ -23,11 +23,14 @@ const processFile = async (file: File) => {
       throw result.error;
     }
 
+    //TODO: add utility to remove XTB header and footer rows
     const parsedRowsResult = parseCashOperationRowsV2(result.result);
     console.log({ parsedRowsResult });
 
-    if (parsedRowsResult.error) {
-      errorMessageDiv.textContent = parsedRowsResult.error;
+    if (parsedRowsResult.errors) {
+      errorMessageDiv.textContent = parsedRowsResult.errors
+        .map((err) => err.message)
+        .join(" ");
       return;
     }
     const resultFile = await processRows(parsedRowsResult.result);
