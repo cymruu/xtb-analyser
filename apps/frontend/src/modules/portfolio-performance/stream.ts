@@ -1,13 +1,7 @@
 import { format } from "date-fns";
-import { ParsedCashOperationRow } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
-import { parseCostPerShare } from "../../XTBParser/cashOperationHistory/parseCostPerShare";
-import { parseDate } from "../../XTBParser/cashOperationHistory/parseDate";
-import { parseQuantity } from "../../XTBParser/cashOperationHistory/parseQuantity";
-import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
 
-// TODO: a lot of code is duplicated from xtb-to-divtracker module.
-// Restructure it
-const textEncoder = new TextEncoder();
+import { ParsedCashOperationRow } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
+import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
 
 const OUTPUT_FILE_HEADER = [
   "Date",
@@ -31,8 +25,6 @@ export const processRows = async (rows: ParsedCashOperationRow[]) => {
     (row) => row.type === "Stock purchase" || row.type === "Stock sale",
   );
 
-  console.log({ filtered });
-
   const mapped = filtered.map((row) => {
     return {
       Date: row.time,
@@ -48,14 +40,12 @@ export const processRows = async (rows: ParsedCashOperationRow[]) => {
     };
   });
 
-  console.log({ mapped });
-
   // write
   const chunks: string[] = [createCSVLine(OUTPUT_FILE_HEADER)];
 
   for (const row of mapped) {
     const csvLine = createCSVLine([
-      format(row.Date, "yyyy-MM-dd"),
+      format(row.Date, "yyyy-MM-dd'T'HH:mm"),
       row.Type,
       row.Shares.toString(),
       row["Security Name"],
