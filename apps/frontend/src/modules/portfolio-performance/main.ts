@@ -1,4 +1,4 @@
-import { processRows } from "./stream";
+import { processRows } from "./processRows";
 import {
   parseCashOperationRows,
   parseCashOperationRowsV2,
@@ -7,6 +7,7 @@ import { config } from "../../config";
 import { createMetricsService } from "../../services/metricsService";
 import { checkWASMSupport } from "../../utils/checkWASMSupport";
 import { loadExcelize } from "../../utils/loadExcelize";
+import { generateCSV } from "./generateCSV";
 
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
@@ -31,9 +32,14 @@ const processFile = async (file: File) => {
       errorMessageDiv.textContent = parsedRowsResult.errors
         .map((err) => err.message)
         .join(" ");
-      return;
+
+      if (!parsedRowsResult.result) return;
     }
-    const resultFile = await processRows(parsedRowsResult.result);
+    const csvLines = await processRows(parsedRowsResult.result);
+
+    console.log({ csvLines });
+    const resultFile = generateCSV(csvLines);
+    console.log({ resultFile });
 
     const link = downloadFile(resultFile, resultFile.name);
     link.click();
