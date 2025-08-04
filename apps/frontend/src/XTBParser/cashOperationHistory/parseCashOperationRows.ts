@@ -62,7 +62,7 @@ const CashOperationRowSchema = z.object({
     const parsed = parse(transaction_date, XTB_DATE_FORMAT, new Date());
     if (!isValid(parsed)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Invalid date",
         path: ["time"],
       });
