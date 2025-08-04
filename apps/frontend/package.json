@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "main": "dist/main.js",
   "scripts": {
-    "build": "bun build --target=browser --env=inline --outdir=./dist/ src/modules/treemap/main.ts src/modules/xtb-to-divtracker/main.ts",
+    "build": "bun build --target=browser --env=inline --outdir=./dist/ src/modules/treemap/main.ts src/modules/xtb-to-divtracker/main.ts src/modules/portfolio-performance/main.ts",
     "build:zola": "bun run build -- --outdir=../frontend2/static/js/",
     "test": "bun test",
     "format": "prettier --check .",

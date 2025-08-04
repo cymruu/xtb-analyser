@@ -1,26 +1,17 @@
-import { processRowStream } from "./stream";
-import { parseCashOperationRows } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
+import { processRows } from "./stream";
+import {
+  parseCashOperationRows,
+  parseCashOperationRowsV2,
+} from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { config } from "../../config";
 import { createMetricsService } from "../../services/metricsService";
 import { checkWASMSupport } from "../../utils/checkWASMSupport";
 import { loadExcelize } from "../../utils/loadExcelize";
 
-function arrayToReadableStream(array: string[][]): ReadableStream<string[]> {
-  let index = 0;
+const dropArea = document.body!;
+const errorMessageDiv = document.getElementById("error-message")!;
 
-  return new ReadableStream({
-    pull(controller) {
-      if (index < array.length) {
-        controller.enqueue(array[index]);
-        index++;
-      } else {
-        controller.close();
-      }
-    },
-  });
-}
-
-const processFile = async (file: File, currency: string) => {
+const processFile = async (file: File) => {
   const arrayBuffer = await file.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
 
@@ -32,9 +23,14 @@ const processFile = async (file: File, currency: string) => {
       throw result.error;
     }
 
-    const parsedLines = parseCashOperationRows(result.result);
-    const stream = arrayToReadableStream(parsedLines.result);
-    const resultFile = await processRowStream(stream, currency);
+    const parsedRowsResult = parseCashOperationRowsV2(result.result);
+    console.log({ parsedRowsResult });
+
+    if (parsedRowsResult.error) {
+      errorMessageDiv.textContent = parsedRowsResult.error;
+      return;
+    }
+    const resultFile = await processRows(parsedRowsResult.result);
 
     const link = downloadFile(resultFile, resultFile.name);
     link.click();
@@ -48,9 +44,6 @@ const processFile = async (file: File, currency: string) => {
     path: window.location.pathname,
   });
 
-  const dropArea = document.getElementById("drop-area")!;
-  const errorMessageDiv = document.getElementById("error-message")!;
-
   dropArea.addEventListener("dragover", (event) => {
     event.preventDefault();
     dropArea.style.borderColor = "#333";
@@ -61,8 +54,6 @@ const processFile = async (file: File, currency: string) => {
   });
 
   dropArea.addEventListener("drop", async (event) => {
-    const currency = (<HTMLSelectElement>document.getElementById("currency"))
-      .value;
     event.preventDefault();
     dropArea.style.borderColor = "#ccc";
 
@@ -73,7 +64,7 @@ const processFile = async (file: File, currency: string) => {
       file.type ===
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     ) {
-      processFile(file, currency);
+      processFile(file);
     } else {
       errorMessageDiv.textContent = "Please select a valid XLSX file.";
     }
