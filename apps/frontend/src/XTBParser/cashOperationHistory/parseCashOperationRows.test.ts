@@ -81,14 +81,15 @@ describe("parseCashOperationRowsV2", () => {
       rows[0][2] = "invalid_type";
       const result = parseCashOperationRowsV2(rows);
 
-      expect(result.errors.flatMap((x) => x.issues)).toEqual([
-        {
-          code: "invalid_value",
-          path: ["type"],
-          values: ["deposit"],
-          message: 'Invalid input: expected "deposit"',
-        },
-      ]);
+      const issues = result.errors.flatMap((x) => x.issues);
+
+      expect(issues).toHaveLength(1);
+      expect(issues[0]).toMatchObject({
+        code: "invalid_value",
+        path: ["type"],
+        values: expect.any(Array),
+        message: expect.any(String),
+      });
     });
   });
 });

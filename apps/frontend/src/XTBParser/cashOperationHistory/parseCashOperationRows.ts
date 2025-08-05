@@ -63,7 +63,7 @@ const CashOperationRowSchema = z.object({
     if (!KnownTypes.safeParse(v).success) {
       ctx.addIssue({
         code: "invalid_value",
-        values: ["deposit"],
+        values: KnownTypes.options,
       });
     }
   }),
