@@ -1,7 +1,11 @@
 import { processRows } from "./processRows";
 import { parseCashOperationRowsV2 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { config } from "../../config";
-import { createMetricsService } from "../../services/metricsService";
+import {
+  createMetricsService,
+  getReportableParsingIssues,
+  IMetricsService,
+} from "../../services/metricsService";
 import { checkWASMSupport } from "../../utils/checkWASMSupport";
 import { loadExcelize } from "../../utils/loadExcelize";
 import { generateCSV } from "./generateCSV";
@@ -10,7 +14,10 @@ import { removeXLSXHeaderColumns } from "../../XTBParser/utils/removeXLSXHeaderR
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
 
-const processFile = async (file: File) => {
+const processFile = async (
+  file: File,
+  { metricsService }: { metricsService: IMetricsService },
+) => {
   const arrayBuffer = await file.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
 
@@ -26,8 +33,14 @@ const processFile = async (file: File) => {
     const parsedRowsResult = parseCashOperationRowsV2(rowsWithoutHeader);
     console.log({ parsedRowsResult });
 
-    //TODO: report invalid types
     if (parsedRowsResult.errors) {
+      const reportableIssues = getReportableParsingIssues(
+        parsedRowsResult.errors.flatMap((x) => x.issues),
+      );
+      if (reportableIssues) {
+        metricsService.collectMetrics("xlsx_parse_issue", reportableIssues);
+      }
+
       errorMessageDiv.textContent = parsedRowsResult.errors
         .map((err) => err.message)
         .join(" ");
@@ -71,7 +84,7 @@ const processFile = async (file: File) => {
       file.type ===
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     ) {
-      processFile(file);
+      processFile(file, { metricsService });
     } else {
       errorMessageDiv.textContent = "Please select a valid XLSX file.";
     }

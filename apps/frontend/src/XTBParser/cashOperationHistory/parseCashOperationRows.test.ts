@@ -9,6 +9,7 @@ import {
   parseCashOperationRowsV2,
 } from "./parseCashOperationRows.ts";
 import { createXTBTimeString } from "../createXTBTestTime.ts";
+import { ReportableZodIssueInternalCode } from "../../services/metricsService.ts";
 
 describe("parseCashOperationRows", () => {
   it("should skip first 11 lines", () => {
@@ -85,6 +86,8 @@ describe("parseCashOperationRowsV2", () => {
 
       expect(issues).toHaveLength(1);
       expect(issues[0]).toMatchObject({
+        internal_code: ReportableZodIssueInternalCode,
+        value: "invalid_type",
         code: "invalid_value",
         path: ["type"],
         values: expect.any(Array),

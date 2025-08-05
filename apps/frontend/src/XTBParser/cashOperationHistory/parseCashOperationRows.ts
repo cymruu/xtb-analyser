@@ -1,6 +1,7 @@
 import { isValid, parse } from "date-fns";
 import z, { ZodError } from "zod";
 import { XTB_DATE_FORMAT } from "../openPositions/parseOpenPositionRows";
+import { ReportableZodIssueInternalCode } from "../../services/metricsService";
 
 type TransactionIdCell = string;
 type TransactionTypeCell = string;
@@ -62,6 +63,8 @@ const CashOperationRowSchema = z.object({
   type: z.string().superRefine((v, ctx) => {
     if (!KnownTypes.safeParse(v).success) {
       ctx.addIssue({
+        internal_code: ReportableZodIssueInternalCode,
+        value: v,
         code: "invalid_value",
         values: KnownTypes.options,
       });
