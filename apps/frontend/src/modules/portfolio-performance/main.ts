@@ -1,5 +1,3 @@
-import { processRows } from "./processRows";
-import { parseCashOperationRowsV2 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { config } from "../../config";
 import {
   createMetricsService,
@@ -7,9 +5,12 @@ import {
   IMetricsService,
 } from "../../services/metricsService";
 import { checkWASMSupport } from "../../utils/checkWASMSupport";
+import { createCSVFile } from "../../utils/createCSVFile";
 import { loadExcelize } from "../../utils/loadExcelize";
-import { generateCSV } from "./generateCSV";
+import { parseCashOperationRowsV2 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { removeXLSXHeaderColumns } from "../../XTBParser/utils/removeXLSXHeaderRows";
+import { PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER } from "./csv";
+import { processRows } from "./processRows";
 
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
@@ -50,7 +51,11 @@ const processFile = async (
     const csvLines = await processRows(parsedRowsResult.result);
 
     console.log({ csvLines });
-    const resultFile = generateCSV(csvLines);
+    const resultFile = createCSVFile({
+      filenName: "test",
+      header: PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER,
+      csvLines,
+    });
 
     const link = downloadFile(resultFile, resultFile.name);
     link.click();
