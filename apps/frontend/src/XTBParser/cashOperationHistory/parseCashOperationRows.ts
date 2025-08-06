@@ -56,7 +56,21 @@ export const parseCashOperationRows = (
   };
 };
 
-const KnownTypes = z.enum(["deposit"]);
+const KnownTypes = z.enum([
+  "deposit",
+  "IKE Deposit",
+  "Free-funds Interest Tax",
+  "Free-funds Interest",
+  "withdrawal",
+  "DIVIDENT",
+  "Withholding Tax",
+  "close trade",
+  "Stock sale",
+  "Stock purchase",
+  "Dividend equivalent",
+  "Adjustment Fee",
+  "swap",
+]);
 
 const CashOperationRowSchema = z.object({
   id: z.coerce.number(),
