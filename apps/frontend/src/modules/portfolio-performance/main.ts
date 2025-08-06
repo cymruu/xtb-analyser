@@ -1,4 +1,4 @@
-import { pipe } from "fp-ts/lib/function";
+import { pipe } from "effect/Function";
 
 import { config } from "../../config";
 import {
