@@ -60,8 +60,10 @@ const processFile = async (
     const csvLines = await processRows(parsedRowsResult.result);
 
     console.log({ csvLines });
+
+    const timeStamp = new Date().toISOString();
     const resultFile = createCSVFile({
-      fileName: "test.csv",
+      fileName: `portfolio_transactions_${timeStamp}.csv`,
       header: PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER,
       csvLines,
     });
