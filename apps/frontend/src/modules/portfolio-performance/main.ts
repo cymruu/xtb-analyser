@@ -52,7 +52,7 @@ const processFile = async (
 
     console.log({ csvLines });
     const resultFile = createCSVFile({
-      filenName: "test",
+      fileName: "test.csv",
       header: PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER,
       csvLines,
     });

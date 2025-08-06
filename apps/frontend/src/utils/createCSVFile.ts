@@ -3,11 +3,11 @@ const createCSVLine = (values: string[]) => {
 };
 
 export const createCSVFile = ({
-  filenName,
+  fileName,
   header,
   csvLines,
 }: {
-  filenName: string;
+  fileName: string;
   header: string[];
   csvLines: string[][];
 }) => {
@@ -18,6 +18,6 @@ export const createCSVFile = ({
     chunks.push(csvLine);
   }
 
-  const resultFile = new File(chunks, filenName);
+  const resultFile = new File(chunks, fileName);
   return resultFile;
 };
