@@ -1,3 +1,5 @@
+import { pipe } from "fp-ts/lib/function";
+
 import { config } from "../../config";
 import {
   createMetricsService,
@@ -9,6 +11,7 @@ import { createCSVFile } from "../../utils/createCSVFile";
 import { loadExcelize } from "../../utils/loadExcelize";
 import { parseCashOperationRowsV2 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { removeXLSXHeaderColumns } from "../../XTBParser/utils/removeXLSXHeaderRows";
+import { removeXLSXSummaryRow } from "../../XTBParser/utils/removeXLSXSummrayRow";
 import { PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER } from "./csv";
 import { processRows } from "./processRows";
 
@@ -30,15 +33,21 @@ const processFile = async (
       throw result.error;
     }
 
-    const rowsWithoutHeader = removeXLSXHeaderColumns(result.result);
-    const parsedRowsResult = parseCashOperationRowsV2(rowsWithoutHeader);
+    const rowsWithoutHeaderAndSummary = pipe(
+      result.result,
+      removeXLSXHeaderColumns,
+      removeXLSXSummaryRow,
+    );
+    const parsedRowsResult = parseCashOperationRowsV2(
+      rowsWithoutHeaderAndSummary,
+    );
     console.log({ parsedRowsResult });
 
     if (parsedRowsResult.errors) {
       const reportableIssues = getReportableParsingIssues(
         parsedRowsResult.errors.flatMap((x) => x.issues),
       );
-      if (reportableIssues) {
+      if (reportableIssues.length) {
         metricsService.collectMetrics("xlsx_parse_issue", reportableIssues);
       }
 

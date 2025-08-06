@@ -26,6 +26,7 @@
         "d3": "^7.9.0",
         "date-fns": "^4.1.0",
         "excelize-wasm": "^0.0.9",
+        "fp-ts": "^2.16.10",
         "zod": "^4.0.14",
       },
       "devDependencies": {
@@ -208,6 +209,8 @@
     "delaunator": ["delaunator@5.0.1", "", { "dependencies": { "robust-predicates": "^3.0.2" } }, "sha512-8nvh+XBe96aCESrGOqMp/84b13H9cdKbG5P2ejQCh4d4sK9RL4371qou9drQjMhvnPmhWl5hnmqbEE0fXr9Xnw=="],
 
     "excelize-wasm": ["excelize-wasm@0.0.9", "", {}, "sha512-klsSMut2B74B8bTJ+3U9N3q15Uxo4WSiFW15kE+Eemq4abqYxUm9QJV4xUtnBnmXetZs0iix/TBRXgnfdY/8sg=="],
+
+    "fp-ts": ["fp-ts@2.16.10", "", {}, "sha512-vuROzbNVfCmUkZSUbnWSltR1sbheyQbTzug7LB/46fEa1c0EucLeBaCEUE0gF3ZGUGBt9lVUiziGOhhj6K1ORA=="],
 
     "hono": ["hono@4.7.11", "", {}, "sha512-rv0JMwC0KALbbmwJDEnxvQCeJh+xbS3KEWW5PC9cMJ08Ur9xgatI0HmtgYZfOdOSOeYsp5LO2cOhdI8cLEbDEQ=="],
 
