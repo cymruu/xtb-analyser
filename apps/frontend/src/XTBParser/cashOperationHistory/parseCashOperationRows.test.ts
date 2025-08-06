@@ -75,7 +75,6 @@ describe("parseCashOperationRowsV2", () => {
     );
   });
 
-  //TODO: finish
   describe("errors", () => {
     it("should return an error if type is invalid", () => {
       const rows = [createCashOperationRowV2(1)];
