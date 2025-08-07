@@ -56,7 +56,7 @@ export const parseCashOperationRows = (
   };
 };
 
-const KnownTypes = z.enum([
+export const KnownCashOperationTypes = z.enum([
   "deposit",
   "IKE Deposit",
   "Free-funds Interest Tax",
@@ -75,12 +75,12 @@ const KnownTypes = z.enum([
 const CashOperationRowSchema = z.object({
   id: z.coerce.number(),
   type: z.string().superRefine((v, ctx) => {
-    if (!KnownTypes.safeParse(v).success) {
+    if (!KnownCashOperationTypes.safeParse(v).success) {
       ctx.addIssue({
         internal_code: ReportableZodIssueInternalCode,
         value: v,
         code: "invalid_value",
-        values: KnownTypes.options,
+        values: KnownCashOperationTypes.options,
       });
     }
   }),
