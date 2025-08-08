@@ -14,6 +14,14 @@ describe("portfolio-performance", () => {
         symbol: "",
         amount: 0,
       },
+      {
+        id: 1,
+        type: "invalid_type", //unknown type
+        time: new Date(1),
+        comment: "",
+        symbol: "",
+        amount: 0,
+      },
     ];
 
     const result = processRows(rows);

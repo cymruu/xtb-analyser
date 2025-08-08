@@ -5,8 +5,8 @@ import {
 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
 import { parseQuantityV2 } from "../../XTBParser/cashOperationHistory/parseQuantity";
-import { Match, pipe } from "effect/index";
-import { map } from "effect/Array";
+import { Match, pipe, Either } from "effect/index";
+import { filter, map } from "effect/Array";
 
 const processDepositRow = (
   row: ParsedCashOperationRow,
@@ -27,9 +27,7 @@ const processDepositRow = (
 };
 
 const processStockSaleRow = (
-  row: ParsedCashOperationRow & {
-    type: (typeof KnownCashOperationTypes.enum)["Stock sale"];
-  },
+  row: ParsedCashOperationRow,
 ): PortfolioTransaction => {
   return {
     date: format(row.time, "yyyy-MM-dd'T'HH:mm"),
@@ -47,9 +45,7 @@ const processStockSaleRow = (
 };
 
 const processStockPurchaseRow = (
-  row: ParsedCashOperationRow & {
-    type: (typeof KnownCashOperationTypes.enum)["Stock purchase"];
-  },
+  row: ParsedCashOperationRow,
 ): PortfolioTransaction => {
   return {
     date: format(row.time, "yyyy-MM-dd'T'HH:mm"),
@@ -80,53 +76,22 @@ export type PortfolioTransaction = {
   cash_account: string | null;
 };
 
-const RowTypeToProcessingFn = {
-  [KnownCashOperationTypes.enum.deposit]: processDepositRow,
-  [KnownCashOperationTypes.enum["Stock sale"]]: processStockSaleRow,
-  [KnownCashOperationTypes.enum["Stock purchase"]]: processStockPurchaseRow,
-};
-
-// export const processRows = (
-//   rows: ParsedCashOperationRow[],
-// ): PortfolioTransaction[] => {
-//   return pipe(
-//     rows,
-//     map((row) => {
-//       const fn = Match.value(row.type).pipe(
-//         Match.when(
-//           Match.is(KnownCashOperationTypes.enum["deposit"]),
-//           () => processDepositRow,
-//         ),
-//       );
-//       console.log({ fn });
-//
-//       return row;
-//     }),
-//   );
-// };
-
-export const processRows = (
-  rows: ParsedCashOperationRow[],
-): PortfolioTransaction[] => {
-  return pipe(
-    rows,
-    map((row) =>
-      pipe(
-        Match.value(row.type),
-        Match.when(KnownCashOperationTypes.enum["deposit"], () =>
-          processDepositRow(row),
-        ),
-        Match.when(KnownCashOperationTypes.enum["Stock sale"], () =>
-          processStockSaleRow(row),
-        ),
-        Match.when(KnownCashOperationTypes.enum["Stock purchase"], () =>
-          processStockPurchaseRow(row),
-        ),
-        Match.orElse(() => {
-          console.warn(`Unknown row type: ${row.type}`);
-          throw new Error("asda");
-        }),
-      ),
+const mapRow = map((row: ParsedCashOperationRow) =>
+  pipe(
+    Match.value(row.type),
+    Match.when(KnownCashOperationTypes.enum["deposit"], () =>
+      processDepositRow(row),
     ),
-  );
+    Match.when(KnownCashOperationTypes.enum["Stock sale"], () =>
+      processStockSaleRow(row),
+    ),
+    Match.when(KnownCashOperationTypes.enum["Stock purchase"], () =>
+      processStockPurchaseRow(row),
+    ),
+    Match.either,
+  ),
+);
+
+export const processRows = (rows: ParsedCashOperationRow[]) => {
+  return pipe(rows, mapRow, filter(Either.isRight));
 };
