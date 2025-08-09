@@ -62,6 +62,24 @@ const processStockPurchaseRow = (
   };
 };
 
+const processDividendRow = (
+  row: ParsedCashOperationRow,
+): PortfolioTransaction => {
+  return {
+    date: format(row.time, "yyyy-MM-dd'T'HH:mm"),
+    type: "Dividend",
+    shares: "0",
+    ticker_symbol: parseTicker(row.symbol),
+    security_name: parseTicker(row.symbol),
+    value: String(row.amount),
+    exchange_rate: null,
+    fees: null,
+    taxes: null,
+    securities_account: null,
+    cash_account: null,
+  };
+};
+
 export type PortfolioTransaction = {
   date: string;
   type: string;
@@ -91,6 +109,13 @@ const mapRow = map((row: ParsedCashOperationRow) =>
     Match.when(KnownCashOperationTypes.enum["Stock purchase"], () =>
       processStockPurchaseRow(row),
     ),
+    Match.when(KnownCashOperationTypes.enum["DIVIDENT"], () =>
+      processDividendRow(row),
+    ),
+    Match.when(KnownCashOperationTypes.enum["Dividend equivalent"], () =>
+      processDividendRow(row),
+    ),
+
     Match.either,
   ),
 );
