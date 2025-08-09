@@ -12,7 +12,10 @@ import { loadExcelize } from "../../utils/loadExcelize";
 import { parseCashOperationRowsV2 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { removeXLSXHeaderColumns } from "../../XTBParser/utils/removeXLSXHeaderRows";
 import { removeXLSXSummaryRow } from "../../XTBParser/utils/removeXLSXSummrayRow";
-import { PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER } from "./csv";
+import {
+  PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER,
+  portfolioTransactionToCSVRow,
+} from "./csv";
 import { processRows } from "./processRows";
 
 const dropArea = document.body!;
@@ -57,15 +60,14 @@ const processFile = async (
 
       if (!parsedRowsResult.result) return;
     }
-    const csvLines = await processRows(parsedRowsResult.result);
-
-    console.log({ csvLines });
+    const processedObjects = processRows(parsedRowsResult.result);
+    console.log({ processedObjects });
 
     const timeStamp = new Date().toISOString();
     const resultFile = createCSVFile({
       fileName: `portfolio_transactions_${timeStamp}.csv`,
       header: PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER,
-      csvLines,
+      csvLines: processedObjects.map(portfolioTransactionToCSVRow),
     });
 
     const link = downloadFile(resultFile, resultFile.name);

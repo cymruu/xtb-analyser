@@ -1,3 +1,5 @@
+import { PortfolioTransaction } from "./processRows";
+
 export const PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER = [
   "Date",
   "Type",
@@ -11,3 +13,21 @@ export const PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER = [
   "Securities Account",
   "Cash Account",
 ];
+
+export const portfolioTransactionToCSVRow = (
+  portfolioTransaction: PortfolioTransaction,
+): string[] => {
+  return [
+    portfolioTransaction.date || "",
+    portfolioTransaction.type || "",
+    portfolioTransaction.shares || "",
+    portfolioTransaction.ticker_symbol || "",
+    portfolioTransaction.security_name || "",
+    portfolioTransaction.value || "",
+    portfolioTransaction.exchange_rate || "",
+    portfolioTransaction.fees || "",
+    portfolioTransaction.taxes || "",
+    portfolioTransaction.securities_account || "",
+    portfolioTransaction.cash_account || "",
+  ];
+};

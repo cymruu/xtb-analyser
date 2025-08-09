@@ -82,6 +82,9 @@ const mapRow = map((row: ParsedCashOperationRow) =>
     Match.when(KnownCashOperationTypes.enum["deposit"], () =>
       processDepositRow(row),
     ),
+    Match.when(KnownCashOperationTypes.enum["IKE Deposit"], () =>
+      processDepositRow(row),
+    ),
     Match.when(KnownCashOperationTypes.enum["Stock sale"], () =>
       processStockSaleRow(row),
     ),
@@ -93,5 +96,5 @@ const mapRow = map((row: ParsedCashOperationRow) =>
 );
 
 export const processRows = (rows: ParsedCashOperationRow[]) => {
-  return pipe(rows, mapRow, filter(Either.isRight));
+  return pipe(rows, mapRow, filter(Either.isRight)).map((row) => row.right);
 };
