@@ -23,6 +23,26 @@ const processDepositRow = (
     taxes: null,
     securities_account: null,
     cash_account: null, // TODO: handle IKE Deposit
+    offset_account: null,
+  };
+};
+
+const processIKEDepositRow = (
+  row: ParsedCashOperationRow,
+): PortfolioTransaction => {
+  return {
+    date: format(row.time, "yyyy-MM-dd'T'HH:mm"),
+    type: "Transfer (Outbound)",
+    shares: "0",
+    ticker_symbol: null,
+    security_name: null,
+    value: String(row.amount),
+    exchange_rate: null,
+    fees: null,
+    taxes: null,
+    securities_account: null,
+    cash_account: "xtb",
+    offset_account: "xtb-ike",
   };
 };
 
@@ -41,6 +61,7 @@ const processStockSaleRow = (
     taxes: null,
     securities_account: null,
     cash_account: null,
+    offset_account: null,
   };
 };
 
@@ -59,6 +80,7 @@ const processStockPurchaseRow = (
     taxes: null,
     securities_account: null,
     cash_account: null,
+    offset_account: null,
   };
 };
 
@@ -77,6 +99,7 @@ const processDividendRow = (
     taxes: null,
     securities_account: null,
     cash_account: null,
+    offset_account: null,
   };
 };
 
@@ -92,6 +115,7 @@ export type PortfolioTransaction = {
   taxes: string | null;
   securities_account: string | null;
   cash_account: string | null;
+  offset_account: string | null;
 };
 
 const mapRow = map((row: ParsedCashOperationRow) =>
@@ -99,6 +123,9 @@ const mapRow = map((row: ParsedCashOperationRow) =>
     Match.value(row.type),
     Match.when(KnownCashOperationTypes.enum["deposit"], () =>
       processDepositRow(row),
+    ),
+    Match.when(KnownCashOperationTypes.enum["IKE Deposit"], () =>
+      processIKEDepositRow(row),
     ),
     Match.when(KnownCashOperationTypes.enum["IKE Deposit"], () =>
       processDepositRow(row),
@@ -115,7 +142,6 @@ const mapRow = map((row: ParsedCashOperationRow) =>
     Match.when(KnownCashOperationTypes.enum["Dividend equivalent"], () =>
       processDividendRow(row),
     ),
-
     Match.either,
   ),
 );
