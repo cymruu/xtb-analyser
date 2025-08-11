@@ -127,6 +127,25 @@ const processDividendRow = (
   };
 };
 
+const processWithholdingTaxRow = (
+  row: ParsedCashOperationRow,
+): PortfolioTransaction => {
+  return {
+    date: formatPortfolioPerformanceDate(row.time),
+    type: "Taxes",
+    shares: "0",
+    ticker_symbol: parseTicker(row.symbol),
+    security_name: parseTicker(row.symbol),
+    value: String(row.amount),
+    exchange_rate: null,
+    fees: null,
+    taxes: null,
+    securities_account: null,
+    cash_account: null,
+    offset_account: null,
+  };
+};
+
 const processFreeFundsInterest = (
   row: ParsedCashOperationRow,
 ): PortfolioTransaction => {
@@ -201,15 +220,18 @@ const mapRow = map((row: ParsedCashOperationRow) =>
     Match.when(KnownCashOperationTypes.enum["DIVIDENT"], () =>
       processDividendRow(row),
     ),
+    Match.when(KnownCashOperationTypes.enum["Withholding Tax"], () =>
+      processWithholdingTaxRow(row),
+    ),
     Match.when(KnownCashOperationTypes.enum["Dividend equivalent"], () =>
       processDividendRow(row),
     ),
-    Match.when(KnownCashOperationTypes.enum["Free-funds Interest"], () => {
-      return processFreeFundsInterest(row);
-    }),
-    Match.when(KnownCashOperationTypes.enum["Free-funds Interest Tax"], () => {
-      return processFreeFundsInterestTax(row);
-    }),
+    Match.when(KnownCashOperationTypes.enum["Free-funds Interest"], () =>
+      processFreeFundsInterest(row),
+    ),
+    Match.when(KnownCashOperationTypes.enum["Free-funds Interest Tax"], () =>
+      processFreeFundsInterestTax(row),
+    ),
 
     Match.either,
   ),
