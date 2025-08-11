@@ -13,6 +13,8 @@ const formatPortfolioPerformanceDate = (datetime: Date) => {
   return format(datetime, "yyyy-MM-dd'T'HH:mm");
 };
 
+const currency = "PLN";
+
 const processDepositRow = (
   row: ParsedCashOperationRow,
 ): PortfolioTransaction => {
@@ -23,6 +25,7 @@ const processDepositRow = (
     ticker_symbol: null,
     security_name: null,
     value: String(row.amount),
+    currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -42,6 +45,7 @@ const processIKEDepositRow = (
     ticker_symbol: null,
     security_name: null,
     value: String(row.amount),
+    currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -61,6 +65,7 @@ const processWithdrawalRow = (
     ticker_symbol: parseTicker(row.symbol),
     security_name: parseTicker(row.symbol),
     value: String(row.amount),
+    currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -80,6 +85,7 @@ const processStockSaleRow = (
     ticker_symbol: parseTicker(row.symbol),
     security_name: parseTicker(row.symbol),
     value: String(row.amount),
+    currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -99,6 +105,7 @@ const processStockPurchaseRow = (
     ticker_symbol: parseTicker(row.symbol),
     security_name: parseTicker(row.symbol),
     value: String(row.amount),
+    currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -118,6 +125,7 @@ const processDividendRow = (
     ticker_symbol: parseTicker(row.symbol),
     security_name: parseTicker(row.symbol),
     value: String(row.amount),
+    currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -137,6 +145,7 @@ const processWithholdingTaxRow = (
     ticker_symbol: parseTicker(row.symbol),
     security_name: parseTicker(row.symbol),
     value: String(row.amount),
+    currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -154,6 +163,7 @@ const processFreeFundsInterest = (
     type: "Interest",
     shares: "0",
     value: String(row.amount),
+    currency,
     ticker_symbol: null,
     security_name: null,
     exchange_rate: null,
@@ -173,6 +183,7 @@ const processFreeFundsInterestTax = (
     type: "Taxes",
     shares: "0",
     value: String(row.amount),
+    currency,
     ticker_symbol: null,
     security_name: null,
     exchange_rate: null,
@@ -189,6 +200,7 @@ export type PortfolioTransaction = {
   type: string;
   shares: string;
   value: string;
+  currency: string | null;
   ticker_symbol: string | null;
   security_name: string | null;
   exchange_rate: string | null;
