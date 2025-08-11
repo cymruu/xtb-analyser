@@ -1,12 +1,13 @@
 import { format } from "date-fns";
+import { filter, map } from "effect/Array";
+import { Either, Match, pipe } from "effect/index";
+
 import {
   KnownCashOperationTypes,
   ParsedCashOperationRow,
 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
-import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
 import { parseQuantityV2 } from "../../XTBParser/cashOperationHistory/parseQuantity";
-import { Match, pipe, Either } from "effect/index";
-import { filter, map } from "effect/Array";
+import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
 
 const formatPortfolioPerformanceDate = (datetime: Date) => {
   return format(datetime, "yyyy-MM-dd'T'HH:mm");
