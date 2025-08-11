@@ -36,6 +36,7 @@ const processFile = async (
       throw result.error;
     }
 
+    // TODO: parse header - get currency
     const rowsWithoutHeaderAndSummary = pipe(
       result.result,
       removeXLSXHeaderColumns,

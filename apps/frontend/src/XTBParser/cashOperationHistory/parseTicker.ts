@@ -19,5 +19,7 @@ export const parseTicker = (v: string) => {
   if (exchange === "UK") {
     return `${symbol}.GB`;
   }
+
+  // TODO: report unknown exchanges
   return v;
 };
