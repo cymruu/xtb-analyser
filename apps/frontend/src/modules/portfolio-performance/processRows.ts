@@ -8,11 +8,15 @@ import { parseQuantityV2 } from "../../XTBParser/cashOperationHistory/parseQuant
 import { Match, pipe, Either } from "effect/index";
 import { filter, map } from "effect/Array";
 
+const formatPortfolioPerformanceDate = (datetime: Date) => {
+  return format(datetime, "yyyy-MM-dd'T'HH:mm");
+};
+
 const processDepositRow = (
   row: ParsedCashOperationRow,
 ): PortfolioTransaction => {
   return {
-    date: format(row.time, "yyyy-MM-dd'T'HH:mm"),
+    date: formatPortfolioPerformanceDate(row.time),
     type: "Deposit",
     shares: "0",
     ticker_symbol: null,
@@ -31,7 +35,7 @@ const processIKEDepositRow = (
   row: ParsedCashOperationRow,
 ): PortfolioTransaction => {
   return {
-    date: format(row.time, "yyyy-MM-dd'T'HH:mm"),
+    date: formatPortfolioPerformanceDate(row.time),
     type: "Transfer (Outbound)",
     shares: "0",
     ticker_symbol: null,
@@ -46,11 +50,30 @@ const processIKEDepositRow = (
   };
 };
 
+const processWithdrawalRow = (
+  row: ParsedCashOperationRow,
+): PortfolioTransaction => {
+  return {
+    date: formatPortfolioPerformanceDate(row.time),
+    type: "Transfer (Outbound)",
+    shares: "0",
+    ticker_symbol: parseTicker(row.symbol),
+    security_name: parseTicker(row.symbol),
+    value: String(row.amount),
+    exchange_rate: null,
+    fees: null,
+    taxes: null,
+    securities_account: null,
+    cash_account: "xtb",
+    offset_account: "wallet", //TODO: parse wallet id
+  };
+};
+
 const processStockSaleRow = (
   row: ParsedCashOperationRow,
 ): PortfolioTransaction => {
   return {
-    date: format(row.time, "yyyy-MM-dd'T'HH:mm"),
+    date: formatPortfolioPerformanceDate(row.time),
     type: "Sell",
     shares: parseQuantityV2(row.comment),
     ticker_symbol: parseTicker(row.symbol),
@@ -69,7 +92,7 @@ const processStockPurchaseRow = (
   row: ParsedCashOperationRow,
 ): PortfolioTransaction => {
   return {
-    date: format(row.time, "yyyy-MM-dd'T'HH:mm"),
+    date: formatPortfolioPerformanceDate(row.time),
     type: "Buy",
     shares: parseQuantityV2(row.comment),
     ticker_symbol: parseTicker(row.symbol),
@@ -88,7 +111,7 @@ const processDividendRow = (
   row: ParsedCashOperationRow,
 ): PortfolioTransaction => {
   return {
-    date: format(row.time, "yyyy-MM-dd'T'HH:mm"),
+    date: formatPortfolioPerformanceDate(row.time),
     type: "Dividend",
     shares: "0",
     ticker_symbol: parseTicker(row.symbol),
@@ -127,8 +150,8 @@ const mapRow = map((row: ParsedCashOperationRow) =>
     Match.when(KnownCashOperationTypes.enum["IKE Deposit"], () =>
       processIKEDepositRow(row),
     ),
-    Match.when(KnownCashOperationTypes.enum["IKE Deposit"], () =>
-      processDepositRow(row),
+    Match.when(KnownCashOperationTypes.enum["withdrawal"], () =>
+      processWithdrawalRow(row),
     ),
     Match.when(KnownCashOperationTypes.enum["Stock sale"], () =>
       processStockSaleRow(row),
