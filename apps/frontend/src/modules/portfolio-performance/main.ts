@@ -38,7 +38,7 @@ const processFile = async (
       throw result.error;
     }
 
-    const currency = await Effect.runPromise(
+    const header = await Effect.runPromise(
       parseHeader(result.result.slice(0, 10)),
     );
 
@@ -66,7 +66,9 @@ const processFile = async (
 
       if (!parsedRowsResult.result) return;
     }
-    const processedObjects = processRows(parsedRowsResult.result);
+    const processedObjects = processRows(parsedRowsResult.result, {
+      currency: header.currency,
+    });
     console.log({ processedObjects });
 
     const timeStamp = new Date().toISOString();

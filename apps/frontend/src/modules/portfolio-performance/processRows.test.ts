@@ -24,7 +24,7 @@ describe("portfolio-performance", () => {
       },
     ];
 
-    const result = processRows(rows);
+    const result = processRows(rows, { currency: "PLN" });
     console.log(result);
   });
 });
