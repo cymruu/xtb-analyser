@@ -17,6 +17,8 @@ import {
   portfolioTransactionToCSVRow,
 } from "./csv";
 import { processRows } from "./processRows";
+import { parseHeader } from "../../XTBParser/header/parseHeader";
+import { Effect } from "effect/index";
 
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
@@ -36,7 +38,10 @@ const processFile = async (
       throw result.error;
     }
 
-    // TODO: parse header - get currency
+    const currency = await Effect.runPromise(
+      parseHeader(result.result.slice(0, 10)),
+    );
+
     const rowsWithoutHeaderAndSummary = pipe(
       result.result,
       removeXLSXHeaderColumns,
