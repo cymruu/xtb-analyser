@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { filter, map } from "effect/Array";
-import { Either, Match, pipe } from "effect/index";
+import { Effect, Match, Option, pipe } from "effect/index";
 
 import {
   KnownCashOperationTypes,
@@ -263,7 +263,7 @@ const mapRow = (options: ProcessRowsOptions) =>
         processFreeFundsInterestTax(row, options),
       ),
 
-      Match.either,
+      Match.option,
     ),
   );
 
@@ -273,7 +273,7 @@ export const processRows = (
   rows: ParsedCashOperationRow[],
   options: ProcessRowsOptions,
 ) => {
-  return pipe(rows, mapRow(options), filter(Either.isRight)).map(
-    (row) => row.right,
+  return pipe(rows, mapRow(options), filter(Option.isSome)).map(
+    (row) => row.value,
   );
 };
