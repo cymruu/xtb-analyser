@@ -13,10 +13,9 @@ const formatPortfolioPerformanceDate = (datetime: Date) => {
   return format(datetime, "yyyy-MM-dd'T'HH:mm");
 };
 
-const currency = "PLN";
-
 const processDepositRow = (
   row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
 ): PortfolioTransaction => {
   return {
     date: formatPortfolioPerformanceDate(row.time),
@@ -25,7 +24,7 @@ const processDepositRow = (
     ticker_symbol: null,
     security_name: null,
     value: String(row.amount),
-    currency,
+    currency: options.currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -37,6 +36,7 @@ const processDepositRow = (
 
 const processIKEDepositRow = (
   row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
 ): PortfolioTransaction => {
   return {
     date: formatPortfolioPerformanceDate(row.time),
@@ -45,7 +45,7 @@ const processIKEDepositRow = (
     ticker_symbol: null,
     security_name: null,
     value: String(row.amount),
-    currency,
+    currency: options.currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -57,6 +57,7 @@ const processIKEDepositRow = (
 
 const processWithdrawalRow = (
   row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
 ): PortfolioTransaction => {
   return {
     date: formatPortfolioPerformanceDate(row.time),
@@ -65,7 +66,7 @@ const processWithdrawalRow = (
     ticker_symbol: parseTicker(row.symbol),
     security_name: parseTicker(row.symbol),
     value: String(row.amount),
-    currency,
+    currency: options.currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -77,6 +78,7 @@ const processWithdrawalRow = (
 
 const processStockSaleRow = (
   row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
 ): PortfolioTransaction => {
   return {
     date: formatPortfolioPerformanceDate(row.time),
@@ -85,7 +87,7 @@ const processStockSaleRow = (
     ticker_symbol: parseTicker(row.symbol),
     security_name: parseTicker(row.symbol),
     value: String(row.amount),
-    currency,
+    currency: options.currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -97,6 +99,7 @@ const processStockSaleRow = (
 
 const processStockPurchaseRow = (
   row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
 ): PortfolioTransaction => {
   return {
     date: formatPortfolioPerformanceDate(row.time),
@@ -105,7 +108,7 @@ const processStockPurchaseRow = (
     ticker_symbol: parseTicker(row.symbol),
     security_name: parseTicker(row.symbol),
     value: String(row.amount),
-    currency,
+    currency: options.currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -117,6 +120,7 @@ const processStockPurchaseRow = (
 
 const processDividendRow = (
   row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
 ): PortfolioTransaction => {
   return {
     date: formatPortfolioPerformanceDate(row.time),
@@ -125,7 +129,7 @@ const processDividendRow = (
     ticker_symbol: parseTicker(row.symbol),
     security_name: parseTicker(row.symbol),
     value: String(row.amount),
-    currency,
+    currency: options.currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -137,6 +141,7 @@ const processDividendRow = (
 
 const processWithholdingTaxRow = (
   row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
 ): PortfolioTransaction => {
   return {
     date: formatPortfolioPerformanceDate(row.time),
@@ -145,7 +150,7 @@ const processWithholdingTaxRow = (
     ticker_symbol: parseTicker(row.symbol),
     security_name: parseTicker(row.symbol),
     value: String(row.amount),
-    currency,
+    currency: options.currency,
     exchange_rate: null,
     fees: null,
     taxes: null,
@@ -157,13 +162,14 @@ const processWithholdingTaxRow = (
 
 const processFreeFundsInterest = (
   row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
 ): PortfolioTransaction => {
   return {
     date: formatPortfolioPerformanceDate(row.time),
     type: "Interest",
     shares: "0",
     value: String(row.amount),
-    currency,
+    currency: options.currency,
     ticker_symbol: null,
     security_name: null,
     exchange_rate: null,
@@ -177,13 +183,14 @@ const processFreeFundsInterest = (
 
 const processFreeFundsInterestTax = (
   row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
 ): PortfolioTransaction => {
   return {
     date: formatPortfolioPerformanceDate(row.time),
     type: "Taxes",
     shares: "0",
     value: String(row.amount),
-    currency,
+    currency: options.currency,
     ticker_symbol: null,
     security_name: null,
     exchange_rate: null,
@@ -211,44 +218,52 @@ export type PortfolioTransaction = {
   offset_account: string | null;
 };
 
-const mapRow = map((row: ParsedCashOperationRow) =>
-  pipe(
-    Match.value(row.type),
-    Match.when(KnownCashOperationTypes.enum["deposit"], () =>
-      processDepositRow(row),
-    ),
-    Match.when(KnownCashOperationTypes.enum["IKE Deposit"], () =>
-      processIKEDepositRow(row),
-    ),
-    Match.when(KnownCashOperationTypes.enum["withdrawal"], () =>
-      processWithdrawalRow(row),
-    ),
-    Match.when(KnownCashOperationTypes.enum["Stock sale"], () =>
-      processStockSaleRow(row),
-    ),
-    Match.when(KnownCashOperationTypes.enum["Stock purchase"], () =>
-      processStockPurchaseRow(row),
-    ),
-    Match.when(KnownCashOperationTypes.enum["DIVIDENT"], () =>
-      processDividendRow(row),
-    ),
-    Match.when(KnownCashOperationTypes.enum["Withholding Tax"], () =>
-      processWithholdingTaxRow(row),
-    ),
-    Match.when(KnownCashOperationTypes.enum["Dividend equivalent"], () =>
-      processDividendRow(row),
-    ),
-    Match.when(KnownCashOperationTypes.enum["Free-funds Interest"], () =>
-      processFreeFundsInterest(row),
-    ),
-    Match.when(KnownCashOperationTypes.enum["Free-funds Interest Tax"], () =>
-      processFreeFundsInterestTax(row),
-    ),
+const mapRow = (options: ProcessRowsOptions) =>
+  map((row: ParsedCashOperationRow) =>
+    pipe(
+      Match.value(row.type),
+      Match.when(KnownCashOperationTypes.enum["deposit"], () =>
+        processDepositRow(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["IKE Deposit"], () =>
+        processIKEDepositRow(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["withdrawal"], () =>
+        processWithdrawalRow(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["Stock sale"], () =>
+        processStockSaleRow(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["Stock purchase"], () =>
+        processStockPurchaseRow(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["DIVIDENT"], () =>
+        processDividendRow(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["Withholding Tax"], () =>
+        processWithholdingTaxRow(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["Dividend equivalent"], () =>
+        processDividendRow(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["Free-funds Interest"], () =>
+        processFreeFundsInterest(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["Free-funds Interest Tax"], () =>
+        processFreeFundsInterestTax(row, options),
+      ),
 
-    Match.either,
-  ),
-);
+      Match.either,
+    ),
+  );
 
-export const processRows = (rows: ParsedCashOperationRow[]) => {
-  return pipe(rows, mapRow, filter(Either.isRight)).map((row) => row.right);
+type ProcessRowsOptions = { currency: string };
+
+export const processRows = (
+  rows: ParsedCashOperationRow[],
+  options: ProcessRowsOptions,
+) => {
+  return pipe(rows, mapRow(options), filter(Either.isRight)).map(
+    (row) => row.right,
+  );
 };
