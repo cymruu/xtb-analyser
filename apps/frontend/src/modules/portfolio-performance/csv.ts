@@ -14,6 +14,7 @@ export const PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER = [
   "Cash Account",
   "Offset Account",
   "Transaction Currency",
+  "Note",
 ];
 
 export const portfolioTransactionToCSVRow = (
@@ -33,5 +34,6 @@ export const portfolioTransactionToCSVRow = (
     portfolioTransaction.cash_account || "",
     portfolioTransaction.offset_account || "",
     portfolioTransaction.currency || "",
+    portfolioTransaction.note || "",
   ];
 };

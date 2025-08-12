@@ -31,6 +31,7 @@ const processDepositRow = (
     securities_account: null,
     cash_account: null, // TODO: handle IKE Deposit
     offset_account: null,
+    note: row.comment,
   };
 };
 
@@ -52,6 +53,7 @@ const processIKEDepositRow = (
     securities_account: null,
     cash_account: "xtb",
     offset_account: "xtb-ike",
+    note: row.comment,
   };
 };
 
@@ -73,6 +75,7 @@ const processWithdrawalRow = (
     securities_account: null,
     cash_account: "xtb",
     offset_account: "wallet", //TODO: parse wallet id
+    note: row.comment,
   };
 };
 
@@ -94,6 +97,7 @@ const processStockSaleRow = (
     securities_account: null,
     cash_account: null,
     offset_account: null,
+    note: row.comment,
   };
 };
 
@@ -115,6 +119,7 @@ const processStockPurchaseRow = (
     securities_account: null,
     cash_account: null,
     offset_account: null,
+    note: row.comment,
   };
 };
 
@@ -136,6 +141,7 @@ const processDividendRow = (
     securities_account: null,
     cash_account: null,
     offset_account: null,
+    note: row.comment,
   };
 };
 
@@ -157,6 +163,7 @@ const processWithholdingTaxRow = (
     securities_account: null,
     cash_account: null,
     offset_account: null,
+    note: row.comment,
   };
 };
 
@@ -178,6 +185,7 @@ const processFreeFundsInterest = (
     securities_account: null,
     cash_account: null,
     offset_account: null,
+    note: row.comment,
   };
 };
 
@@ -199,6 +207,7 @@ const processFreeFundsInterestTax = (
     securities_account: null,
     cash_account: null,
     offset_account: null,
+    note: row.comment,
   };
 };
 
@@ -216,6 +225,7 @@ export type PortfolioTransaction = {
   securities_account: string | null;
   cash_account: string | null;
   offset_account: string | null;
+  note: string | null;
 };
 
 const mapRow = (options: ProcessRowsOptions) =>
