@@ -20,6 +20,10 @@ export const parseTicker = (v: string) => {
     return `${symbol}.GB`;
   }
 
+  if (exchange === "FI") {
+    return `${symbol}.HE`;
+  }
+
   // TODO: report unknown exchanges
   return v;
 };
