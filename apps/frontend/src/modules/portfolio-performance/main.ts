@@ -68,7 +68,7 @@ const processFile = async (
     }
     const processedObjects = processRows(parsedRowsResult.result, {
       currency: header.currency,
-    });
+    }).map((x) => x.value);
     console.log({ processedObjects });
 
     const timeStamp = new Date().toISOString();

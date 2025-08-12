@@ -149,6 +149,27 @@ const processWithholdingTaxRow = (
   row: ParsedCashOperationRow,
   options: ProcessRowsOptions,
 ): PortfolioTransaction => {
+  const isRefund = row.amount < 0;
+
+  if (!isRefund) {
+    return {
+      date: formatPortfolioPerformanceDate(row.time),
+      type: "Tax Refund",
+      shares: "0",
+      ticker_symbol: parseTicker(row.symbol),
+      security_name: parseTicker(row.symbol),
+      value: String(Math.abs(row.amount)),
+      currency: options.currency,
+      exchange_rate: null,
+      fees: null,
+      taxes: null,
+      securities_account: null,
+      cash_account: null,
+      offset_account: null,
+      note: row.comment,
+    };
+  }
+
   return {
     date: formatPortfolioPerformanceDate(row.time),
     type: "Taxes",
@@ -273,7 +294,5 @@ export const processRows = (
   rows: ParsedCashOperationRow[],
   options: ProcessRowsOptions,
 ) => {
-  return pipe(rows, mapRow(options), filter(Option.isSome)).map(
-    (row) => row.value,
-  );
+  return pipe(rows, mapRow(options), filter(Option.isSome));
 };

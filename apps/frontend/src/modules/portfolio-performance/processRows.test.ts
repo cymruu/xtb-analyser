@@ -23,6 +23,7 @@ describe("portfolio-performance", () => {
         amount: 0,
       },
     ];
+    //TODO: finish tests
 
     const result = processRows(rows, { currency: "PLN" });
     console.log(result);
