@@ -70,6 +70,9 @@ export const KnownCashOperationTypes = z.enum([
   "Dividend equivalent",
   "Adjustment Fee",
   "swap",
+  "Sec Fee",
+  "tax IFTT",
+  "transfer",
 ]);
 
 const CashOperationRowSchema = z.object({

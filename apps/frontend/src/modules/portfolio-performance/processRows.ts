@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { filter, map } from "effect/Array";
-import { Effect, Match, Option, pipe } from "effect/index";
+import { Match, Option, pipe } from "effect/index";
 
 import {
   KnownCashOperationTypes,
@@ -232,6 +232,72 @@ const processFreeFundsInterestTax = (
   };
 };
 
+const processSecFeeRow = (
+  row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
+): PortfolioTransaction => {
+  return {
+    date: formatPortfolioPerformanceDate(row.time),
+    type: "Taxes",
+    shares: "0",
+    value: String(row.amount),
+    currency: options.currency,
+    ticker_symbol: null,
+    security_name: null,
+    exchange_rate: null,
+    fees: null,
+    taxes: null,
+    securities_account: null,
+    cash_account: null,
+    offset_account: null,
+    note: row.comment,
+  };
+};
+
+const processTaxIFTTRow = (
+  row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
+): PortfolioTransaction => {
+  return {
+    date: formatPortfolioPerformanceDate(row.time),
+    type: "Taxes",
+    shares: "0",
+    value: String(row.amount),
+    currency: options.currency,
+    ticker_symbol: null,
+    security_name: null,
+    exchange_rate: null,
+    fees: null,
+    taxes: null,
+    securities_account: null,
+    cash_account: null,
+    offset_account: null,
+    note: row.comment,
+  };
+};
+
+const processTransferRow = (
+  row: ParsedCashOperationRow,
+  options: ProcessRowsOptions,
+): PortfolioTransaction => {
+  return {
+    date: formatPortfolioPerformanceDate(row.time),
+    type: "Transfer (Outbound)",
+    shares: "0",
+    value: String(row.amount),
+    currency: options.currency,
+    ticker_symbol: null,
+    security_name: null,
+    exchange_rate: null,
+    fees: null,
+    taxes: null,
+    securities_account: null,
+    cash_account: null,
+    offset_account: null,
+    note: row.comment,
+  };
+};
+
 export type PortfolioTransaction = {
   date: string;
   type: string;
@@ -282,6 +348,15 @@ const mapRow = (options: ProcessRowsOptions) =>
       ),
       Match.when(KnownCashOperationTypes.enum["Free-funds Interest Tax"], () =>
         processFreeFundsInterestTax(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["Sec Fee"], () =>
+        processSecFeeRow(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["tax IFTT"], () =>
+        processTaxIFTTRow(row, options),
+      ),
+      Match.when(KnownCashOperationTypes.enum["transfer"], () =>
+        processTransferRow(row, options),
       ),
 
       Match.option,
