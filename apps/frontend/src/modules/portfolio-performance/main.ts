@@ -16,13 +16,17 @@ import {
   PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER,
   portfolioTransactionToCSVRow,
 } from "./csv";
-import { processRows } from "./processRows";
+import { processRows, processRowsV2 } from "./processRows";
 import { parseHeader } from "../../XTBParser/header/parseHeader";
 import { Effect } from "effect/index";
 import { parseClosedOperationHistoryRows } from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";
 
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
+
+const withoutHeaderAndSummary = (rows: string[][]) => {
+  return pipe(rows, removeXLSXHeaderColumns, removeXLSXSummaryRow);
+};
 
 const processFile = async (
   file: File,
@@ -39,10 +43,11 @@ const processFile = async (
       throw result0.error;
     }
 
-    const header0 = await Effect.runPromise(
+    const header = await Effect.runPromise(
       parseHeader(result0.result.slice(0, 10)),
     );
-    console.log({ header0 });
+
+    console.log({ header });
 
     const result = xlsxFile.GetRows("CASH OPERATION HISTORY");
     if (result.error) {
@@ -50,20 +55,13 @@ const processFile = async (
     }
 
     const a = await Effect.runPromise(
-      parseClosedOperationHistoryRows(result0.result),
+      parseClosedOperationHistoryRows(withoutHeaderAndSummary(result0.result)),
     );
 
-    const header = await Effect.runPromise(
-      parseHeader(result.result.slice(0, 10)),
-    );
+    const b = processRowsV2(a.result, { currency: header.currency });
 
-    const rowsWithoutHeaderAndSummary = pipe(
-      result.result,
-      removeXLSXHeaderColumns,
-      removeXLSXSummaryRow,
-    );
     const parsedRowsResult = parseCashOperationRowsV2(
-      rowsWithoutHeaderAndSummary,
+      withoutHeaderAndSummary(result.result),
     );
     console.log({ parsedRowsResult });
 

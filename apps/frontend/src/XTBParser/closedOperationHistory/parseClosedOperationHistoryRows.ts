@@ -17,15 +17,19 @@ const timeSchema = z.string().transform((transaction_date, ctx) => {
   return parsed;
 });
 
+export const KnownClosedPositionTypes = z.enum(["BUY"]);
+
 const ClosedOperationRowSchema = z.object({
   position: z.number(),
   symbol: z.string(),
-  type: z.enum(["BUY", "SELL"]),
+  type: KnownClosedPositionTypes,
   volume: z.coerce.number(),
   open_time: timeSchema,
   open_price: z.coerce.number(),
   close_time: timeSchema,
   close_price: z.coerce.number(),
+  purchase_value: z.coerce.number(),
+  sale_value: z.coerce.number(),
 });
 
 export type ParsedClosedOperation = z.infer<typeof ClosedOperationRowSchema>;
@@ -45,6 +49,10 @@ const mapClosedOperationRowToObject = (
     open_price,
     close_time,
     close_price,
+    _open_origin,
+    _close_origin,
+    purchase_value,
+    sale_value,
   ] = row;
 
   return {
@@ -56,6 +64,8 @@ const mapClosedOperationRowToObject = (
     open_price,
     close_time,
     close_price,
+    purchase_value,
+    sale_value,
   };
 };
 

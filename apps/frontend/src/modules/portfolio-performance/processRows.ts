@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { filter, map } from "effect/Array";
-import { Match, Option, pipe } from "effect/index";
+import { Effect, Match, Option, pipe } from "effect/index";
 
 import {
   KnownCashOperationTypes,
@@ -8,6 +8,11 @@ import {
 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { parseQuantityV2 } from "../../XTBParser/cashOperationHistory/parseQuantity";
 import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
+import {
+  KnownClosedPositionTypes,
+  ParsedClosedOperation,
+} from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";
+import { flatMap } from "effect/ParseResult";
 
 const formatPortfolioPerformanceDate = (datetime: Date) => {
   return format(datetime, "yyyy-MM-dd'T'HH:mm");
@@ -370,4 +375,55 @@ export const processRows = (
   options: ProcessRowsOptions,
 ) => {
   return pipe(rows, mapRow(options), filter(Option.isSome));
+};
+
+const mapRowV2 = (options: ProcessRowsOptions) =>
+  map((row: ParsedClosedOperation) =>
+    pipe(
+      Match.value(row.type),
+      Match.when(KnownClosedPositionTypes.enum["BUY"], () => {
+        return [
+          {
+            date: formatPortfolioPerformanceDate(row.open_time),
+            type: "Buy",
+            shares: row.volume,
+            ticker_symbol: parseTicker(row.symbol),
+            security_name: parseTicker(row.symbol),
+            value: String(row.purchase_value),
+            currency: options.currency,
+            exchange_rate: null,
+            fees: null,
+            taxes: null,
+            securities_account: null,
+            cash_account: null,
+            offset_account: null,
+            note: null,
+          },
+          {
+            date: formatPortfolioPerformanceDate(row.close_time),
+            type: "Sell",
+            shares: row.volume,
+            ticker_symbol: parseTicker(row.symbol),
+            security_name: parseTicker(row.symbol),
+            value: String(row.sale_value),
+            currency: options.currency,
+            exchange_rate: null,
+            fees: null,
+            taxes: null,
+            securities_account: null,
+            cash_account: null,
+            offset_account: null,
+            note: null,
+          },
+        ];
+      }),
+      Match.option,
+    ),
+  );
+
+export const processRowsV2 = (
+  rows: ParsedClosedOperation[],
+  options: ProcessRowsOptions,
+) => {
+  return pipe(rows, mapRowV2(options), filter(Option.isSome));
 };
