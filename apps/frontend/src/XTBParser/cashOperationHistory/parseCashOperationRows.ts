@@ -116,7 +116,7 @@ type ParsedCashOperationRowsResult = {
   errors: ZodError<ParsedCashOperationRow>[];
 };
 
-const mapCashoperationRowToObject = (
+const mapCashOperationRowToObject = (
   row: string[],
 ): UnparsedCashOperationRow => {
   const [_empty_cell, id, type, time, comment, symbol, amount] = row;
@@ -138,7 +138,7 @@ const parseOpenPositionRow = (row: UnparsedCashOperationRow) => {
 export const parseCashOperationRowsV2 = (
   rows: string[][],
 ): ParsedCashOperationRowsResult => {
-  const data = rows.map(mapCashoperationRowToObject).map(parseOpenPositionRow);
+  const data = rows.map(mapCashOperationRowToObject).map(parseOpenPositionRow);
 
   const groupedResults = Object.groupBy(data, (v) =>
     v.success ? "ok" : "nok",

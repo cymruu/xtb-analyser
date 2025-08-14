@@ -19,6 +19,7 @@ import {
 import { processRows } from "./processRows";
 import { parseHeader } from "../../XTBParser/header/parseHeader";
 import { Effect } from "effect/index";
+import { parseClosedOperationHistoryRows } from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";
 
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
@@ -33,10 +34,24 @@ const processFile = async (
   loadExcelize().then(async (excelize) => {
     const xlsxFile = excelize.OpenReader(bytes);
 
+    const result0 = xlsxFile.GetRows("CLOSED POSITION HISTORY");
+    if (result0.error) {
+      throw result0.error;
+    }
+
+    const header0 = await Effect.runPromise(
+      parseHeader(result0.result.slice(0, 10)),
+    );
+    console.log({ header0 });
+
     const result = xlsxFile.GetRows("CASH OPERATION HISTORY");
     if (result.error) {
       throw result.error;
     }
+
+    const a = await Effect.runPromise(
+      parseClosedOperationHistoryRows(result0.result),
+    );
 
     const header = await Effect.runPromise(
       parseHeader(result.result.slice(0, 10)),
