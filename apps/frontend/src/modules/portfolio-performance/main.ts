@@ -57,38 +57,43 @@ const processFile = async (
     const a = await Effect.runPromise(
       parseClosedOperationHistoryRows(withoutHeaderAndSummary(result0.result)),
     );
+    console.log({ a });
 
     const b = processRowsV2(a.result, { currency: header.currency });
+    console.log(b);
 
-    const parsedRowsResult = parseCashOperationRowsV2(
-      withoutHeaderAndSummary(result.result),
-    );
-    console.log({ parsedRowsResult });
-
-    if (parsedRowsResult.errors) {
-      const reportableIssues = getReportableParsingIssues(
-        parsedRowsResult.errors.flatMap((x) => x.issues),
-      );
-      if (reportableIssues.length) {
-        metricsService.collectMetrics("xlsx_parse_issue", reportableIssues);
-      }
-
-      errorMessageDiv.textContent = parsedRowsResult.errors
-        .map((err) => err.message)
-        .join(" ");
-
-      if (!parsedRowsResult.result) return;
-    }
-    const processedObjects = processRows(parsedRowsResult.result, {
-      currency: header.currency,
-    }).map((x) => x.value);
-    console.log({ processedObjects });
+    // const parsedRowsResult = parseCashOperationRowsV2(
+    //   withoutHeaderAndSummary(result.result),
+    // );
+    // console.log({ parsedRowsResult });
+    //
+    // if (parsedRowsResult.errors) {
+    //   const reportableIssues = getReportableParsingIssues(
+    //     parsedRowsResult.errors.flatMap((x) => x.issues),
+    //   );
+    //   if (reportableIssues.length) {
+    //     metricsService.collectMetrics("xlsx_parse_issue", reportableIssues);
+    //   }
+    //
+    //   errorMessageDiv.textContent = parsedRowsResult.errors
+    //     .map((err) => err.message)
+    //     .join(" ");
+    //
+    //   if (!parsedRowsResult.result) return;
+    // }
+    // const processedObjects = processRows(parsedRowsResult.result, {
+    //   currency: header.currency,
+    // }).map((x) => x.value);
+    // console.log({ processedObjects });
 
     const timeStamp = new Date().toISOString();
     const resultFile = createCSVFile({
       fileName: `portfolio_transactions_${timeStamp}.csv`,
       header: PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER,
-      csvLines: processedObjects.map(portfolioTransactionToCSVRow),
+      csvLines: b
+        .map((x) => x.value)
+        .flat()
+        .map(portfolioTransactionToCSVRow),
     });
 
     const link = downloadFile(resultFile, resultFile.name);

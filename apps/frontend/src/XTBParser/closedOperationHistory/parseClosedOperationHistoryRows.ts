@@ -20,7 +20,7 @@ const timeSchema = z.string().transform((transaction_date, ctx) => {
 export const KnownClosedPositionTypes = z.enum(["BUY"]);
 
 const ClosedOperationRowSchema = z.object({
-  position: z.number(),
+  position: z.coerce.number(),
   symbol: z.string(),
   type: KnownClosedPositionTypes,
   volume: z.coerce.number(),

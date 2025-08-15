@@ -382,11 +382,13 @@ const mapRowV2 = (options: ProcessRowsOptions) =>
     pipe(
       Match.value(row.type),
       Match.when(KnownClosedPositionTypes.enum["BUY"], () => {
+        console.log({ row });
+
         return [
           {
             date: formatPortfolioPerformanceDate(row.open_time),
             type: "Buy",
-            shares: row.volume,
+            shares: String(row.volume),
             ticker_symbol: parseTicker(row.symbol),
             security_name: parseTicker(row.symbol),
             value: String(row.purchase_value),
@@ -402,7 +404,7 @@ const mapRowV2 = (options: ProcessRowsOptions) =>
           {
             date: formatPortfolioPerformanceDate(row.close_time),
             type: "Sell",
-            shares: row.volume,
+            shares: String(row.volume),
             ticker_symbol: parseTicker(row.symbol),
             security_name: parseTicker(row.symbol),
             value: String(row.sale_value),
@@ -415,7 +417,7 @@ const mapRowV2 = (options: ProcessRowsOptions) =>
             offset_account: null,
             note: null,
           },
-        ];
+        ] as PortfolioTransaction[];
       }),
       Match.option,
     ),
@@ -425,5 +427,7 @@ export const processRowsV2 = (
   rows: ParsedClosedOperation[],
   options: ProcessRowsOptions,
 ) => {
+  console.log("processRowsV2", { rows });
+
   return pipe(rows, mapRowV2(options), filter(Option.isSome));
 };
