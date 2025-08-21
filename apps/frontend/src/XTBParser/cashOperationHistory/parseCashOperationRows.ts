@@ -1,7 +1,7 @@
 import { isValid, parse } from "date-fns";
 import z, { ZodError } from "zod";
-import { XTB_DATE_FORMAT } from "../openPositions/parseOpenPositionRows";
 import { ReportableZodIssueInternalCode } from "../../services/metricsService";
+import { XTB_DATE_FORMAT } from "../utils/XTBTimeSchema";
 
 type TransactionIdCell = string;
 type TransactionTypeCell = string;

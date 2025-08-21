@@ -1,21 +1,6 @@
-import { isValid, parse } from "date-fns";
 import z from "zod";
-import { XTB_DATE_FORMAT } from "../openPositions/parseOpenPositionRows";
 import { Effect } from "effect/index";
-
-const timeSchema = z.string().transform((transaction_date, ctx) => {
-  const parsed = parse(transaction_date, XTB_DATE_FORMAT, new Date());
-  if (!isValid(parsed)) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Invalid date",
-      path: ["time"],
-    });
-    return z.NEVER;
-  }
-
-  return parsed;
-});
+import { XTBTimeSchema } from "../utils/XTBTimeSchema";
 
 export const KnownClosedPositionTypes = z.enum(["BUY"]);
 
@@ -24,9 +9,9 @@ const ClosedOperationRowSchema = z.object({
   symbol: z.string(),
   type: KnownClosedPositionTypes,
   volume: z.coerce.number(),
-  open_time: timeSchema,
+  open_time: XTBTimeSchema,
   open_price: z.coerce.number(),
-  close_time: timeSchema,
+  close_time: XTBTimeSchema,
   close_price: z.coerce.number(),
   purchase_value: z.coerce.number(),
   sale_value: z.coerce.number(),

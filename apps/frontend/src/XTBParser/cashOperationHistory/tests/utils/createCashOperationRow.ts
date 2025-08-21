@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { createXTBTimeString } from "../../../createXTBTestTime";
-import { XTB_DATE_FORMAT } from "../../../openPositions/parseOpenPositionRows";
+import { XTB_DATE_FORMAT } from "../../../utils/XTBTimeSchema";
 
 export const createCashOperationRow = (i: number): string[] => {
   return [

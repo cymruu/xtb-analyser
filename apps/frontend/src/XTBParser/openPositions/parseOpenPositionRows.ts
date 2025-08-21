@@ -1,7 +1,6 @@
 import { isValid, parse } from "date-fns";
 import { z } from "zod/v4";
-
-export const XTB_DATE_FORMAT = "d/M/yyyy HH:mm:ss";
+import { XTB_DATE_FORMAT } from "../utils/XTBTimeSchema";
 
 const OpenPositionRowSchema = z.object({
   id: z.coerce.number(),
