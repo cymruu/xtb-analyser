@@ -13,6 +13,7 @@ import {
   ParsedClosedOperation,
 } from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";
 import { flatMap } from "effect/ParseResult";
+import { ParsedOpenPositionRow } from "../../XTBParser/openPositions/parseOpenPositionRows";
 
 const formatPortfolioPerformanceDate = (datetime: Date) => {
   return format(datetime, "yyyy-MM-dd'T'HH:mm");
@@ -377,7 +378,7 @@ export const processRows = (
   return pipe(rows, mapRow(options), filter(Option.isSome));
 };
 
-const mapRowV2 = (options: ProcessRowsOptions) =>
+const mapClosedOperationRowV2 = (options: ProcessRowsOptions) =>
   map((row: ParsedClosedOperation) =>
     pipe(
       Match.value(row.type),
@@ -423,11 +424,51 @@ const mapRowV2 = (options: ProcessRowsOptions) =>
     ),
   );
 
+const mapOpenOperationRowV2 = (options: ProcessRowsOptions) =>
+  map((row: ParsedOpenPositionRow) =>
+    pipe(
+      Match.value(row.type),
+      Match.when(KnownClosedPositionTypes.enum["BUY"], () => {
+        return [
+          {
+            date: formatPortfolioPerformanceDate(row.open_time),
+            type: "Buy",
+            shares: String(row.volume),
+            ticker_symbol: parseTicker(row.symbol),
+            security_name: parseTicker(row.symbol),
+            value: String(row.purchase_value),
+            currency: options.currency,
+            exchange_rate: null,
+            fees: null,
+            taxes: null,
+            securities_account: null,
+            cash_account: null,
+            offset_account: null,
+            note: null,
+          },
+        ] as PortfolioTransaction[];
+      }),
+      Match.option,
+    ),
+  );
+
 export const processRowsV2 = (
-  rows: ParsedClosedOperation[],
+  closedOperationRows: ParsedClosedOperation[],
+  openOperationRows: ParsedOpenPositionRow[],
   options: ProcessRowsOptions,
 ) => {
-  console.log("processRowsV2", { rows });
+  console.log("processRowsV2", { closedOperationRows, openOperationRows });
 
-  return pipe(rows, mapRowV2(options), filter(Option.isSome));
+  const closedOperationsPipe = pipe(
+    closedOperationRows,
+    mapClosedOperationRowV2(options),
+    filter(Option.isSome),
+  );
+  const openOperationsPipe = pipe(
+    openOperationRows,
+    mapOpenOperationRowV2(options),
+    filter(Option.isSome),
+  );
+
+  return [...closedOperationsPipe, ...openOperationsPipe];
 };

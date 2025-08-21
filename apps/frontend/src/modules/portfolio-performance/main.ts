@@ -20,6 +20,8 @@ import { processRows, processRowsV2 } from "./processRows";
 import { parseHeader } from "../../XTBParser/header/parseHeader";
 import { Effect } from "effect/index";
 import { parseClosedOperationHistoryRows } from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";
+import { parseOpenPositionRowsV2 } from "../../XTBParser/openPositions/parseOpenPositionRows";
+import { findOpenPositionsSheet } from "../../XTBParser/openPositions/findOpenPositionsSheet";
 
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
@@ -43,23 +45,37 @@ const processFile = async (
       throw result0.error;
     }
 
+    const sheets = xlsxFile.GetSheetList();
+    const operationsSheetIndex = findOpenPositionsSheet(sheets.list);
+
+    const result1 = xlsxFile.GetRows(sheets.list[operationsSheetIndex]!);
+    if (result1.error) {
+      throw result1.error;
+    }
+
     const header = await Effect.runPromise(
       parseHeader(result0.result.slice(0, 10)),
     );
 
     console.log({ header });
 
-    const result = xlsxFile.GetRows("CASH OPERATION HISTORY");
-    if (result.error) {
-      throw result.error;
-    }
-
-    const a = await Effect.runPromise(
+    const closedOperationsHistoryRows = await Effect.runPromise(
       parseClosedOperationHistoryRows(withoutHeaderAndSummary(result0.result)),
     );
-    console.log({ a });
+    console.log({ a: closedOperationsHistoryRows });
 
-    const b = processRowsV2(a.result, { currency: header.currency });
+    const openOperationsHistoryRows = await Effect.runPromise(
+      parseOpenPositionRowsV2(withoutHeaderAndSummary(result1.result)),
+    );
+    console.log({ b: openOperationsHistoryRows });
+
+    const b = processRowsV2(
+      closedOperationsHistoryRows.result,
+      openOperationsHistoryRows.result,
+      {
+        currency: header.currency,
+      },
+    );
     console.log(b);
 
     // const parsedRowsResult = parseCashOperationRowsV2(
