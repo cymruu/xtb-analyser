@@ -1,20 +1,13 @@
-import { isValid, parse } from "date-fns";
 import { z } from "zod/v4";
-import { XTB_DATE_FORMAT } from "../utils/XTBTimeSchema";
+import { XTBTimeSchema } from "../utils/XTBTimeSchema";
+import { Effect } from "effect/index";
 
 const OpenPositionRowSchema = z.object({
   id: z.coerce.number(),
   symbol: z.string().trim(),
   type: z.literal("BUY"),
   volume: z.coerce.number(),
-  open_time: z.string().transform((transaction_date) => {
-    const parsed = parse(transaction_date, XTB_DATE_FORMAT, new Date());
-    if (!isValid(parsed)) {
-      return null;
-    }
-
-    return parsed;
-  }),
+  open_time: XTBTimeSchema,
   open_price: z.coerce.number(),
   market_price: z.coerce.number(),
   purchase_value: z.coerce.number(),
@@ -88,3 +81,22 @@ export const parseOpenPositionRows = (
     result: (groupedResults.ok || []).map((row) => row.data!),
   };
 };
+
+export const parseOpenPositionRowsV2 = (rows: string[][]) =>
+  Effect.forEach(rows, (row) =>
+    Effect.succeed(row).pipe(
+      Effect.map(mapOpenPositionRowToObject),
+      Effect.map(parseOpenPositionRow),
+    ),
+  ).pipe(
+    Effect.map((parsedRows) => {
+      const groupedResults = Object.groupBy(parsedRows, (v) =>
+        v.success ? "ok" : "nok",
+      );
+
+      return {
+        errors: (groupedResults.nok || []).map((row) => row.error!),
+        result: (groupedResults.ok || []).map((row) => row.data!),
+      };
+    }),
+  );
