@@ -40,67 +40,77 @@ const processFile = async (
   loadExcelize().then(async (excelize) => {
     const xlsxFile = excelize.OpenReader(bytes);
 
-    const result0 = xlsxFile.GetRows("CLOSED POSITION HISTORY");
-    if (result0.error) {
-      throw result0.error;
+    const closedPositionSheet = xlsxFile.GetRows("CLOSED POSITION HISTORY");
+    if (closedPositionSheet.error) {
+      throw closedPositionSheet.error;
     }
 
     const sheets = xlsxFile.GetSheetList();
     const operationsSheetIndex = findOpenPositionsSheet(sheets.list);
 
-    const result1 = xlsxFile.GetRows(sheets.list[operationsSheetIndex]!);
-    if (result1.error) {
-      throw result1.error;
+    const openPositionsSheet = xlsxFile.GetRows(
+      sheets.list[operationsSheetIndex]!,
+    );
+    if (openPositionsSheet.error) {
+      throw openPositionsSheet.error;
     }
 
     const header = await Effect.runPromise(
-      parseHeader(result0.result.slice(0, 10)),
+      parseHeader(closedPositionSheet.result.slice(0, 10)),
     );
 
     console.log({ header });
 
     const closedOperationsHistoryRows = await Effect.runPromise(
-      parseClosedOperationHistoryRows(withoutHeaderAndSummary(result0.result)),
+      parseClosedOperationHistoryRows(
+        withoutHeaderAndSummary(closedPositionSheet.result),
+      ),
     );
-    console.log({ a: closedOperationsHistoryRows });
+    console.log({ closedOperationsHistoryRows });
 
     const openOperationsHistoryRows = await Effect.runPromise(
-      parseOpenPositionRowsV2(withoutHeaderAndSummary(result1.result)),
+      parseOpenPositionRowsV2(
+        withoutHeaderAndSummary(openPositionsSheet.result),
+      ),
     );
-    console.log({ b: openOperationsHistoryRows });
+    console.log({ openOperationsHistoryRows });
+
+    const cashOperationHistorySheet = xlsxFile.GetRows(
+      "CASH OPERATION HISTORY",
+    );
+    if (cashOperationHistorySheet.error) {
+      throw cashOperationHistorySheet.error;
+    }
+
+    const parsedRowsResult = parseCashOperationRowsV2(
+      withoutHeaderAndSummary(cashOperationHistorySheet.result),
+    );
+    console.log({ parsedRowsResult });
+
+    if (parsedRowsResult.errors) {
+      const reportableIssues = getReportableParsingIssues(
+        parsedRowsResult.errors.flatMap((x) => x.issues),
+      );
+      if (reportableIssues.length) {
+        metricsService.collectMetrics("xlsx_parse_issue", reportableIssues);
+      }
+
+      errorMessageDiv.textContent = parsedRowsResult.errors
+        .map((err) => err.message)
+        .join(" ");
+
+      if (!parsedRowsResult.result) return;
+    }
 
     const b = processRowsV2(
       closedOperationsHistoryRows.result,
       openOperationsHistoryRows.result,
+      parsedRowsResult.result,
       {
         currency: header.currency,
       },
     );
     console.log(b);
-
-    // const parsedRowsResult = parseCashOperationRowsV2(
-    //   withoutHeaderAndSummary(result.result),
-    // );
-    // console.log({ parsedRowsResult });
-    //
-    // if (parsedRowsResult.errors) {
-    //   const reportableIssues = getReportableParsingIssues(
-    //     parsedRowsResult.errors.flatMap((x) => x.issues),
-    //   );
-    //   if (reportableIssues.length) {
-    //     metricsService.collectMetrics("xlsx_parse_issue", reportableIssues);
-    //   }
-    //
-    //   errorMessageDiv.textContent = parsedRowsResult.errors
-    //     .map((err) => err.message)
-    //     .join(" ");
-    //
-    //   if (!parsedRowsResult.result) return;
-    // }
-    // const processedObjects = processRows(parsedRowsResult.result, {
-    //   currency: header.currency,
-    // }).map((x) => x.value);
-    // console.log({ processedObjects });
 
     const timeStamp = new Date().toISOString();
     const resultFile = createCSVFile({

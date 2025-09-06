@@ -334,12 +334,12 @@ const mapRow = (options: ProcessRowsOptions) =>
       Match.when(KnownCashOperationTypes.enum["withdrawal"], () =>
         processWithdrawalRow(row, options),
       ),
-      Match.when(KnownCashOperationTypes.enum["Stock sale"], () =>
-        processStockSaleRow(row, options),
-      ),
-      Match.when(KnownCashOperationTypes.enum["Stock purchase"], () =>
-        processStockPurchaseRow(row, options),
-      ),
+      // Match.when(KnownCashOperationTypes.enum["Stock sale"], () =>
+      //   processStockSaleRow(row, options),
+      // ),
+      // Match.when(KnownCashOperationTypes.enum["Stock purchase"], () =>
+      //   processStockPurchaseRow(row, options),
+      // ),
       Match.when(KnownCashOperationTypes.enum["DIVIDENT"], () =>
         processDividendRow(row, options),
       ),
@@ -455,6 +455,7 @@ const mapOpenOperationRowV2 = (options: ProcessRowsOptions) =>
 export const processRowsV2 = (
   closedOperationRows: ParsedClosedOperation[],
   openOperationRows: ParsedOpenPositionRow[],
+  cashOperationRows: ParsedCashOperationRow[],
   options: ProcessRowsOptions,
 ) => {
   console.log("processRowsV2", { closedOperationRows, openOperationRows });
@@ -470,5 +471,11 @@ export const processRowsV2 = (
     filter(Option.isSome),
   );
 
-  return [...closedOperationsPipe, ...openOperationsPipe];
+  const cashOperationPipe = pipe(
+    cashOperationRows,
+    mapRow(options),
+    filter(Option.isSome),
+  );
+
+  return [...closedOperationsPipe, ...openOperationsPipe, ...cashOperationPipe];
 };
