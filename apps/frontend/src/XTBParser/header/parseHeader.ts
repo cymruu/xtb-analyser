@@ -1,27 +1,33 @@
-import { Effect, Option } from "effect/index";
+import { Array, Effect, Option, pipe } from "effect/index";
 
 export type ParsedHeader = {
   currency: string;
 };
 
+const findRowAndColumnIndex = (lookup: string) => (rows: string[][]) =>
+  Array.findFirst(rows, (row, rowIndex) => {
+    const colIndexOption = Array.findFirstIndex(row, (v) => v === lookup);
+
+    return Option.map(colIndexOption, (colIndex) => ({
+      rowIndex: rowIndex,
+      colIndex: colIndex,
+    }));
+  });
+
 export const parseHeader = (rows: string[][]) =>
-  Effect.succeed(() =>
-    rows.flatMap((row, i) =>
-      row.map((cell, j) => ({ cell, rowIndex: i, colIndex: j })),
-    ),
-  ).pipe(
-    Effect.map((flattenedCells) =>
-      Option.fromNullable(
-        flattenedCells().find(({ cell }) => cell === "Currency"),
-      ),
-    ),
-    Effect.flatMap(
-      Option.match({
-        onNone: () => Effect.fail(new Error("not found")),
-        onSome: (v) => {
-          const currency = rows[v.rowIndex + 1][v.colIndex];
-          return Effect.succeed({ currency });
-        },
-      }),
-    ),
+  pipe(
+    findRowAndColumnIndex("Currency")(rows),
+    Option.match({
+      onNone: () => Effect.fail("Currency not found in header"),
+      onSome: ({ rowIndex, colIndex }) => {
+        const currencyRow = rows[rowIndex + 1];
+        const currencyValue = currencyRow?.[colIndex];
+
+        if (!currencyValue) {
+          return Effect.fail("Currency value not found in header");
+        }
+
+        return Effect.succeed({ currency: currencyValue });
+      },
+    }),
   );

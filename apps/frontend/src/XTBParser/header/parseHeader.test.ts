@@ -28,6 +28,18 @@ const header = [
 describe("parseHeader", () => {
   it("should parse currency", async () => {
     const effect = parseHeader(header);
-    expect(await Effect.runPromise(effect)).toEqual({ currency: "PLN" });
+    expect(effect).toEqual(Effect.succeed({ currency: "PLN" }));
+  });
+
+  describe("errors", () => {
+    it("should fail if currency is missing in the header", async () => {
+      const effect = parseHeader([]);
+      expect(effect).toEqual(Effect.fail("Currency not found in header"));
+    });
+
+    it("should fail if currency value is missing in the header", async () => {
+      const effect = parseHeader([["Currency"], [""]]);
+      expect(effect).toEqual(Effect.fail("Currency value not found in header"));
+    });
   });
 });

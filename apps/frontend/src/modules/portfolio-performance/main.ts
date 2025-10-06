@@ -55,9 +55,7 @@ const processFile = async (
       throw openPositionsSheet.error;
     }
 
-    const header = await Effect.runPromise(
-      parseHeader(closedPositionSheet.result.slice(0, 10)),
-    );
+    const header = parseHeader(closedPositionSheet.result.slice(0, 10));
 
     console.log({ header });
 
