@@ -16,7 +16,7 @@ import {
   PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER,
   portfolioTransactionToCSVRow,
 } from "./csv";
-import { processRows, processRowsV2 } from "./processRows";
+import { processRowsV2 } from "./processRows";
 import { parseHeader } from "../../XTBParser/header/parseHeader";
 import { Effect } from "effect/index";
 import { parseClosedOperationHistoryRows } from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";

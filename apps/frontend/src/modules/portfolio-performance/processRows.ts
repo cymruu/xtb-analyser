@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { filter, map } from "effect/Array";
-import { Effect, Match, Option, pipe } from "effect/index";
+import { Match, Option, pipe } from "effect/index";
 
 import {
   KnownCashOperationTypes,
@@ -12,7 +12,6 @@ import {
   KnownClosedPositionTypes,
   ParsedClosedOperation,
 } from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";
-import { flatMap } from "effect/ParseResult";
 import { ParsedOpenPositionRow } from "../../XTBParser/openPositions/parseOpenPositionRows";
 
 const formatPortfolioPerformanceDate = (datetime: Date) => {
@@ -69,10 +68,10 @@ const processWithdrawalRow = (
 ): PortfolioTransaction => {
   return {
     date: formatPortfolioPerformanceDate(row.time),
-    type: "Transfer (Outbound)",
+    type: "Removal",
     shares: "0",
-    ticker_symbol: parseTicker(row.symbol),
-    security_name: parseTicker(row.symbol),
+    ticker_symbol: null,
+    security_name: null,
     value: String(row.amount),
     currency: options.currency,
     exchange_rate: null,
@@ -80,7 +79,7 @@ const processWithdrawalRow = (
     taxes: null,
     securities_account: null,
     cash_account: "xtb",
-    offset_account: "wallet", //TODO: parse wallet id
+    offset_account: null,
     note: row.comment,
   };
 };
@@ -384,14 +383,15 @@ const mapClosedOperationRowV2 = (options: ProcessRowsOptions) =>
       Match.value(row.type),
       Match.when(KnownClosedPositionTypes.enum["BUY"], () => {
         console.log({ row });
+        const ticker_symbol = parseTicker(row.symbol);
 
         return [
           {
             date: formatPortfolioPerformanceDate(row.open_time),
             type: "Buy",
             shares: String(row.volume),
-            ticker_symbol: parseTicker(row.symbol),
-            security_name: parseTicker(row.symbol),
+            ticker_symbol,
+            security_name: ticker_symbol,
             value: String(row.purchase_value),
             currency: options.currency,
             exchange_rate: null,
@@ -406,8 +406,8 @@ const mapClosedOperationRowV2 = (options: ProcessRowsOptions) =>
             date: formatPortfolioPerformanceDate(row.close_time),
             type: "Sell",
             shares: String(row.volume),
-            ticker_symbol: parseTicker(row.symbol),
-            security_name: parseTicker(row.symbol),
+            ticker_symbol,
+            security_name: ticker_symbol,
             value: String(row.sale_value),
             currency: options.currency,
             exchange_rate: null,
