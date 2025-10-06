@@ -22,8 +22,8 @@
     "@observablehq/stdlib": "^5.8.8",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
-    "effect": "^3.17.6",
+    "effect": "^3.18.3",
     "excelize-wasm": "^0.0.9",
-    "zod": "^4.0.14"
+    "zod": "^4.1.12"
   }
 }
