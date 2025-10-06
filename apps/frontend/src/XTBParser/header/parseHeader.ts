@@ -1,9 +1,5 @@
 import { Array, Effect, Option, pipe } from "effect/index";
 
-export type ParsedHeader = {
-  currency: string;
-};
-
 const findRowAndColumnIndex = (lookup: string) => (rows: string[][]) =>
   Array.findFirst(rows, (row, rowIndex) => {
     const colIndexOption = Array.findFirstIndex(row, (v) => v === lookup);

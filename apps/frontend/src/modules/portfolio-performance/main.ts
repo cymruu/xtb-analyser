@@ -1,5 +1,6 @@
 import { pipe } from "effect/Function";
 
+import { Effect } from "effect/index";
 import { config } from "../../config";
 import {
   createMetricsService,
@@ -10,6 +11,10 @@ import { checkWASMSupport } from "../../utils/checkWASMSupport";
 import { createCSVFile } from "../../utils/createCSVFile";
 import { loadExcelize } from "../../utils/loadExcelize";
 import { parseCashOperationRowsV2 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
+import { parseClosedOperationHistoryRows } from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";
+import { parseHeader } from "../../XTBParser/header/parseHeader";
+import { findOpenPositionsSheet } from "../../XTBParser/openPositions/findOpenPositionsSheet";
+import { parseOpenPositionRowsV2 } from "../../XTBParser/openPositions/parseOpenPositionRows";
 import { removeXLSXHeaderColumns } from "../../XTBParser/utils/removeXLSXHeaderRows";
 import { removeXLSXSummaryRow } from "../../XTBParser/utils/removeXLSXSummrayRow";
 import {
@@ -17,11 +22,6 @@ import {
   portfolioTransactionToCSVRow,
 } from "./csv";
 import { processRowsV2 } from "./processRows";
-import { parseHeader } from "../../XTBParser/header/parseHeader";
-import { Effect } from "effect/index";
-import { parseClosedOperationHistoryRows } from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";
-import { parseOpenPositionRowsV2 } from "../../XTBParser/openPositions/parseOpenPositionRows";
-import { findOpenPositionsSheet } from "../../XTBParser/openPositions/findOpenPositionsSheet";
 
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
