@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
-import { findOpenPositionsSheet } from "./findOpenPositionsSheet";
+import { Effect, Option } from "effect";
+import {
+  findOpenPositionsSheet,
+  findOpenPositionsSheetEffect,
+} from "./findOpenPositionsSheet";
 
 const testCases = [
   {
@@ -50,6 +54,21 @@ describe("findSheetIndex", () => {
       const result = findOpenPositionsSheet(testCase.input);
 
       expect(result).toEqual(testCase.expected);
+    });
+  }
+});
+
+describe("findSheetIndexEffect", () => {
+  for (const testCase of testCases) {
+    it(testCase.description, () => {
+      const result = findOpenPositionsSheetEffect(testCase.input);
+
+      //TODO: refactor after getting rid findOpenPositionsSheet
+      if (testCase.expected === -1) {
+        expect(result).toEqual(Option.none());
+      } else {
+        expect(result).toEqual(Option.some(testCase.expected));
+      }
     });
   }
 });

@@ -1,5 +1,6 @@
 import { init } from "excelize-wasm";
 import excelizeModulePath from "../../../../node_modules/excelize-wasm/excelize.wasm.gz";
+import { Effect } from "effect/index";
 
 // TODO: find more elegant way to handle it
 const excelizeModuleName = excelizeModulePath.replace("../", "./");
@@ -13,3 +14,8 @@ export const loadExcelize = () => {
 
   return excelizePromise;
 };
+
+export const loadExcelizeEffect = Effect.tryPromise({
+  try: () => loadExcelize(),
+  catch: (err) => new Error("Failed to load excelize-wasm module"),
+});
