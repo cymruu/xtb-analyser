@@ -2,6 +2,7 @@ import { isValid, parse } from "date-fns";
 import z, { ZodError } from "zod";
 import { ReportableZodIssueInternalCode } from "../../services/metricsService";
 import { XTB_DATE_FORMAT } from "../utils/XTBTimeSchema";
+import { Effect } from "effect/index";
 
 type TransactionIdCell = string;
 type TransactionTypeCell = string;
@@ -148,4 +149,24 @@ export const parseCashOperationRowsV2 = (
     errors: (groupedResults.nok || []).map((row) => row.error!),
     result: (groupedResults.ok || []).map((row) => row.data!),
   };
+};
+
+export const parseCashOperationRowsV3 = (rows: string[][]) => {
+  return Effect.forEach(rows, (row) =>
+    Effect.succeed(row).pipe(
+      Effect.map(mapCashOperationRowToObject),
+      Effect.map(parseOpenPositionRow),
+    ),
+  ).pipe(
+    Effect.map((parsedRows) => {
+      const groupedResults = Object.groupBy(parsedRows, (v) =>
+        v.success ? "ok" : "nok",
+      );
+
+      return {
+        errors: (groupedResults.nok || []).map((row) => row.error!),
+        result: (groupedResults.ok || []).map((row) => row.data!),
+      };
+    }),
+  );
 };

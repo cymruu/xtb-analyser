@@ -1,10 +1,10 @@
 import { Effect } from "effect/index";
 import { loadExcelizeEffect } from "../../utils/loadExcelize";
-import { findOpenPositionsSheetEffect } from "../../XTBParser/openPositions/findOpenPositionsSheet";
-import { parseHeader } from "../../XTBParser/header/parseHeader";
+import { parseCashOperationRowsV3 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 import { parseClosedOperationHistoryRows } from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";
+import { parseHeader } from "../../XTBParser/header/parseHeader";
+import { findOpenPositionsSheetEffect } from "../../XTBParser/openPositions/findOpenPositionsSheet";
 import { parseOpenPositionRowsV2 } from "../../XTBParser/openPositions/parseOpenPositionRows";
-import { parseCashOperationRowsV2 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
 
 type PortfolioPerformanceProgramArgs = { file: File };
 
@@ -52,15 +52,15 @@ export const portfolioPerformanceProgram = ({
     const openOperationsHistoryRows = yield* parseOpenPositionRowsV2(
       openPositionsSheet.result,
     );
-    //TODO: this needs to be refractored into an effect
-    // const closedOperationHistoryRows = yield* parseCashOperationRowsV2(
-    //   cashOperationHistorySheet.result,
-    // );
+    const cashOperationRows = yield* parseCashOperationRowsV3(
+      cashOperationHistorySheet.result,
+    );
 
     console.log({
       header,
       closedOperationHistoryRows,
       openOperationsHistoryRows,
+      cashOperationRows,
     });
 
     console.log({ sheets });
