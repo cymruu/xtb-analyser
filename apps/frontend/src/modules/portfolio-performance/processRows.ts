@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { filter, map } from "effect/Array";
-import { Match, Option, pipe } from "effect/index";
+import { Array, Effect, Match, Option, pipe } from "effect/index";
 
 import {
   KnownCashOperationTypes,
@@ -479,3 +479,19 @@ export const processRowsV2 = (
 
   return [...closedOperationsPipe, ...openOperationsPipe, ...cashOperationPipe];
 };
+
+export const processRowsV3 = (
+  closedOperationRows: ParsedClosedOperation[],
+  openOperationRows: ParsedOpenPositionRow[],
+  cashOperationRows: ParsedCashOperationRow[],
+  options: ProcessRowsOptions,
+) =>
+  Effect.gen(function* () {
+    yield* Effect.logInfo("Processing rows with processRowsV2");
+
+    const closed = pipe(closedOperationRows, mapClosedOperationRowV2(options));
+    const open = pipe(openOperationRows, mapOpenOperationRowV2(options));
+    const cash = pipe(cashOperationRows, mapRow(options));
+
+    return [...closed, ...open, ...cash];
+  });

@@ -2,7 +2,7 @@ import { isValid, parse } from "date-fns";
 import z, { ZodError } from "zod";
 import { ReportableZodIssueInternalCode } from "../../services/metricsService";
 import { XTB_DATE_FORMAT } from "../utils/XTBTimeSchema";
-import { Effect } from "effect/index";
+import { Effect, pipe } from "effect/index";
 
 type TransactionIdCell = string;
 type TransactionTypeCell = string;
@@ -132,14 +132,14 @@ const mapCashOperationRowToObject = (
   };
 };
 
-const parseOpenPositionRow = (row: UnparsedCashOperationRow) => {
+const parseCashOperationRow = (row: UnparsedCashOperationRow) => {
   return CashOperationRowSchema.safeParse(row);
 };
 
 export const parseCashOperationRowsV2 = (
   rows: string[][],
 ): ParsedCashOperationRowsResult => {
-  const data = rows.map(mapCashOperationRowToObject).map(parseOpenPositionRow);
+  const data = rows.map(mapCashOperationRowToObject).map(parseCashOperationRow);
 
   const groupedResults = Object.groupBy(data, (v) =>
     v.success ? "ok" : "nok",
@@ -151,22 +151,21 @@ export const parseCashOperationRowsV2 = (
   };
 };
 
-export const parseCashOperationRowsV3 = (rows: string[][]) => {
-  return Effect.forEach(rows, (row) =>
-    Effect.succeed(row).pipe(
+export const parseCashOperationRowsV3 = (rows: string[][]) =>
+  Effect.partition(rows, (row) =>
+    pipe(
+      Effect.succeed(row),
       Effect.map(mapCashOperationRowToObject),
-      Effect.map(parseOpenPositionRow),
+      Effect.map(parseCashOperationRow),
+      Effect.flatMap((parsed) =>
+        parsed.success
+          ? Effect.succeed(parsed.data!)
+          : Effect.fail(parsed.error!),
+      ),
     ),
   ).pipe(
-    Effect.map((parsedRows) => {
-      const groupedResults = Object.groupBy(parsedRows, (v) =>
-        v.success ? "ok" : "nok",
-      );
-
-      return {
-        errors: (groupedResults.nok || []).map((row) => row.error!),
-        result: (groupedResults.ok || []).map((row) => row.data!),
-      };
-    }),
+    Effect.map(([failures, successes]) => ({
+      errors: failures,
+      result: successes,
+    })),
   );
-};

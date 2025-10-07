@@ -1,6 +1,6 @@
 import { z } from "zod/v4";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
-import { Effect } from "effect/index";
+import { Effect, pipe } from "effect/index";
 
 const OpenPositionRowSchema = z.object({
   id: z.coerce.number(),
@@ -83,20 +83,20 @@ export const parseOpenPositionRows = (
 };
 
 export const parseOpenPositionRowsV2 = (rows: string[][]) =>
-  Effect.forEach(rows, (row) =>
-    Effect.succeed(row).pipe(
+  Effect.partition(rows, (row) =>
+    pipe(
+      Effect.succeed(row),
       Effect.map(mapOpenPositionRowToObject),
       Effect.map(parseOpenPositionRow),
+      Effect.flatMap((parsed) =>
+        parsed.success
+          ? Effect.succeed(parsed.data!)
+          : Effect.fail(parsed.error!),
+      ),
     ),
   ).pipe(
-    Effect.map((parsedRows) => {
-      const groupedResults = Object.groupBy(parsedRows, (v) =>
-        v.success ? "ok" : "nok",
-      );
-
-      return {
-        errors: (groupedResults.nok || []).map((row) => row.error!),
-        result: (groupedResults.ok || []).map((row) => row.data!),
-      };
-    }),
+    Effect.map(([failures, successes]) => ({
+      errors: failures,
+      result: successes,
+    })),
   );
