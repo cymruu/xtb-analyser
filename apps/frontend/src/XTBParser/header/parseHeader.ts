@@ -10,20 +10,24 @@ const findRowAndColumnIndex = (lookup: string) => (rows: string[][]) =>
     }));
   });
 
-export const parseHeader = (rows: string[][]) =>
+const getValueBelowHeader = (rows: string[][], lookup: string) =>
   pipe(
-    findRowAndColumnIndex("Currency")(rows),
+    findRowAndColumnIndex(lookup)(rows),
     Option.match({
-      onNone: () => Effect.fail("Currency not found in header"),
+      onNone: () => Effect.fail(`${lookup} not found in header`),
       onSome: ({ rowIndex, colIndex }) => {
-        const currencyRow = rows[rowIndex + 1];
-        const currencyValue = currencyRow?.[colIndex];
-
-        if (!currencyValue) {
-          return Effect.fail("Currency value not found in header");
-        }
-
-        return Effect.succeed({ currency: currencyValue });
+        const value = rows[rowIndex + 1]?.[colIndex];
+        return value
+          ? Effect.succeed(value)
+          : Effect.fail(`${lookup} value not found in header`);
       },
     }),
   );
+
+export const parseHeader = (rows: string[][]) =>
+  Effect.gen(function* () {
+    const currency = yield* getValueBelowHeader(rows, "Currency");
+    const account = yield* getValueBelowHeader(rows, "Account");
+
+    return { currency, account };
+  });
