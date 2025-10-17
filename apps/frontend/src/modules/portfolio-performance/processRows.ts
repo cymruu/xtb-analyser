@@ -492,6 +492,8 @@ export const processRowsV3 = (
     // TODO: get rid of repeated filters.
     const closed = pipe(
       closedOperationRows,
+      //TODO: add support for CFD records
+      filter((x) => x.open_price !== 0 && x.sale_value !== 0), // filter out CFD records
       mapClosedOperationRowV2(options),
       filter(Option.isSome),
     );

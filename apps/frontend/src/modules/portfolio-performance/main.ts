@@ -157,6 +157,18 @@ const processFile = async (
     ) {
       const r = await Effect.runPromise(portfolioPerformanceProgram({ file }));
       console.log({ result: r });
+      const timeStamp = new Date().toISOString();
+      const resultFile = createCSVFile({
+        fileName: `portfolio_transactions_${timeStamp}.csv`,
+        header: PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER,
+        csvLines: r
+          .map((x) => x.value)
+          .flat()
+          .map(portfolioTransactionToCSVRow),
+      });
+
+      const link = downloadFile(resultFile, resultFile.name);
+      link.click();
     } else {
       errorMessageDiv.textContent = "Please select a valid XLSX file.";
     }
