@@ -487,11 +487,24 @@ export const processRowsV3 = (
   options: ProcessRowsOptions,
 ) =>
   Effect.gen(function* () {
-    yield* Effect.logInfo("Processing rows with processRowsV2");
+    yield* Effect.logInfo("Processing rows with processRowsV3");
 
-    const closed = pipe(closedOperationRows, mapClosedOperationRowV2(options));
-    const open = pipe(openOperationRows, mapOpenOperationRowV2(options));
-    const cash = pipe(cashOperationRows, mapRow(options));
+    // TODO: get rid of repeated filters.
+    const closed = pipe(
+      closedOperationRows,
+      mapClosedOperationRowV2(options),
+      filter(Option.isSome),
+    );
+    const open = pipe(
+      openOperationRows,
+      mapOpenOperationRowV2(options),
+      filter(Option.isSome),
+    );
+    const cash = pipe(
+      cashOperationRows,
+      mapRow(options),
+      filter(Option.isSome),
+    );
 
     return [...closed, ...open, ...cash];
   });

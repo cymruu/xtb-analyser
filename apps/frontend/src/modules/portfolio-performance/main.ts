@@ -21,8 +21,8 @@ import {
   PORTFOLIO_PERFORMANCE_PORTFOLIO_TRANSACTIONS_FILE_HEADER,
   portfolioTransactionToCSVRow,
 } from "./csv";
-import { processRowsV2 } from "./processRows";
 import { portfolioPerformanceProgram } from "./effect";
+import { processRowsV2 } from "./processRows";
 
 const dropArea = document.body!;
 const errorMessageDiv = document.getElementById("error-message")!;
@@ -156,7 +156,7 @@ const processFile = async (
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     ) {
       const r = await Effect.runPromise(portfolioPerformanceProgram({ file }));
-      console.log({ r });
+      console.log({ result: r });
     } else {
       errorMessageDiv.textContent = "Please select a valid XLSX file.";
     }
