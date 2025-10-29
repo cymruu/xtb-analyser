@@ -39,6 +39,8 @@
       <div class="feature-item">
           <h3><a href="{{get_url(path="@/xtb-to-divtracker.md")}}">XTB to DivTracker</a></h3>
           <p>Export Portfolio Transactions to <a href="https://play.google.com/store/apps/details?id=com.divtracker.stockapp">DivTracker</a> format.</p>
+          {% set image = resize_image(path="/images/divtracker.jpeg", width=300, height=200, op="fit") %}
+          <img src="{{image.url}}" alt="divtracker" />
       </div>
   </div>
 {% endblock content %}
