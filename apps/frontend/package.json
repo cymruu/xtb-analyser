@@ -16,14 +16,14 @@
     "@types/bun": "latest",
     "@types/d3": "^7.4.3",
     "prettier-config": "workspace:settings",
-    "typescript": "^5.9.2"
+    "typescript": "^5"
   },
   "dependencies": {
     "@observablehq/stdlib": "^5.8.8",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
-    "effect": "^3.18.3",
-    "excelize-wasm": "^0.0.9",
+    "effect": "^3.18.4",
+    "excelize-wasm": "^0.1.0",
     "zod": "^4.1.12"
   }
 }
