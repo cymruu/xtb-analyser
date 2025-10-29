@@ -5,7 +5,7 @@ import { parseClosedOperationHistoryRows } from "../../XTBParser/closedOperation
 import { parseHeader } from "../../XTBParser/header/parseHeader";
 import { findOpenPositionsSheetEffect } from "../../XTBParser/openPositions/findOpenPositionsSheet";
 import { parseOpenPositionRowsV2 } from "../../XTBParser/openPositions/parseOpenPositionRows";
-import { processRowsV3 } from "./processRows";
+import { processRows } from "./processRows";
 
 type PortfolioPerformanceProgramArgs = { file: File };
 
@@ -58,22 +58,12 @@ export const portfolioPerformanceProgram = ({
       cashOperationHistorySheet.result,
     );
 
-    const processedRows = yield* processRowsV3(
+    const processedRows = yield* processRows(
       closedOperationHistoryRows.result,
       openOperationsHistoryRows.result,
       cashOperationRows.result,
       { currency: header.currency },
     );
-
-    console.log({
-      header,
-      closedOperationHistoryRows,
-      openOperationsHistoryRows,
-      cashOperationRows,
-      processedRows,
-    });
-
-    console.log({ sheets });
 
     return processedRows;
   });

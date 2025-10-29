@@ -112,11 +112,6 @@ type UnparsedCashOperationRow = {
   [K in keyof ParsedCashOperationRow]: unknown;
 };
 
-type ParsedCashOperationRowsResult = {
-  result: ParsedCashOperationRow[];
-  errors: ZodError<ParsedCashOperationRow>[];
-};
-
 const mapCashOperationRowToObject = (
   row: string[],
 ): UnparsedCashOperationRow => {
@@ -134,21 +129,6 @@ const mapCashOperationRowToObject = (
 
 const parseCashOperationRow = (row: UnparsedCashOperationRow) => {
   return CashOperationRowSchema.safeParse(row);
-};
-
-export const parseCashOperationRowsV2 = (
-  rows: string[][],
-): ParsedCashOperationRowsResult => {
-  const data = rows.map(mapCashOperationRowToObject).map(parseCashOperationRow);
-
-  const groupedResults = Object.groupBy(data, (v) =>
-    v.success ? "ok" : "nok",
-  );
-
-  return {
-    errors: (groupedResults.nok || []).map((row) => row.error!),
-    result: (groupedResults.ok || []).map((row) => row.data!),
-  };
 };
 
 export const parseCashOperationRowsV3 = (rows: string[][]) =>

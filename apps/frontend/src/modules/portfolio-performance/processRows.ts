@@ -1,12 +1,11 @@
 import { format } from "date-fns";
 import { filter, map } from "effect/Array";
-import { Array, Effect, Match, Option, pipe } from "effect/index";
+import { Effect, Match, Option, pipe } from "effect/index";
 
 import {
   KnownCashOperationTypes,
   ParsedCashOperationRow,
 } from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
-import { parseQuantityV2 } from "../../XTBParser/cashOperationHistory/parseQuantity";
 import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
 import {
   KnownClosedPositionTypes,
@@ -79,50 +78,6 @@ const processWithdrawalRow = (
     taxes: null,
     securities_account: null,
     cash_account: "xtb",
-    offset_account: null,
-    note: row.comment,
-  };
-};
-
-const processStockSaleRow = (
-  row: ParsedCashOperationRow,
-  options: ProcessRowsOptions,
-): PortfolioTransaction => {
-  return {
-    date: formatPortfolioPerformanceDate(row.time),
-    type: "Sell",
-    shares: parseQuantityV2(row.comment),
-    ticker_symbol: parseTicker(row.symbol),
-    security_name: parseTicker(row.symbol),
-    value: String(row.amount),
-    currency: options.currency,
-    exchange_rate: null,
-    fees: null,
-    taxes: null,
-    securities_account: null,
-    cash_account: null,
-    offset_account: null,
-    note: row.comment,
-  };
-};
-
-const processStockPurchaseRow = (
-  row: ParsedCashOperationRow,
-  options: ProcessRowsOptions,
-): PortfolioTransaction => {
-  return {
-    date: formatPortfolioPerformanceDate(row.time),
-    type: "Buy",
-    shares: parseQuantityV2(row.comment),
-    ticker_symbol: parseTicker(row.symbol),
-    security_name: parseTicker(row.symbol),
-    value: String(row.amount),
-    currency: options.currency,
-    exchange_rate: null,
-    fees: null,
-    taxes: null,
-    securities_account: null,
-    cash_account: null,
     offset_account: null,
     note: row.comment,
   };
@@ -333,12 +288,6 @@ const mapRow = (options: ProcessRowsOptions) =>
       Match.when(KnownCashOperationTypes.enum["withdrawal"], () =>
         processWithdrawalRow(row, options),
       ),
-      // Match.when(KnownCashOperationTypes.enum["Stock sale"], () =>
-      //   processStockSaleRow(row, options),
-      // ),
-      // Match.when(KnownCashOperationTypes.enum["Stock purchase"], () =>
-      //   processStockPurchaseRow(row, options),
-      // ),
       Match.when(KnownCashOperationTypes.enum["DIVIDENT"], () =>
         processDividendRow(row, options),
       ),
@@ -370,19 +319,11 @@ const mapRow = (options: ProcessRowsOptions) =>
 
 type ProcessRowsOptions = { currency: string };
 
-export const processRows = (
-  rows: ParsedCashOperationRow[],
-  options: ProcessRowsOptions,
-) => {
-  return pipe(rows, mapRow(options), filter(Option.isSome));
-};
-
-const mapClosedOperationRowV2 = (options: ProcessRowsOptions) =>
+const mapClosedOperationRow = (options: ProcessRowsOptions) =>
   map((row: ParsedClosedOperation) =>
     pipe(
       Match.value(row.type),
       Match.when(KnownClosedPositionTypes.enum["BUY"], () => {
-        console.log({ row });
         const ticker_symbol = parseTicker(row.symbol);
 
         return [
@@ -424,7 +365,7 @@ const mapClosedOperationRowV2 = (options: ProcessRowsOptions) =>
     ),
   );
 
-const mapOpenOperationRowV2 = (options: ProcessRowsOptions) =>
+const mapOpenOperationRow = (options: ProcessRowsOptions) =>
   map((row: ParsedOpenPositionRow) =>
     pipe(
       Match.value(row.type),
@@ -452,54 +393,26 @@ const mapOpenOperationRowV2 = (options: ProcessRowsOptions) =>
     ),
   );
 
-export const processRowsV2 = (
-  closedOperationRows: ParsedClosedOperation[],
-  openOperationRows: ParsedOpenPositionRow[],
-  cashOperationRows: ParsedCashOperationRow[],
-  options: ProcessRowsOptions,
-) => {
-  console.log("processRowsV2", { closedOperationRows, openOperationRows });
-
-  const closedOperationsPipe = pipe(
-    closedOperationRows,
-    mapClosedOperationRowV2(options),
-    filter(Option.isSome),
-  );
-  const openOperationsPipe = pipe(
-    openOperationRows,
-    mapOpenOperationRowV2(options),
-    filter(Option.isSome),
-  );
-
-  const cashOperationPipe = pipe(
-    cashOperationRows,
-    mapRow(options),
-    filter(Option.isSome),
-  );
-
-  return [...closedOperationsPipe, ...openOperationsPipe, ...cashOperationPipe];
-};
-
-export const processRowsV3 = (
+export const processRows = (
   closedOperationRows: ParsedClosedOperation[],
   openOperationRows: ParsedOpenPositionRow[],
   cashOperationRows: ParsedCashOperationRow[],
   options: ProcessRowsOptions,
 ) =>
   Effect.gen(function* () {
-    yield* Effect.logInfo("Processing rows with processRowsV3");
+    yield* Effect.logInfo("Processing rows with processRows");
 
     // TODO: get rid of repeated filters.
     const closed = pipe(
       closedOperationRows,
       //TODO: add support for CFD records
       filter((x) => x.open_price !== 0 && x.sale_value !== 0), // filter out CFD records
-      mapClosedOperationRowV2(options),
+      mapClosedOperationRow(options),
       filter(Option.isSome),
     );
     const open = pipe(
       openOperationRows,
-      mapOpenOperationRowV2(options),
+      mapOpenOperationRow(options),
       filter(Option.isSome),
     );
     const cash = pipe(

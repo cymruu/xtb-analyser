@@ -6,10 +6,11 @@ import {
 } from "./tests/utils/createCashOperationRow.ts";
 import {
   parseCashOperationRows,
-  parseCashOperationRowsV2,
+  parseCashOperationRowsV3,
 } from "./parseCashOperationRows.ts";
 import { createXTBTimeString } from "../createXTBTestTime.ts";
 import { ReportableZodIssueInternalCode } from "../../services/metricsService.ts";
+import { Effect } from "effect";
 
 describe("parseCashOperationRows", () => {
   it("should skip first 11 lines", () => {
@@ -55,13 +56,13 @@ describe("parseCashOperationRows", () => {
   });
 });
 
-describe("parseCashOperationRowsV2", () => {
-  it("should parse valid rows", () => {
+describe("parseCashOperationRowsV3", () => {
+  it("should parse valid rows", async () => {
     const validRows = Array.from({ length: 11 }).map((_, i) =>
       createCashOperationRowV2(i),
     );
 
-    const result = parseCashOperationRowsV2(validRows);
+    const result = await Effect.runPromise(parseCashOperationRowsV3(validRows));
 
     expect(result.result).toEqual(
       Array.from({ length: 11 }).map((_, i) => ({
@@ -76,10 +77,10 @@ describe("parseCashOperationRowsV2", () => {
   });
 
   describe("errors", () => {
-    it("should return an error if type is invalid", () => {
+    it("should return an error if type is invalid", async () => {
       const rows = [createCashOperationRowV2(1)];
       rows[0][2] = "invalid_type";
-      const result = parseCashOperationRowsV2(rows);
+      const result = await Effect.runPromise(parseCashOperationRowsV3(rows));
 
       const issues = result.errors.flatMap((x) => x.issues);
 
