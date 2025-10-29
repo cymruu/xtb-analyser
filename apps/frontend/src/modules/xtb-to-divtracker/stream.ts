@@ -1,7 +1,7 @@
-import { parseCostPerShare } from "../XTBParser/cashOperationHistory/parseCostPerShare";
-import { parseDate } from "../XTBParser/cashOperationHistory/parseDate";
-import { parseQuantity } from "../XTBParser/cashOperationHistory/parseQuantity";
-import { parseTicker } from "../XTBParser/cashOperationHistory/parseTicker";
+import { parseCostPerShare } from "../../XTBParser/cashOperationHistory/parseCostPerShare";
+import { parseDate } from "../../XTBParser/cashOperationHistory/parseDate";
+import { parseQuantity } from "../../XTBParser/cashOperationHistory/parseQuantity";
+import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
 
 const textEncoder = new TextEncoder();
 

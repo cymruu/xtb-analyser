@@ -1,10 +1,8 @@
 import { format } from "date-fns/format";
 
-import {
-  ParsedOpenPositionRow,
-  XTB_DATE_FORMAT,
-} from "../../parseOpenPositionRows";
+import { ParsedOpenPositionRow } from "../../parseOpenPositionRows";
 import { createXTBTimeString } from "../../../createXTBTestTime";
+import { XTB_DATE_FORMAT } from "../../../utils/XTBTimeSchema";
 
 export const createOpenPositionRow = (
   i: number,

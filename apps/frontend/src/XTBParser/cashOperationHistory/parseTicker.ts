@@ -8,11 +8,22 @@ export const parseTicker = (v: string) => {
   }
 
   const [symbol, exchange] = v.split(".");
+  if (exchange === "PL") {
+    return `${symbol}.WA`;
+  }
+
   if (exchange === "US") {
     return symbol;
   }
+
   if (exchange === "UK") {
     return `${symbol}.GB`;
   }
+
+  if (exchange === "FI") {
+    return `${symbol}.HE`;
+  }
+
+  // TODO: report unknown exchanges
   return v;
 };
