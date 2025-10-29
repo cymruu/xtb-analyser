@@ -1,7 +1,7 @@
 import { Context, Hono, Next } from "hono";
 import { createMiddleware } from "hono/factory";
 import { logger } from "hono/logger";
-import z from "zod/v4";
+import z from "zod";
 
 import { IServices } from "./services";
 import { HonoEnv } from "./types";

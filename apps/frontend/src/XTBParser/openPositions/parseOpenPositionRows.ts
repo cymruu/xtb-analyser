@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
 import { Effect, pipe } from "effect/index";
 

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { validator } from "hono/validator";
-import z from "zod/v4";
+import z from "zod";
 
 import { HonoEnv } from "../../types";
 
