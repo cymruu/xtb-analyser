@@ -1,0 +1,56 @@
+{% extends "base.html" %} 
+{% block page_style %}
+<style>
+      #drop-area {
+        border: 2px dashed #ccc;
+        width: 300px;
+        height: 200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px;
+        padding: 10px;
+      }
+      #error-message {
+        margin-top: 20px;
+        white-space: pre-wrap;
+        background-color: #f4f4f4;
+        padding: 10px;
+      }
+      .error-message {
+        color: red;
+      }
+</style>
+{% endblock page_style %}
+
+{% block content %}
+  <h2>Drop the XLSX files exported from XTB to analyse your portfolio</h2>
+  <div id="drop-area">Drop your XLSX transaction history files here</div>
+    <details>
+      <summary>Extra Settings</summary>
+      <label>
+        Hide money values in treemap chart
+        <input
+          id="hide_value"
+          type="checkbox"
+          name="checkbox"
+          class="extra-config-control"
+          checked
+        />
+      </label>
+    </details>
+
+    <p>
+      <b
+        >Click <a id="load-example" href="#">here</a> to load an example
+        portfolio</b
+      >
+    </p>
+
+    <div id="error-message"></div>
+    <div id="container">generated portfolio treemap will appear here</div>
+  </div>
+
+  <script type="module" src="/js/treemap/main.js"></script>
+
+{% endblock content %}

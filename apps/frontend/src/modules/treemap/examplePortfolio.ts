@@ -1,0 +1,121 @@
+export const examplePortfolio = {
+  name: "root",
+  children: [
+    {
+      name: "USD Portfolio",
+      currency: "USD",
+      children: [
+        {
+          name: "AAPL.US",
+          value: 75000,
+          performance: 0.185,
+          grossProfit: 11600,
+          weight: 0.35,
+        },
+        {
+          name: "TSLA.US",
+          value: 42000,
+          performance: -0.082,
+          grossProfit: -3500,
+          weight: 0.2,
+        },
+        {
+          name: "NVDA.US",
+          value: 68000,
+          performance: 0.251,
+          grossProfit: 17000,
+          weight: 0.3,
+        },
+        {
+          name: "JPM.US",
+          value: 20000,
+          performance: 0.035,
+          grossProfit: 700,
+          weight: 0.1,
+        },
+        {
+          name: "NFLX.US",
+          value: 10000,
+          performance: -0.15,
+          grossProfit: -1500,
+          weight: 0.05,
+        },
+      ],
+    },
+    {
+      name: "EUR Portfolio",
+      currency: "EUR",
+      children: [
+        {
+          name: "SAP.DE",
+          value: 30000,
+          performance: 0.075,
+          grossProfit: 2250,
+          weight: 0.4,
+        },
+        {
+          name: "VOW3.DE",
+          value: 15000,
+          performance: -0.03,
+          grossProfit: -450,
+          weight: 0.2,
+        },
+        {
+          name: "RMS.PA",
+          value: 25000,
+          performance: 0.1,
+          grossProfit: 2500,
+          weight: 0.33,
+        },
+        {
+          name: "SAN.MC",
+          value: 5000,
+          performance: 0.015,
+          grossProfit: 75,
+          weight: 0.07,
+        },
+      ],
+    },
+    {
+      name: "PLN Portfolio",
+      currency: "PLN",
+      children: [
+        {
+          name: "PKN.PL",
+          value: 45000,
+          performance: 0.095,
+          grossProfit: 4275,
+          weight: 0.5,
+        },
+        {
+          name: "PZU.PL",
+          value: 18000,
+          performance: 0.04,
+          grossProfit: 720,
+          weight: 0.2,
+        },
+        {
+          name: "CDP.PL",
+          value: 12000,
+          performance: -0.1,
+          grossProfit: -1200,
+          weight: 0.13,
+        },
+        {
+          name: "KGH.PL",
+          value: 9000,
+          performance: 0.065,
+          grossProfit: 585,
+          weight: 0.1,
+        },
+        {
+          name: "MBK.PL",
+          value: 6000,
+          performance: 0.02,
+          grossProfit: 120,
+          weight: 0.07,
+        },
+      ],
+    },
+  ],
+};

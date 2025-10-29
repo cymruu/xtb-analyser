@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>xtb-analyser</title>
+    <style>
+      :root {
+        --primary-bg: #f8fafc;
+        --header-footer-bg: #e2e8f0;
+        --text-color: #334155;
+        --link-color: #4f46e5;
+        --link-hover-color: #6d28d9;
+      }
+
+      body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background-color: var(--primary-bg);
+        color: var(--text-color);
+      }
+
+      header {
+        background-color: var(--header-footer-bg);
+        padding: 0.75rem 1.5rem; /* Reduced padding */
+        text-align: center;
+        border-bottom: 1px solid #cbd5e1; /* Subtle border */
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: var(--text-color);
+      }
+
+      header nav {
+        margin-top: 0.5rem;
+      }
+
+      header nav a {
+        color: var(--link-color);
+        text-decoration: none;
+        margin: 0 0.8rem;
+        font-weight: 400;
+        transition: color 0.2s ease;
+      }
+
+      header nav a:hover {
+        color: var(--link-hover-color);
+      }
+
+      main {
+        flex-grow: 1;
+        margin: 15px;
+      }
+
+      footer {
+        background-color: var(--header-footer-bg);
+        color: var(--text-color);
+        text-align: center;
+        font-size: 0.85em;
+        border-top: 1px solid #cbd5e1;
+      }
+    </style>
+    {% block page_style %} {% endblock page_style %}
+  </head>
+  <body>
+    {% include "partials/header.html" %}
+
+    <main>
+      <div class="container">{% block content %} {% endblock content %}</div>
+    </main>
+
+    {% include "partials/footer.html" %}
+  </body>
+</html>

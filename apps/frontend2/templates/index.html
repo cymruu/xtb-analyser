@@ -1,0 +1,53 @@
+{% extends "base.html" %} {% block content %}
+<style>
+        .container {
+            width: 80%;
+            margin: 2em auto;
+            background-color: white;
+            padding: 2em;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2em;
+            margin-top: 2em;
+        }
+        .feature-item {
+            background-color: #e9eff6;
+            padding: 1.5em;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-item h3 {
+            color: #0056b3;
+            margin-top: 0;
+        }
+</style>
+  <h2>List of available tools:</h2>
+  <div class="features-grid" id="features">
+      <div class="feature-item">
+          <h3><a href="{{get_url(path="@/portfolio-treemap.md")}}">Portfolio TreeMap</a></h3>
+          <p>Visualize your investments and their performance using a treemap chart. Understand key metrics and see your portfolio's composition at a glance.</p>
+
+          {% set image = resize_image(path="/images/treemap.png", width=300, height=200, op="fit") %}
+          <img src="{{image.url}}" alt="treemap" />
+      </div>
+      <div class="feature-item">
+          <h3><a href="{{get_url(path="@/xtb-to-divtracker.md")}}">XTB to DivTracker</a></h3>
+          <p>Export Portfolio Transactions to <a href="https://play.google.com/store/apps/details?id=com.divtracker.stockapp">DivTracker</a> format.</p>
+          {% set image = resize_image(path="/images/divtracker.jpeg", width=300, height=200, op="fit") %}
+          <img src="{{image.url}}" alt="divtracker" />
+      </div>
+      <div class="feature-item">
+          <h3><a href="{{get_url(path="@/xtb-to-divtracker.md")}}">XTB to Portfolio-Performance</a></h3>
+          <p>Export Portfolio Transactions to <a href="https://www.portfolio-performance.info/en/">Portfolio-Performance</a> format.</p>
+          {% set image = resize_image(path="/images/pp.png", width=300, height=200, op="fit") %}
+          <img src="{{image.url}}" alt="portfolio-performance" />
+      </div>
+
+  </div>
+{% endblock content %}

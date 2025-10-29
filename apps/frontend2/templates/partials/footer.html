@@ -1,0 +1,10 @@
+{% set data = load_data(path="build_info.toml", required=false) %}
+<footer>
+  <p>
+    The accuracy and completeness of the processed data are not guaranteed. Use
+    at your own risk. Source code available at
+    <a href="https://github.com/cymruu/xtb-analyser">GitHub</a><br />
+    version: <b>{% if data["version"] %} {{data["version"]}} {% else %} Unknown {%endif %}</b>
+    built at: <b>{% if data["build_time"] %} {{data["build_time"]}} {% else %} Unknown {%endif %}</b>
+  </p>
+</footer>

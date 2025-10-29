@@ -4,9 +4,8 @@ import { parseOpenPositionRows } from "./parseOpenPositionRows.ts";
 import { createOpenPositionRows } from "./test/utils/createOpenPositionRows.ts";
 
 describe("parseOpenPositionRows", () => {
-  it.only("should return only valid rows", () => {
+  it("should return only valid rows", () => {
     const rows = createOpenPositionRows(1);
-    console.log({ rows });
 
     const result = parseOpenPositionRows(rows);
 
