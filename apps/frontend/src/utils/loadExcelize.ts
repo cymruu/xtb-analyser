@@ -5,8 +5,6 @@ import { Effect } from "effect/index";
 // TODO: find more elegant way to handle it
 const excelizeModuleName = excelizeModulePath.replace("../", "./");
 
-console.log({ excelizeModulePath, excelizeModuleName });
-
 export const loadExcelize = () => {
   const excelizePromise = init("/js/" + excelizeModuleName).catch((err) => {
     console.error(err);

@@ -1,12 +1,21 @@
 import { format } from "date-fns/format";
 
-import { ParsedOpenPositionRow } from "../../parseOpenPositionRows";
 import { createXTBTimeString } from "../../../createXTBTestTime";
 import { XTB_DATE_FORMAT } from "../../../utils/XTBTimeSchema";
 
 export const createOpenPositionRow = (
   i: number,
-  overwrite: Partial<ParsedOpenPositionRow> = {},
+  overwrite: Partial<{
+    id: string;
+    symbol: string;
+    type: string;
+    volume: string;
+    open_time: string;
+    open_price: string;
+    market_price: string;
+    purchase_value: string;
+    profit: string;
+  }> = {},
 ): string[] => {
   return [
     "",

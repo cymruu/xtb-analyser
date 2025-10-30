@@ -3,14 +3,11 @@ import { filter, map } from "effect/Array";
 import { Effect, Match, Option, pipe } from "effect/index";
 
 import {
-  KnownCashOperationTypes,
   ParsedCashOperationRow,
-} from "../../XTBParser/cashOperationHistory/parseCashOperationRows";
-import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
-import {
-  KnownClosedPositionTypes,
   ParsedClosedOperation,
-} from "../../XTBParser/closedOperationHistory/parseClosedOperationHistoryRows";
+} from "@xtb-analyser/xtb-csv-parser";
+
+import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
 import { ParsedOpenPositionRow } from "../../XTBParser/openPositions/parseOpenPositionRows";
 
 const formatPortfolioPerformanceDate = (datetime: Date) => {
@@ -279,39 +276,23 @@ const mapRow = (options: ProcessRowsOptions) =>
   map((row: ParsedCashOperationRow) =>
     pipe(
       Match.value(row.type),
-      Match.when(KnownCashOperationTypes.enum["deposit"], () =>
-        processDepositRow(row, options),
-      ),
-      Match.when(KnownCashOperationTypes.enum["IKE Deposit"], () =>
-        processIKEDepositRow(row, options),
-      ),
-      Match.when(KnownCashOperationTypes.enum["withdrawal"], () =>
-        processWithdrawalRow(row, options),
-      ),
-      Match.when(KnownCashOperationTypes.enum["DIVIDENT"], () =>
-        processDividendRow(row, options),
-      ),
-      Match.when(KnownCashOperationTypes.enum["Withholding Tax"], () =>
+      Match.when("deposit", () => processDepositRow(row, options)),
+      Match.when("IKE Deposit", () => processIKEDepositRow(row, options)),
+      Match.when("withdrawal", () => processWithdrawalRow(row, options)),
+      Match.when("DIVIDENT", () => processDividendRow(row, options)),
+      Match.when("Withholding Tax", () =>
         processWithholdingTaxRow(row, options),
       ),
-      Match.when(KnownCashOperationTypes.enum["Dividend equivalent"], () =>
-        processDividendRow(row, options),
-      ),
-      Match.when(KnownCashOperationTypes.enum["Free-funds Interest"], () =>
+      Match.when("Dividend equivalent", () => processDividendRow(row, options)),
+      Match.when("Free-funds Interest", () =>
         processFreeFundsInterest(row, options),
       ),
-      Match.when(KnownCashOperationTypes.enum["Free-funds Interest Tax"], () =>
+      Match.when("Free-funds Interest Tax", () =>
         processFreeFundsInterestTax(row, options),
       ),
-      Match.when(KnownCashOperationTypes.enum["Sec Fee"], () =>
-        processSecFeeRow(row, options),
-      ),
-      Match.when(KnownCashOperationTypes.enum["tax IFTT"], () =>
-        processTaxIFTTRow(row, options),
-      ),
-      Match.when(KnownCashOperationTypes.enum["transfer"], () =>
-        processTransferRow(row, options),
-      ),
+      Match.when("Sec Fee", () => processSecFeeRow(row, options)),
+      Match.when("tax IFTT", () => processTaxIFTTRow(row, options)),
+      Match.when("transfer", () => processTransferRow(row, options)),
 
       Match.option,
     ),
@@ -323,7 +304,7 @@ const mapClosedOperationRow = (options: ProcessRowsOptions) =>
   map((row: ParsedClosedOperation) =>
     pipe(
       Match.value(row.type),
-      Match.when(KnownClosedPositionTypes.enum["BUY"], () => {
+      Match.when("BUY", () => {
         const ticker_symbol = parseTicker(row.symbol);
 
         return [
@@ -369,7 +350,7 @@ const mapOpenOperationRow = (options: ProcessRowsOptions) =>
   map((row: ParsedOpenPositionRow) =>
     pipe(
       Match.value(row.type),
-      Match.when(KnownClosedPositionTypes.enum["BUY"], () => {
+      Match.when("BUY", () => {
         return [
           {
             date: formatPortfolioPerformanceDate(row.open_time),

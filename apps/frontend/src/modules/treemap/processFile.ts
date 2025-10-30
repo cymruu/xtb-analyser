@@ -1,7 +1,7 @@
-import { findOpenPositionsSheet } from "../../XTBParser/openPositions/findOpenPositionsSheet";
-import { parseOpenPositionRows } from "../../XTBParser/openPositions/parseOpenPositionRows";
+import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
 import { loadExcelize } from "../../utils/loadExcelize";
 import { getOpenPositionRowsSummary } from "./analyseOpenPositionRows";
+import { Effect } from "effect/index";
 
 export const processFile = async (file: File) => {
   console.info("processing file");
@@ -10,15 +10,10 @@ export const processFile = async (file: File) => {
   const bytes = new Uint8Array(arrayBuffer);
 
   return loadExcelize().then(async (excelize) => {
-    const xlsxFile = excelize.OpenReader(bytes);
-
-    const sheets = xlsxFile.GetSheetList();
-    const operationsSheetIndex = findOpenPositionsSheet(sheets.list);
-
-    const result = xlsxFile.GetRows(sheets.list[operationsSheetIndex]!);
-    const parsedRows = parseOpenPositionRows(result.result);
-
-    const portfolioSummary = getOpenPositionRowsSummary(parsedRows.result);
+    const result = await Effect.runPromise(parseCSV(bytes, { excelize }));
+    const portfolioSummary = getOpenPositionRowsSummary(
+      result.openPositions.successes,
+    );
     console.log("Portfolio Summary:", portfolioSummary);
 
     const total = portfolioSummary.reduce(

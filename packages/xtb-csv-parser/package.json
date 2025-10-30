@@ -1,0 +1,22 @@
+{
+  "name": "@xtb-analyser/xtb-csv-parser",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "effect": "^3.18.4",
+    "zod": "^4.1.12"
+  },
+  "peerDependencies": {
+    "excelize-wasm": "^0.1.0"
+  }
+}

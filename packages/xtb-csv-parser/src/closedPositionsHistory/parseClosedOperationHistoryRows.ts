@@ -1,5 +1,7 @@
+import { Effect, flow } from "effect/index";
 import z from "zod";
-import { Effect, pipe } from "effect/index";
+
+import { RowValidationError } from "../utils/RowValidationError";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
 
 export const KnownClosedPositionTypes = z.enum(["BUY"]);
@@ -55,24 +57,23 @@ const mapClosedOperationRowToObject = (
 };
 
 const parseClosedOperationRow = (row: UnparsedClosedOperation) => {
-  return ClosedOperationRowSchema.safeParse(row);
+  const parseResult = ClosedOperationRowSchema.safeParse(row);
+  if (!parseResult.success) {
+    return Effect.fail(
+      new RowValidationError({ parseError: parseResult.error }),
+    );
+  }
+
+  return Effect.succeed(parseResult.data);
 };
 
 export const parseClosedOperationHistoryRows = (rows: string[][]) =>
-  Effect.partition(rows, (row) =>
-    pipe(
-      Effect.succeed(row),
-      Effect.map(mapClosedOperationRowToObject),
-      Effect.map(parseClosedOperationRow),
-      Effect.flatMap((parsed) =>
-        parsed.success
-          ? Effect.succeed(parsed.data!)
-          : Effect.fail(parsed.error!),
-      ),
-    ),
+  Effect.partition(
+    rows,
+    flow(mapClosedOperationRowToObject, parseClosedOperationRow),
   ).pipe(
     Effect.map(([failures, successes]) => ({
-      errors: failures,
-      result: successes,
+      failures,
+      successes,
     })),
   );

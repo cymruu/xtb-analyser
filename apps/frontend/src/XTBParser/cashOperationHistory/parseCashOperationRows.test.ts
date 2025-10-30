@@ -1,16 +1,7 @@
 import { describe, it, expect } from "bun:test";
 
-import {
-  createCashOperationRow,
-  createCashOperationRowV2,
-} from "./tests/utils/createCashOperationRow.ts";
-import {
-  parseCashOperationRows,
-  parseCashOperationRowsV3,
-} from "./parseCashOperationRows.ts";
-import { createXTBTimeString } from "../createXTBTestTime.ts";
-import { ReportableZodIssueInternalCode } from "../../services/metricsService.ts";
-import { Effect } from "effect";
+import { createCashOperationRow } from "./tests/utils/createCashOperationRow.ts";
+import { parseCashOperationRows } from "./parseCashOperationRows.ts";
 
 describe("parseCashOperationRows", () => {
   it("should skip first 11 lines", () => {
@@ -53,46 +44,5 @@ describe("parseCashOperationRows", () => {
         `transaction_amount: ${i + 11}`,
       ]),
     );
-  });
-});
-
-describe("parseCashOperationRowsV3", () => {
-  it("should parse valid rows", async () => {
-    const validRows = Array.from({ length: 11 }).map((_, i) =>
-      createCashOperationRowV2(i),
-    );
-
-    const result = await Effect.runPromise(parseCashOperationRowsV3(validRows));
-
-    expect(result.result).toEqual(
-      Array.from({ length: 11 }).map((_, i) => ({
-        id: i,
-        type: `deposit`,
-        time: createXTBTimeString(i),
-        comment: `transaction_comment: ${i}`,
-        symbol: `transaction_symbol: ${i}`,
-        amount: i,
-      })),
-    );
-  });
-
-  describe("errors", () => {
-    it("should return an error if type is invalid", async () => {
-      const rows = [createCashOperationRowV2(1)];
-      rows[0][2] = "invalid_type";
-      const result = await Effect.runPromise(parseCashOperationRowsV3(rows));
-
-      const issues = result.errors.flatMap((x) => x.issues);
-
-      expect(issues).toHaveLength(1);
-      expect(issues[0]).toMatchObject({
-        internal_code: ReportableZodIssueInternalCode,
-        value: "invalid_type",
-        code: "invalid_value",
-        path: ["type"],
-        values: expect.any(Array),
-        message: expect.any(String),
-      });
-    });
   });
 });
