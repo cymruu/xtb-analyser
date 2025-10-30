@@ -37,7 +37,7 @@ jobs:
         working-directory: ./apps/backend/
       - run: bun test
         working-directory: ./apps/backend/
-      - run: bun run build
+      - run: bunx prisma generate && bun run build
         working-directory: ./apps/backend/
         # frontend
       - run: bun install --frozen-lockfile
