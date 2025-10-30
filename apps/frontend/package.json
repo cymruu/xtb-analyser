@@ -24,6 +24,7 @@
     "date-fns": "^4.1.0",
     "effect": "^3.18.4",
     "excelize-wasm": "^0.1.0",
+    "@xtb-analyser/xtb-csv-parser": "workspace:packages",
     "zod": "^4.1.12"
   }
 }

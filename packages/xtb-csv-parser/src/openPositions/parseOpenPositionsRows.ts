@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
-import { Effect, pipe } from "effect/index";
+import { Effect, flow } from "effect/index";
+import { RowValidationError } from "../utils/RowValidationError";
 
 const OpenPositionRowSchema = z.object({
   id: z.coerce.number(),
@@ -18,11 +19,6 @@ export type ParsedOpenPositionRow = z.infer<typeof OpenPositionRowSchema>;
 
 type UnparsedOpenPositionRow = {
   [K in keyof ParsedOpenPositionRow]: unknown;
-};
-
-type ParseOpenPositionRowsResult = {
-  result: ParsedOpenPositionRow[];
-  error: string | null;
 };
 
 const mapOpenPositionRowToObject = (row: string[]): UnparsedOpenPositionRow => {
@@ -60,43 +56,23 @@ const mapOpenPositionRowToObject = (row: string[]): UnparsedOpenPositionRow => {
 };
 
 const parseOpenPositionRow = (row: UnparsedOpenPositionRow) => {
-  return OpenPositionRowSchema.safeParse(row);
-};
-
-export const parseOpenPositionRows = (
-  rows: string[][],
-): ParseOpenPositionRowsResult => {
-  const data = rows.map(mapOpenPositionRowToObject).map(parseOpenPositionRow);
-
-  const groupedResults = Object.groupBy(data, (v) =>
-    v.success ? "ok" : "nok",
-  );
-
-  if (data.length === 0) {
-    return { error: "No valid rows found", result: [] };
+  const parseResult = OpenPositionRowSchema.safeParse(row);
+  if (!parseResult.success) {
+    return Effect.fail(
+      new RowValidationError({ parseError: parseResult.error }),
+    );
   }
 
-  return {
-    error: null,
-    result: (groupedResults.ok || []).map((row) => row.data!),
-  };
+  return Effect.succeed(parseResult.data);
 };
 
-export const parseOpenPositionRowsV2 = (rows: string[][]) =>
-  Effect.partition(rows, (row) =>
-    pipe(
-      Effect.succeed(row),
-      Effect.map(mapOpenPositionRowToObject),
-      Effect.map(parseOpenPositionRow),
-      Effect.flatMap((parsed) =>
-        parsed.success
-          ? Effect.succeed(parsed.data!)
-          : Effect.fail(parsed.error!),
-      ),
-    ),
+export const parseOpenPositionRows = (rows: string[][]) =>
+  Effect.partition(
+    rows,
+    flow(mapOpenPositionRowToObject, parseOpenPositionRow),
   ).pipe(
     Effect.map(([failures, successes]) => ({
-      errors: failures,
-      result: successes,
+      failures,
+      successes,
     })),
   );

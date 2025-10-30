@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 
-import { parseQuantity, parseQuantityV2 } from "./parseQuantity";
+import { parseQuantity } from "./parseQuantity";
 
 const testCases = [
   { input: "OPEN BUY 100 @ 9.895", expected: "100" },
@@ -27,13 +27,3 @@ const testCasesV2 = [
   { input: "OPEN BUY 0.0736/4.0736 @ 61.370", expected: "0.0736" },
   { input: "CLOSE BUY 0.1995/61 @ 16.40", expected: "0.1995" },
 ];
-
-describe("parseQuantityV2", () => {
-  for (const testCase of testCasesV2) {
-    it(`should properly parse ${testCase.input}`, async () => {
-      const result = parseQuantityV2(testCase.input);
-
-      expect(result).toEqual(testCase.expected);
-    });
-  }
-});
