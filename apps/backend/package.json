@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "start": "bun run dist/server.js",
-    "build": "bun build --target=bun --sourcemap=linked --outdir=dist/ --outfile=server.js ./src/server.ts",
+    "build": "bun build --target=bun --sourcemap=linked --outdir=dist/ ./src/server.ts",
     "dev": "bun --watch run src/server.ts",
     "test": "bun test"
   },
