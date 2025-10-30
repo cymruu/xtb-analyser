@@ -16,4 +16,4 @@ RUN bun install --frozen-lockfile --production
 
 USER bun
 CMD ["/bin/sh"]
-# ENTRYPOINT [ "bun", "start" ]
+ENTRYPOINT [ "bun", "start" ]

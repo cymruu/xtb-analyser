@@ -7,13 +7,12 @@ import { Portfolio } from "../../generated/prisma/client";
 export const createPortfolioServiceMock = (deps: {
   timeService: ITimeService;
 }): ReturnType<typeof createPortfolioService> => {
-  let lastPortfolioId = 0;
   const portfolios: Portfolio[] = [];
 
   return {
     async create(portfolioPayload) {
       const portfolio = {
-        id: ++lastPortfolioId,
+        id: portfolios.length + 1,
         uuid: randomUUIDv7(),
         createdAt: deps.timeService.now(),
         updatedAt: deps.timeService.now(),
