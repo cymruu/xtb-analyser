@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../generated/prisma/client";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
