@@ -3,6 +3,7 @@ import z from "zod";
 
 import { RowValidationError } from "../utils/RowValidationError";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
+import { parseQuantity } from "./parseQuantity";
 
 export const KnownCashOperationTypes = z.enum([
   "deposit",
@@ -25,23 +26,46 @@ export const KnownCashOperationTypes = z.enum([
 
 const ReportableZodIssueInternalCode = "REPORTABLE_ISSUE";
 
-const CashOperationRowSchema = z.object({
-  id: z.coerce.number(),
-  type: z.string().superRefine((v, ctx) => {
-    if (!KnownCashOperationTypes.safeParse(v).success) {
-      ctx.addIssue({
-        internal_code: ReportableZodIssueInternalCode,
-        value: v,
-        code: "invalid_value",
-        values: KnownCashOperationTypes.options,
-      });
-    }
-  }),
-  time: XTBTimeSchema,
-  comment: z.string(),
-  symbol: z.string(),
-  amount: z.coerce.number(),
-});
+const CashOperationRowSchemaBase = z
+  .object({
+    id: z.coerce.number(),
+    type: KnownCashOperationTypes.superRefine((v, ctx) => {
+      if (!KnownCashOperationTypes.safeParse(v).success) {
+        ctx.addIssue({
+          internal_code: ReportableZodIssueInternalCode,
+          value: v,
+          code: "invalid_value",
+          values: KnownCashOperationTypes.options,
+        });
+      }
+    }),
+    time: XTBTimeSchema,
+    comment: z.string(),
+    symbol: z.string(),
+    amount: z.coerce.number(),
+  })
+  .strict();
+
+const CashOperationRowSchemaStockPurchase = CashOperationRowSchemaBase.extend({
+  type: z.literal(KnownCashOperationTypes.enum["Stock purchase"]),
+}).transform((v) => ({ ...v, quantity: parseQuantity(v.comment) }));
+
+const CashOperationRowSchemaStockSale = CashOperationRowSchemaBase.extend({
+  type: z.literal(KnownCashOperationTypes.enum["Stock sale"]),
+}).transform((v) => ({ ...v, quantity: parseQuantity(v.comment) }));
+
+const CashOperationRowSchema = z.discriminatedUnion("type", [
+  CashOperationRowSchemaBase,
+  CashOperationRowSchemaStockPurchase,
+  CashOperationRowSchemaStockSale,
+]);
+
+export type ParsedCashOperationStockPurchaseRow = z.infer<
+  typeof CashOperationRowSchemaStockPurchase
+>;
+export type ParsedCashOperationStockSaleRow = z.infer<
+  typeof CashOperationRowSchemaStockSale
+>;
 
 export type ParsedCashOperationRow = z.infer<typeof CashOperationRowSchema>;
 
