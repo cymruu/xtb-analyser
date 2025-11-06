@@ -15,8 +15,8 @@ export const KnownCashOperationTypes = z.enum([
   "Dividend equivalent",
   "Withholding Tax",
   "close trade",
-  "Stock sale",
-  "Stock purchase",
+  // "Stock sale",
+  // "Stock purchase",
   "Adjustment Fee",
   "swap",
   "Sec Fee",
@@ -47,14 +47,14 @@ const CashOperationRowSchemaBase = z
   .strict();
 
 const CashOperationRowSchemaStockPurchase = CashOperationRowSchemaBase.extend({
-  type: z.literal(KnownCashOperationTypes.enum["Stock purchase"]),
+  type: z.literal("Stock purchase"),
 }).transform((v) => ({ ...v, quantity: parseQuantity(v.comment) }));
 
 const CashOperationRowSchemaStockSale = CashOperationRowSchemaBase.extend({
-  type: z.literal(KnownCashOperationTypes.enum["Stock sale"]),
+  type: z.literal("Stock sale"),
 }).transform((v) => ({ ...v, quantity: parseQuantity(v.comment) }));
 
-const CashOperationRowSchema = z.discriminatedUnion("type", [
+const CashOperationRowSchema = z.union([
   CashOperationRowSchemaBase,
   CashOperationRowSchemaStockPurchase,
   CashOperationRowSchemaStockSale,
