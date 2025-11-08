@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
-import { Array, Chunk, Effect, GroupBy, pipe, Sink, Stream } from "effect";
+import { Array, Effect, GroupBy, pipe, Sink, Stream } from "effect";
 
 import { startOfDay } from "date-fns/fp";
 import { map } from "effect/Array";
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
-import { format } from "date-fns";
+import { format, formatISO } from "date-fns";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -37,13 +37,13 @@ export const createPortfolioService = ({
             quantity: transaction.quantity, //TODO: handle stock sale (negative quantity)
             time: transaction.time,
             symbol: transaction.symbol,
-          };
+          } as PortfolioTransaction;
         }),
       );
 
       const transactionsByDay = Stream.fromIterable(transactions).pipe(
         Stream.groupByKey((transaction) =>
-          format(startOfDay(transaction.time), "dd/MM/yyyy"),
+          formatISO(startOfDay(transaction.time), { representation: "date" }),
         ),
         GroupBy.evaluate((key, stream) =>
           stream.pipe(Stream.map((transaction) => ({ key, transaction }))),
@@ -72,4 +72,25 @@ export const createPortfolioService = ({
       return results;
     },
   };
+};
+
+type PortfolioTransaction = {
+  quantity: number;
+  time: Date;
+  symbol: string;
+};
+
+type PortfolioDayElement = { [key: string]: number };
+
+type PortfolioDayElements = {
+  [key: number]: PortfolioDayElement;
+};
+
+const calculatePortfolioInDay = (
+  previous: PortfolioDayElements,
+  transactions: PortfolioTransaction[],
+) => {
+  const current = { ...previous };
+
+  return current;
 };
