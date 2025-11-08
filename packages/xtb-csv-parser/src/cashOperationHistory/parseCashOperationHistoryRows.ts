@@ -1,45 +1,32 @@
 import { Effect, flow } from "effect";
-import z from "zod";
+import z, { ZodError } from "zod";
 
 import type { ParseResult } from "../utils/parseResult";
 import { RowValidationError } from "../utils/RowValidationError";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
 import { parseQuantity } from "./parseQuantity";
 
-export const KnownCashOperationTypes = z.enum([
-  "deposit",
-  "IKE Deposit",
-  "Free-funds Interest Tax",
-  "Free-funds Interest",
-  "withdrawal",
-  "DIVIDENT",
-  "Dividend equivalent",
-  "Withholding Tax",
-  "close trade",
-  // "Stock sale",
-  // "Stock purchase",
-  "Adjustment Fee",
-  "swap",
-  "Sec Fee",
-  "tax IFTT",
-  "transfer",
-]);
-
 const ReportableZodIssueInternalCode = "REPORTABLE_ISSUE";
 
 const CashOperationRowSchemaBase = z
   .object({
     id: z.coerce.number(),
-    type: KnownCashOperationTypes.superRefine((v, ctx) => {
-      if (!KnownCashOperationTypes.safeParse(v).success) {
-        ctx.addIssue({
-          internal_code: ReportableZodIssueInternalCode,
-          value: v,
-          code: "invalid_value",
-          values: KnownCashOperationTypes.options,
-        });
-      }
-    }),
+    type: z.enum([
+      "deposit",
+      "IKE Deposit",
+      "Free-funds Interest Tax",
+      "Free-funds Interest",
+      "withdrawal",
+      "DIVIDENT",
+      "Dividend equivalent",
+      "Withholding Tax",
+      "close trade",
+      "Adjustment Fee",
+      "swap",
+      "Sec Fee",
+      "tax IFTT",
+      "transfer",
+    ]),
     time: XTBTimeSchema,
     comment: z.string(),
     symbol: z.string(),
@@ -55,18 +42,11 @@ const CashOperationRowSchemaStockSale = CashOperationRowSchemaBase.extend({
   type: z.literal("Stock sale"),
 }).transform((v) => ({ ...v, quantity: parseQuantity(v.comment) }));
 
-const CashOperationRowSchema = z.union([
+const CashOperationRowSchema = z.discriminatedUnion("type", [
   CashOperationRowSchemaBase,
   CashOperationRowSchemaStockPurchase,
   CashOperationRowSchemaStockSale,
 ]);
-
-export type ParsedCashOperationStockPurchaseRow = z.infer<
-  typeof CashOperationRowSchemaStockPurchase
->;
-export type ParsedCashOperationStockSaleRow = z.infer<
-  typeof CashOperationRowSchemaStockSale
->;
 
 export type ParsedCashOperationRow = z.infer<typeof CashOperationRowSchema>;
 
@@ -92,6 +72,43 @@ const mapCashOperationRowToObject = (
 const parseCashOperationRow = (row: UnparsedCashOperationRow) => {
   const parseResult = CashOperationRowSchema.safeParse(row);
   if (!parseResult.success) {
+    // Zod does not allow to use `superRefine` on union, therefore we need to handle the error manually
+    if (parseResult.error.issues[0]?.code === "invalid_union") {
+      return Effect.fail(
+        new RowValidationError({
+          parseError: {
+            issues: [
+              {
+                internal_code: ReportableZodIssueInternalCode,
+                message: "invalid type",
+                path: ["type"],
+                value: row.type,
+                code: "invalid_value",
+                values: [
+                  "deposit",
+                  "IKE Deposit",
+                  "Free-funds Interest Tax",
+                  "Free-funds Interest",
+                  "withdrawal",
+                  "DIVIDENT",
+                  "Dividend equivalent",
+                  "Withholding Tax",
+                  "close trade",
+                  "Stock sale",
+                  "Stock purchase",
+                  "Adjustment Fee",
+                  "swap",
+                  "Sec Fee",
+                  "tax IFTT",
+                  "transfer",
+                ],
+              },
+            ],
+          } as unknown as ZodError,
+        }),
+      );
+    }
+
     return Effect.fail(
       new RowValidationError({ parseError: parseResult.error }),
     );
