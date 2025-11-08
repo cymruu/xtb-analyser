@@ -1,10 +1,10 @@
-import { Context, Hono, Next } from "hono";
+import { type Context, Hono, type Next } from "hono";
 import { createMiddleware } from "hono/factory";
 import { logger } from "hono/logger";
 import z from "zod";
 
-import { IServices } from "./services";
-import { HonoEnv } from "./types";
+import type { IServices } from "./services";
+import type { HonoEnv } from "./types";
 import { validator } from "hono/validator";
 import { cors } from "hono/cors";
 
