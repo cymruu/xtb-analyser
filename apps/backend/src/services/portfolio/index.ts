@@ -1,12 +1,13 @@
 import { z } from "zod";
 
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
-import { Array, Chunk, Effect, GroupBy, pipe, Record, Stream } from "effect";
+import { Array, Chunk, Effect, GroupBy, pipe, Sink, Stream } from "effect";
 
 import { startOfDay } from "date-fns/fp";
 import { map } from "effect/Array";
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
+import { format } from "date-fns";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -27,8 +28,6 @@ export const createPortfolioService = ({
       return result;
     },
     async calculatePortfolioDailyValue(operations: ParsedCashOperationRow[]) {
-      console.log({ operations });
-
       const transactions = pipe(
         Array.filter(operations, (v) => {
           return v.type === "Stock purchase" || v.type === "Stock sale";
@@ -42,17 +41,30 @@ export const createPortfolioService = ({
         }),
       );
 
-      console.log({ transactions });
-
       const transactionsByDay = Stream.fromIterable(transactions).pipe(
-        Stream.groupByKey((transaction) => startOfDay(transaction.time)),
+        Stream.groupByKey((transaction) =>
+          format(startOfDay(transaction.time), "dd/MM/yyyy"),
+        ),
+        GroupBy.evaluate((key, stream) =>
+          stream.pipe(Stream.map((transaction) => ({ key, transaction }))),
+        ),
+        Stream.run(
+          Sink.foldLeft(
+            {} as { [key: string]: { transactions: unknown[] } },
+            (acc, curr) => {
+              if (!acc[curr.key]) {
+                acc[curr.key] = { transactions: [curr.transaction] };
+                return acc;
+              }
+
+              acc[curr.key]!.transactions.push(curr.transaction);
+              return acc;
+            },
+          ),
+        ),
       );
 
-      const stream = GroupBy.evaluate(transactionsByDay, (key, stream) =>
-        Stream.fromEffect(Stream.runCollect(stream)),
-      );
-
-      const results = await Effect.runPromise(Stream.runCollect(stream));
+      const results = await Effect.runPromise(transactionsByDay);
 
       console.log({ results });
       console.log(JSON.stringify(results));
@@ -61,14 +73,3 @@ export const createPortfolioService = ({
     },
   };
 };
-
-type PortfolioDayElement = { [key: string]: number };
-
-type PortfolioDayElements = {
-  [key: number]: PortfolioDayElement;
-};
-
-const calculatePortfolioInDay = (
-  previous: PortfolioDayElement,
-  transactions: unknown[],
-) => {};
