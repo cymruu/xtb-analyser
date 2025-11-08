@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 import { formatISO } from "date-fns";
 import { startOfDay } from "date-fns/fp";
-import { Array, Effect, GroupBy, pipe, Sink, Stream } from "effect";
+import { Array, Effect, GroupBy, Match, pipe, Sink, Stream } from "effect";
 
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
@@ -32,8 +32,15 @@ export const createPortfolioService = ({
           return v.type === "Stock purchase" || v.type === "Stock sale";
         }),
         Array.map((transaction) => {
+          const quantityMultiplier = Match.value(transaction.type).pipe(
+            Match.when("Stock purchase", () => 1),
+            Match.when("Stock sale", () => -1),
+            Match.exhaustive,
+          );
+
+          const quantity = transaction.quantity * quantityMultiplier;
           return {
-            quantity: transaction.quantity, //TODO: handle stock sale (negative quantity)
+            quantity,
             time: transaction.time,
             symbol: transaction.symbol,
           } as PortfolioTransaction;

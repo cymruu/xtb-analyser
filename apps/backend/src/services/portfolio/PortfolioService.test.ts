@@ -32,7 +32,7 @@ describe("PortfolioService", () => {
           id: 1,
           comment: "",
           symbol: "META",
-          type: "Stock purchase",
+          type: "Stock sale",
           amount: 500,
           quantity: 5,
           time: new Date("2025-11-09"),
