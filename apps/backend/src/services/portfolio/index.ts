@@ -7,7 +7,8 @@ import { startOfDay } from "date-fns/fp";
 import { map } from "effect/Array";
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
-import { format, formatISO } from "date-fns";
+import { formatISO } from "date-fns";
+import { currentMaxOpsBeforeYield } from "effect/FiberRef";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -41,7 +42,7 @@ export const createPortfolioService = ({
         }),
       );
 
-      const transactionsByDay = Stream.fromIterable(transactions).pipe(
+      const transactionsByDayEffect = Stream.fromIterable(transactions).pipe(
         Stream.groupByKey((transaction) =>
           formatISO(startOfDay(transaction.time), { representation: "date" }),
         ),
@@ -50,26 +51,37 @@ export const createPortfolioService = ({
         ),
         Stream.run(
           Sink.foldLeft(
-            {} as { [key: string]: { transactions: unknown[] } },
+            {} as { [key: string]: PortfolioTransaction[] },
             (acc, curr) => {
               if (!acc[curr.key]) {
-                acc[curr.key] = { transactions: [curr.transaction] };
+                acc[curr.key] = [curr.transaction];
                 return acc;
               }
 
-              acc[curr.key]!.transactions.push(curr.transaction);
+              acc[curr.key]!.push(curr.transaction);
               return acc;
             },
           ),
         ),
       );
 
-      const results = await Effect.runPromise(transactionsByDay);
+      const transactionsByDay = await Effect.runPromise(
+        transactionsByDayEffect,
+      );
 
-      console.log({ results });
-      console.log(JSON.stringify(results));
+      console.dir({ transactionsByDay }, { depth: 5 });
 
-      return results;
+      const [_, result] = Array.mapAccum(
+        Object.entries(transactionsByDay),
+        {},
+        (state, [key, transactions]) => {
+          const current = calculatePortfolioInDay(state, transactions);
+          return [current, { key, current }];
+        },
+      );
+      console.dir({ result }, { depth: 5 });
+
+      return result;
     },
   };
 };
@@ -80,17 +92,22 @@ type PortfolioTransaction = {
   symbol: string;
 };
 
-type PortfolioDayElement = { [key: string]: number };
-
 type PortfolioDayElements = {
-  [key: number]: PortfolioDayElement;
+  [key: string]: number;
 };
 
 const calculatePortfolioInDay = (
   previous: PortfolioDayElements,
   transactions: PortfolioTransaction[],
 ) => {
-  const current = { ...previous };
+  return Array.reduce(
+    transactions,
+    { ...previous } as PortfolioDayElements,
+    (acc, curr) => {
+      const currentValue = acc[curr.symbol] ?? 0;
+      acc[curr.symbol] = currentValue + curr.quantity;
 
-  return current;
+      return acc;
+    },
+  );
 };
