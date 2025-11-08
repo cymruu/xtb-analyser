@@ -1,14 +1,12 @@
 import { z } from "zod";
 
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
+import { formatISO } from "date-fns";
+import { startOfDay } from "date-fns/fp";
 import { Array, Effect, GroupBy, pipe, Sink, Stream } from "effect";
 
-import { startOfDay } from "date-fns/fp";
-import { map } from "effect/Array";
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
-import { formatISO } from "date-fns";
-import { currentMaxOpsBeforeYield } from "effect/FiberRef";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -33,7 +31,7 @@ export const createPortfolioService = ({
         Array.filter(operations, (v) => {
           return v.type === "Stock purchase" || v.type === "Stock sale";
         }),
-        map((transaction) => {
+        Array.map((transaction) => {
           return {
             quantity: transaction.quantity, //TODO: handle stock sale (negative quantity)
             time: transaction.time,
