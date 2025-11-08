@@ -34,18 +34,26 @@ const CashOperationRowSchemaBase = z
   })
   .strict();
 
-const CashOperationRowSchemaStockPurchase = CashOperationRowSchemaBase.extend({
+const CashOperationRowSchemaStockPurchase = z.object({
+  ...CashOperationRowSchemaBase.shape,
   type: z.literal("Stock purchase"),
-}).transform((v) => ({ ...v, quantity: parseQuantity(v.comment) }));
+});
 
-const CashOperationRowSchemaStockSale = CashOperationRowSchemaBase.extend({
+const CashOperationRowSchemaStockSale = z.object({
+  ...CashOperationRowSchemaBase.shape,
   type: z.literal("Stock sale"),
-}).transform((v) => ({ ...v, quantity: parseQuantity(v.comment) }));
+});
 
 const CashOperationRowSchema = z.discriminatedUnion("type", [
   CashOperationRowSchemaBase,
-  CashOperationRowSchemaStockPurchase,
-  CashOperationRowSchemaStockSale,
+  CashOperationRowSchemaStockPurchase.transform((v) => ({
+    ...v,
+    quantity: parseQuantity(v.comment),
+  })),
+  CashOperationRowSchemaStockSale.transform((v) => ({
+    ...v,
+    quantity: parseQuantity(v.comment),
+  })),
 ]);
 
 export type ParsedCashOperationRow = z.infer<typeof CashOperationRowSchema>;
@@ -85,22 +93,9 @@ const parseCashOperationRow = (row: UnparsedCashOperationRow) => {
                 value: row.type,
                 code: "invalid_value",
                 values: [
-                  "deposit",
-                  "IKE Deposit",
-                  "Free-funds Interest Tax",
-                  "Free-funds Interest",
-                  "withdrawal",
-                  "DIVIDENT",
-                  "Dividend equivalent",
-                  "Withholding Tax",
-                  "close trade",
-                  "Stock sale",
-                  "Stock purchase",
-                  "Adjustment Fee",
-                  "swap",
-                  "Sec Fee",
-                  "tax IFTT",
-                  "transfer",
+                  CashOperationRowSchemaBase.shape.type.options,
+                  CashOperationRowSchemaStockPurchase.shape.type,
+                  CashOperationRowSchemaStockSale.shape.type,
                 ],
               },
             ],
