@@ -1,9 +1,9 @@
-import { z } from "zod";
-
-import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 import { formatISO } from "date-fns";
 import { startOfDay } from "date-fns/fp";
 import { Array, Effect, GroupBy, Match, pipe, Sink, Stream } from "effect";
+import { z } from "zod";
+
+import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
@@ -86,6 +86,15 @@ export const createPortfolioService = ({
       );
       console.dir({ result }, { depth: 5 });
 
+      const index = createPriceIndex();
+      Array.forEach(Object.values(result), ({ key: date, current }) => {
+        Array.forEach(Object.entries(current), ([symbol, amount]) => {
+          index.registerTicker(date, symbol, amount);
+        });
+      });
+
+      console.dir({ index: index.index }, { depth: 5 });
+
       return result;
     },
   };
@@ -120,4 +129,30 @@ const calculatePortfolioInDay = (
       return acc;
     },
   );
+};
+
+type TickerPriceIndices = {
+  [key: string] /* symbol*/ : Array<{ start: Date | null; end: Date | null }>;
+};
+
+export const createPriceIndex = () => {
+  const index: TickerPriceIndices = {};
+  const registerTicker = (date: string, symbol: string, amount: number) => {
+    const d = new Date(date);
+    if (!index[symbol]) index[symbol] = [];
+
+    const tickerPeriods = index[symbol];
+    const lastPeriod = tickerPeriods[tickerPeriods.length - 1];
+
+    if (amount > 0) {
+      if (!lastPeriod || lastPeriod.end !== null) {
+        tickerPeriods.push({ start: d, end: null });
+      }
+    } else {
+      if (lastPeriod && lastPeriod.end === null) {
+        lastPeriod.end = d;
+      }
+    }
+  };
+  return { index, registerTicker };
 };
