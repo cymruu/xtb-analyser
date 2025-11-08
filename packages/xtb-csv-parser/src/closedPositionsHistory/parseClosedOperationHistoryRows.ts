@@ -3,7 +3,7 @@ import z from "zod";
 
 import { RowValidationError } from "../utils/RowValidationError";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
-import type { ParseResult } from "../parseResult";
+import type { ParseResult } from "../utils/parseResult";
 
 export const KnownClosedPositionTypes = z.enum(["BUY"]);
 

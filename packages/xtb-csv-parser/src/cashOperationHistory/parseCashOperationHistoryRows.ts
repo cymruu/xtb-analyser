@@ -1,7 +1,7 @@
 import { Effect, flow } from "effect";
 import z from "zod";
 
-import type { ParseResult } from "../parseResult";
+import type { ParseResult } from "../utils/parseResult";
 import { RowValidationError } from "../utils/RowValidationError";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
 import { parseQuantity } from "./parseQuantity";

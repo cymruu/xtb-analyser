@@ -7,7 +7,7 @@ import { findSheetIndexEffect } from "./findSheetIndex";
 import { parseHeader } from "./header/parseHeader";
 import { parseOpenPositionRows } from "./openPositions/parseOpenPositionsRows";
 import { removeXLSXHeaderColumns } from "./utils/removeXLSXHeaderRows";
-import { sortParsedResults } from "./parseResult";
+import { sortParsedResults } from "./utils/parseResult";
 
 const CLOSED_POSITIONS_SHEET_NAME = "CLOSED POSITION HISTORY";
 const OPEN_POSITIONS_SHEET_REGEX = /^OPEN POSITION \d+$/;

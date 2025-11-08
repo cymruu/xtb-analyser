@@ -1,6 +1,5 @@
 import { Array, Effect, Order } from "effect";
-
-import type { RowValidationError } from "./utils/RowValidationError";
+import type { RowValidationError } from "./RowValidationError";
 
 export type ParseResult<T> = {
   failures: RowValidationError[];

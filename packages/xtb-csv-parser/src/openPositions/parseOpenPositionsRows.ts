@@ -2,7 +2,7 @@ import { z } from "zod";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
 import { Effect, flow } from "effect/index";
 import { RowValidationError } from "../utils/RowValidationError";
-import type { ParseResult } from "../parseResult";
+import type { ParseResult } from "../utils/parseResult";
 
 const OpenPositionRowSchema = z.object({
   id: z.coerce.number(),
