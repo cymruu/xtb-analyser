@@ -1,8 +1,10 @@
 import { randomUUIDv7 } from "bun";
 
+import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
+
 import { createPortfolioService } from ".";
-import { ITimeService } from "../time/time";
-import { Portfolio } from "../../generated/prisma/client";
+import type { Portfolio } from "../../generated/prisma/client";
+import type { ITimeService } from "../time/time";
 
 export const createPortfolioServiceMock = (deps: {
   timeService: ITimeService;
@@ -21,6 +23,11 @@ export const createPortfolioServiceMock = (deps: {
       portfolios.push(portfolio);
 
       return portfolio;
+    },
+    calculatePortfolioDailyValue: function (
+      operations: ParsedCashOperationRow[],
+    ) {
+      throw new Error("Function not implemented.");
     },
   };
 };

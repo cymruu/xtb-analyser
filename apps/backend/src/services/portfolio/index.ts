@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
-import { Array, pipe, Stream } from "effect";
+import { Array, Chunk, Effect, GroupBy, pipe, Record, Stream } from "effect";
 
 import { startOfDay } from "date-fns/fp";
 import { map } from "effect/Array";
@@ -26,20 +26,49 @@ export const createPortfolioService = ({
 
       return result;
     },
-    async calculatePortfolioStatus(operations: ParsedCashOperationRow[]) {
+    async calculatePortfolioDailyValue(operations: ParsedCashOperationRow[]) {
+      console.log({ operations });
+
       const transactions = pipe(
         Array.filter(operations, (v) => {
           return v.type === "Stock purchase" || v.type === "Stock sale";
         }),
-        map((x) => {
-          return { quantity: x.quantity, time: x.time };
+        map((transaction) => {
+          return {
+            quantity: transaction.quantity, //TODO: handle stock sale (negative quantity)
+            time: transaction.time,
+            symbol: transaction.symbol,
+          };
         }),
       );
 
-      const groupedByDay = Stream.fromIterable(transactions).pipe(
+      console.log({ transactions });
+
+      const transactionsByDay = Stream.fromIterable(transactions).pipe(
         Stream.groupByKey((transaction) => startOfDay(transaction.time)),
       );
-      return transactions;
+
+      const stream = GroupBy.evaluate(transactionsByDay, (key, stream) =>
+        Stream.fromEffect(Stream.runCollect(stream)),
+      );
+
+      const results = await Effect.runPromise(Stream.runCollect(stream));
+
+      console.log({ results });
+      console.log(JSON.stringify(results));
+
+      return results;
     },
   };
 };
+
+type PortfolioDayElement = { [key: string]: number };
+
+type PortfolioDayElements = {
+  [key: number]: PortfolioDayElement;
+};
+
+const calculatePortfolioInDay = (
+  previous: PortfolioDayElement,
+  transactions: unknown[],
+) => {};
