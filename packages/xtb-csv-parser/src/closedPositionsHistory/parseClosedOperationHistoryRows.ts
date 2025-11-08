@@ -3,6 +3,7 @@ import z from "zod";
 
 import { RowValidationError } from "../utils/RowValidationError";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
+import type { ParseResult } from "../parseResult";
 
 export const KnownClosedPositionTypes = z.enum(["BUY"]);
 
@@ -67,7 +68,9 @@ const parseClosedOperationRow = (row: UnparsedClosedOperation) => {
   return Effect.succeed(parseResult.data);
 };
 
-export const parseClosedOperationHistoryRows = (rows: string[][]) =>
+export const parseClosedOperationHistoryRows = (
+  rows: string[][],
+): Effect.Effect<ParseResult<ParsedClosedOperation>> =>
   Effect.partition(
     rows,
     flow(mapClosedOperationRowToObject, parseClosedOperationRow),

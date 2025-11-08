@@ -2,6 +2,7 @@ import { z } from "zod";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
 import { Effect, flow } from "effect/index";
 import { RowValidationError } from "../utils/RowValidationError";
+import type { ParseResult } from "../parseResult";
 
 const OpenPositionRowSchema = z.object({
   id: z.coerce.number(),
@@ -66,7 +67,9 @@ const parseOpenPositionRow = (row: UnparsedOpenPositionRow) => {
   return Effect.succeed(parseResult.data);
 };
 
-export const parseOpenPositionRows = (rows: string[][]) =>
+export const parseOpenPositionRows = (
+  rows: string[][],
+): Effect.Effect<ParseResult<ParsedOpenPositionRow>> =>
   Effect.partition(
     rows,
     flow(mapOpenPositionRowToObject, parseOpenPositionRow),

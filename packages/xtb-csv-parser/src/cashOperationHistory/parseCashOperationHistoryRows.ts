@@ -1,6 +1,7 @@
-import { Array, Effect, flow, Order } from "effect";
+import { Effect, flow } from "effect";
 import z from "zod";
 
+import type { ParseResult } from "../parseResult";
 import { RowValidationError } from "../utils/RowValidationError";
 import { XTBTimeSchema } from "../utils/XTBTimeSchema";
 import { parseQuantity } from "./parseQuantity";
@@ -99,16 +100,15 @@ const parseCashOperationRow = (row: UnparsedCashOperationRow) => {
   return Effect.succeed(parseResult.data);
 };
 
-export const parseCashOperationRows = (rows: string[][]) =>
+export const parseCashOperationRows = (
+  rows: string[][],
+): Effect.Effect<ParseResult<ParsedCashOperationRow>> =>
   Effect.partition(
     rows,
     flow(mapCashOperationRowToObject, parseCashOperationRow),
   ).pipe(
     Effect.map(([failures, successes]) => ({
       failures,
-      successes: Array.sort(
-        successes,
-        Order.mapInput(Order.Date, (row: ParsedCashOperationRow) => row.time),
-      ),
+      successes,
     })),
   );
