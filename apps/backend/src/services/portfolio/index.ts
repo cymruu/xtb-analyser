@@ -101,6 +101,8 @@ type PortfolioDayElements = {
   [key: string]: number;
 };
 
+const PRECISION = 10 ^ 2;
+
 const calculatePortfolioInDay = (
   previous: PortfolioDayElements,
   transactions: PortfolioTransaction[],
@@ -110,7 +112,10 @@ const calculatePortfolioInDay = (
     { ...previous } as PortfolioDayElements,
     (acc, curr) => {
       const currentValue = acc[curr.symbol] ?? 0;
-      acc[curr.symbol] = currentValue + curr.quantity;
+      acc[curr.symbol] =
+        Math.round(
+          (currentValue + curr.quantity + Number.EPSILON) * PRECISION,
+        ) / PRECISION;
 
       return acc;
     },
