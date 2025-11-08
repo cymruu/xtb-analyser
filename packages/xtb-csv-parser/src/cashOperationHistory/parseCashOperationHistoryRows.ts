@@ -1,4 +1,4 @@
-import { Effect, flow } from "effect";
+import { Array, Effect, flow, Order } from "effect";
 import z from "zod";
 
 import { RowValidationError } from "../utils/RowValidationError";
@@ -106,6 +106,9 @@ export const parseCashOperationRows = (rows: string[][]) =>
   ).pipe(
     Effect.map(([failures, successes]) => ({
       failures,
-      successes,
+      successes: Array.sort(
+        successes,
+        Order.mapInput(Order.Date, (row: ParsedCashOperationRow) => row.time),
+      ),
     })),
   );
