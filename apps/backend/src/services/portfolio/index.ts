@@ -7,6 +7,8 @@ import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
+import { createPriceServiceMock } from "../price/mock";
+import { timeServiceMock } from "../time/time";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -86,14 +88,18 @@ export const createPortfolioService = ({
       );
       console.dir({ result }, { depth: 5 });
 
-      const index = createPriceIndex();
+      const priceIndex = createPriceIndex();
       Array.forEach(Object.values(result), ({ key: date, current }) => {
         Array.forEach(Object.entries(current), ([symbol, amount]) => {
-          index.registerTicker(date, symbol, amount);
+          priceIndex.registerTicker(date, symbol, amount);
         });
       });
+      const priceService = createPriceServiceMock(priceIndex.index, {
+        timeService: timeServiceMock,
+      });
+      const prices = priceService.prices;
 
-      console.dir({ index: index.index }, { depth: 5 });
+      console.dir({ index: priceIndex.index, prices }, { depth: 5 });
 
       return result;
     },
@@ -131,8 +137,8 @@ const calculatePortfolioInDay = (
   );
 };
 
-type TickerPriceIndices = {
-  [key: string] /* symbol*/ : Array<{ start: Date | null; end: Date | null }>;
+export type TickerPriceIndices = {
+  [key: string] /* symbol*/ : Array<{ start: Date; end: Date | null }>;
 };
 
 export const createPriceIndex = () => {
