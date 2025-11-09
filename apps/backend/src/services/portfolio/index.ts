@@ -9,6 +9,7 @@ import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import { createPriceServiceMock } from "../price/mock";
 import { timeServiceMock } from "../time/time";
+import type { TransactionTimeKey, Ticker } from "../../domains/stock/types";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -50,15 +51,20 @@ export const createPortfolioService = ({
       );
 
       const transactionsByDayEffect = Stream.fromIterable(transactions).pipe(
-        Stream.groupByKey((transaction) =>
-          formatISO(startOfDay(transaction.time), { representation: "date" }),
+        Stream.groupByKey(
+          (transaction) =>
+            formatISO(startOfDay(transaction.time), {
+              representation: "date",
+            }) as TransactionTimeKey,
         ),
         GroupBy.evaluate((key, stream) =>
           stream.pipe(Stream.map((transaction) => ({ key, transaction }))),
         ),
         Stream.run(
           Sink.foldLeft(
-            {} as { [key: string]: PortfolioTransaction[] },
+            {} as {
+              [key: TransactionTimeKey]: PortfolioTransaction[];
+            },
             (acc, curr) => {
               if (!acc[curr.key]) {
                 acc[curr.key] = [curr.transaction];
@@ -91,7 +97,7 @@ export const createPortfolioService = ({
       const priceIndex = createPriceIndex();
       Array.forEach(Object.values(result), ({ key: date, current }) => {
         Array.forEach(Object.entries(current), ([symbol, amount]) => {
-          priceIndex.registerTicker(date, symbol, amount);
+          priceIndex.registerTicker(date, symbol as Ticker, amount);
         });
       });
       const priceService = createPriceServiceMock(priceIndex.index, {
@@ -109,11 +115,11 @@ export const createPortfolioService = ({
 type PortfolioTransaction = {
   quantity: number;
   time: Date;
-  symbol: string;
+  symbol: Ticker;
 };
 
 type PortfolioDayElements = {
-  [key: string]: number;
+  [key: Ticker]: number;
 };
 
 const PRECISION = 10 ^ 2;
@@ -138,12 +144,16 @@ const calculatePortfolioInDay = (
 };
 
 export type TickerPriceIndices = {
-  [key: string] /* symbol*/ : Array<{ start: Date; end: Date | null }>;
+  [key: Ticker]: Array<{ start: Date; end: Date | null }>;
 };
 
 export const createPriceIndex = () => {
   const index: TickerPriceIndices = {};
-  const registerTicker = (date: string, symbol: string, amount: number) => {
+  const registerTicker = (
+    date: TransactionTimeKey,
+    symbol: Ticker,
+    amount: number,
+  ) => {
     const d = new Date(date);
     if (!index[symbol]) index[symbol] = [];
 
