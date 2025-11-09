@@ -1,6 +1,6 @@
 import { prismaClient } from "../lib/db/index";
 import { createPortfolioService } from "./portfolio";
-import { ITimeService, timeService } from "./time/time";
+import { type ITimeService, timeService } from "./time/time";
 
 export type IServices = {
   time: ITimeService;
