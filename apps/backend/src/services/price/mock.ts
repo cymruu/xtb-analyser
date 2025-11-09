@@ -4,13 +4,15 @@ import { Array, Option } from "effect";
 
 import type { TickerPriceIndices } from "../portfolio";
 import { type ITimeService } from "../time/time";
+import type { Ticker, TransactionTimeKey } from "../../domains/stock/types";
+import type { TypedEntries } from "../../types";
 
 /*
  *  | SYMBOL | datetimedate | open | high | low | close | close adjusted | price_source
  */
 
 type PriceEntry = {
-  symbol: string;
+  symbol: Ticker;
   open: number;
   high: number;
   low: number;
@@ -20,8 +22,8 @@ type PriceEntry = {
 };
 
 type Prices = {
-  [key: string]: /*Date*/ {
-    [key: string]: /*symbol*/ PriceEntry;
+  [key: TransactionTimeKey]: {
+    [key: Ticker]: PriceEntry;
   };
 };
 
@@ -35,38 +37,40 @@ export const createPriceServiceMock = (
 ) => {
   const prices: Prices = {};
   const getPrices = (priceIndex: TickerPriceIndices) => {
-    Array.fromIterable(Object.entries(priceIndex)).forEach(
-      ([symbol, indices]) => {
-        Array.fromIterable(indices).forEach((index) => {
-          const intervals = eachDayOfInterval({
-            start: index.start,
-            end: index.end ?? endOfDay(timeService.now()),
-          });
-          intervals.forEach((date) => {
-            const key = formatISO(date, { representation: "date" });
-            if (!prices[key]) {
-              prices[key] = {};
-            }
-
-            prices[key][symbol] = {
-              symbol,
-              open: 1,
-              high: 1,
-              low: 1,
-              close: 1,
-              close_adjusted: 1,
-              price_source: "mock",
-            };
-          });
+    Array.fromIterable(
+      Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
+    ).forEach(([symbol, indices]) => {
+      Array.fromIterable(indices).forEach((index) => {
+        const intervals = eachDayOfInterval({
+          start: index.start,
+          end: index.end ?? endOfDay(timeService.now()),
         });
-      },
-    );
+        intervals.forEach((date) => {
+          const key = formatISO(date, {
+            representation: "date",
+          }) as TransactionTimeKey;
+          if (!prices[key]) {
+            prices[key] = {};
+          }
+
+          prices[key][symbol] = {
+            symbol,
+            open: 1,
+            high: 1,
+            low: 1,
+            close: 1,
+            close_adjusted: 1,
+            price_source: "mock",
+          };
+        });
+      });
+    });
   };
   getPrices(priceIndex);
 
   return {
     prices,
-    getPrice: (symbol: string, date: string) => {
+    getPrice: (symbol: Ticker, date: TransactionTimeKey) => {
       const price = prices[date]?.[symbol];
 
       if (!price) {

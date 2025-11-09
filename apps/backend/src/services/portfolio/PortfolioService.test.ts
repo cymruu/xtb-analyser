@@ -4,6 +4,12 @@ import { init } from "excelize-wasm";
 import { createPortfolioService, createPriceIndex } from ".";
 
 import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
+import {
+  TickerCtor,
+  TransactionTimeKeyCtor,
+  type Ticker,
+  type TransactionTimeKey,
+} from "../../domains/stock/types";
 
 const PortfolioService = createPortfolioService({
   prismaClient: null as any,
@@ -51,9 +57,13 @@ describe("TickerPriceIndices builder", () => {
   it("starts a new period when a stock appears", () => {
     const { index, registerTicker } = createPriceIndex();
 
-    registerTicker("1970-01-01", "PKN", 10);
+    registerTicker(
+      "1970-01-01" as TransactionTimeKey,
+      TickerCtor("PKN") as Ticker,
+      10,
+    );
 
-    expect(index["PKN"]).toEqual([
+    expect(index[TickerCtor("PKN")]).toEqual([
       {
         start: new Date("1970-01-01"),
         end: null,
@@ -64,10 +74,10 @@ describe("TickerPriceIndices builder", () => {
   it("ends an open period when a stock amount goes to zero", () => {
     const { index, registerTicker } = createPriceIndex();
 
-    registerTicker("1970-01-01", "PKN", 10);
-    registerTicker("1970-02-01", "PKN", 0);
+    registerTicker(TransactionTimeKeyCtor("1970-01-01"), TickerCtor("PKN"), 10);
+    registerTicker(TransactionTimeKeyCtor("1970-02-01"), TickerCtor("PKN"), 0);
 
-    expect(index["PKN"]).toEqual([
+    expect(index[TickerCtor("PKN")]).toEqual([
       {
         start: new Date("1970-01-01"),
         end: new Date("1970-02-01"),
@@ -78,11 +88,11 @@ describe("TickerPriceIndices builder", () => {
   it("creates multiple periods when a stock is re-added later", () => {
     const { index, registerTicker } = createPriceIndex();
 
-    registerTicker("1970-01-01", "PKN", 10);
-    registerTicker("1970-02-01", "PKN", 0);
-    registerTicker("1970-03-01", "PKN", 5);
+    registerTicker(TransactionTimeKeyCtor("1970-01-01"), TickerCtor("PKN"), 10);
+    registerTicker(TransactionTimeKeyCtor("1970-02-01"), TickerCtor("PKN"), 0);
+    registerTicker(TransactionTimeKeyCtor("1970-03-01"), TickerCtor("PKN"), 5);
 
-    expect(index["PKN"]).toEqual([
+    expect(index[TickerCtor("PKN")]).toEqual([
       {
         start: new Date("1970-01-01"),
         end: new Date("1970-02-01"),
@@ -94,17 +104,21 @@ describe("TickerPriceIndices builder", () => {
   it("handles multiple tickers independently", () => {
     const { index, registerTicker } = createPriceIndex();
 
-    registerTicker("1970-01-01", "PKN", 10);
-    registerTicker("1970-01-10", "DINO", 15);
-    registerTicker("1970-02-01", "PKN", 0);
+    registerTicker(TransactionTimeKeyCtor("1970-01-01"), TickerCtor("PKN"), 10);
+    registerTicker(
+      TransactionTimeKeyCtor("1970-01-10"),
+      TickerCtor("DINO"),
+      15,
+    );
+    registerTicker(TransactionTimeKeyCtor("1970-02-01"), TickerCtor("PKN"), 0);
 
-    expect(index["PKN"]).toEqual([
+    expect(index[TickerCtor("PKN")]).toEqual([
       {
         start: new Date("1970-01-01"),
         end: new Date("1970-02-01"),
       },
     ]);
-    expect(index["DINO"]).toEqual([
+    expect(index[TickerCtor("DINO")]).toEqual([
       {
         start: new Date("1970-01-10"),
         end: null,
@@ -115,11 +129,11 @@ describe("TickerPriceIndices builder", () => {
   it("does not duplicate open periods when called repeatedly with positive amount", () => {
     const { index, registerTicker } = createPriceIndex();
 
-    registerTicker("1970-01-01", "PKN", 10);
-    registerTicker("1970-01-05", "PKN", 20);
-    registerTicker("1970-01-10", "PKN", 15);
+    registerTicker(TransactionTimeKeyCtor("1970-01-01"), TickerCtor("PKN"), 10);
+    registerTicker(TransactionTimeKeyCtor("1970-01-05"), TickerCtor("PKN"), 20);
+    registerTicker(TransactionTimeKeyCtor("1970-01-10"), TickerCtor("PKN"), 15);
 
-    expect(index["PKN"]).toEqual([
+    expect(index[TickerCtor("PKN")]).toEqual([
       {
         start: new Date("1970-01-01"),
         end: null,
@@ -130,8 +144,8 @@ describe("TickerPriceIndices builder", () => {
   it("ignores zero updates when no open period exists", () => {
     const { index, registerTicker } = createPriceIndex();
 
-    registerTicker("1970-01-01", "PKN", 0);
+    registerTicker(TransactionTimeKeyCtor("1970-01-01"), TickerCtor("PKN"), 0);
 
-    expect(index["PKN"]).toEqual([]);
+    expect(index[TickerCtor("PKN")]).toEqual([]);
   });
 });

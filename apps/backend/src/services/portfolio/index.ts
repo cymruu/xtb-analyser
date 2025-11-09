@@ -10,6 +10,7 @@ import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import { createPriceServiceMock } from "../price/mock";
 import { timeServiceMock } from "../time/time";
 import type { TransactionTimeKey, Ticker } from "../../domains/stock/types";
+import type { TypedEntries } from "../../types";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -85,7 +86,9 @@ export const createPortfolioService = ({
       console.dir({ transactionsByDay }, { depth: 5 });
 
       const [_, result] = Array.mapAccum(
-        Object.entries(transactionsByDay),
+        Object.entries(transactionsByDay) as TypedEntries<
+          typeof transactionsByDay
+        >,
         {},
         (state, [key, transactions]) => {
           const current = calculatePortfolioInDay(state, transactions);
@@ -96,9 +99,12 @@ export const createPortfolioService = ({
 
       const priceIndex = createPriceIndex();
       Array.forEach(Object.values(result), ({ key: date, current }) => {
-        Array.forEach(Object.entries(current), ([symbol, amount]) => {
-          priceIndex.registerTicker(date, symbol as Ticker, amount);
-        });
+        Array.forEach(
+          Object.entries(current) as TypedEntries<typeof current>,
+          ([symbol, amount]) => {
+            priceIndex.registerTicker(date, symbol, amount);
+          },
+        );
       });
       const priceService = createPriceServiceMock(priceIndex.index, {
         timeService: timeServiceMock,

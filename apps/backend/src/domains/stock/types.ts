@@ -1,4 +1,7 @@
-import type { Brand } from "effect/Brand";
+import { Brand } from "effect";
 
-export type Ticker = string & Brand<Ticker>;
-export type TransactionTimeKey = string & Brand<TransactionTimeKey>;
+export type Ticker = string & Brand.Brand<Ticker>;
+export const TickerCtor = Brand.nominal<Ticker>();
+
+export type TransactionTimeKey = string & Brand.Brand<TransactionTimeKey>;
+export const TransactionTimeKeyCtor = Brand.nominal<TransactionTimeKey>();
