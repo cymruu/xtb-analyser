@@ -1,8 +1,8 @@
 import { endOfDay, formatISO } from "date-fns";
 import { eachDayOfInterval } from "date-fns/fp";
-import { Array, Option } from "effect";
+import { Array, Effect, Option, Sink, Stream } from "effect";
 
-import type { TickerPriceIndices } from "../portfolio";
+import type { PortfolioDayElements, TickerPriceIndices } from "../portfolio";
 import { type ITimeService } from "../time/time";
 import type { Ticker, TransactionTimeKey } from "../../domains/stock/types";
 import type { TypedEntries } from "../../types";
@@ -18,7 +18,7 @@ type PriceEntry = {
   low: number;
   close: number;
   close_adjusted: number;
-  price_source: "mock" | "yahoo" | "stoq";
+  price_source: "mock" | "yahoo";
 };
 
 type Prices = {
@@ -67,17 +67,45 @@ export const createPriceServiceMock = (
     });
   };
   getPrices(priceIndex);
+  const getPrice = (symbol: Ticker, date: TransactionTimeKey) => {
+    const price = prices[date]?.[symbol];
+
+    if (!price) {
+      // TODO: implement LOCF
+      return Option.none();
+    }
+    return Option.some(price.close);
+  };
 
   return {
     prices,
-    getPrice: (symbol: Ticker, date: TransactionTimeKey) => {
-      const price = prices[date]?.[symbol];
+    getPrice,
+    calculateValue: (
+      date: TransactionTimeKey,
+      portfolio: PortfolioDayElements,
+    ) => {
+      return Effect.partition(
+        Object.entries(portfolio) as TypedEntries<typeof portfolio>,
+        ([ticker, amount]) => {
+          const priceOption = getPrice(ticker, date);
 
-      if (!price) {
-        // TODO: implement LOCF
-        return Option.none();
-      }
-      return Option.some(price.close);
+          return Option.match(priceOption, {
+            onNone: () => {
+              return Effect.fail(
+                new Error(`No price for ${ticker} at ${date}`),
+              );
+            },
+            onSome(v) {
+              return Effect.succeed(v * amount);
+            },
+          });
+        },
+      ).pipe(
+        Effect.map(([failures, successes]) => ({
+          failures,
+          value: Array.reduce(successes, 0, (acc, v) => acc + v),
+        })),
+      );
     },
   };
 };

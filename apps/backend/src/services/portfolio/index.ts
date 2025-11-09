@@ -124,7 +124,7 @@ type PortfolioTransaction = {
   symbol: Ticker;
 };
 
-type PortfolioDayElements = {
+export type PortfolioDayElements = {
   [key: Ticker]: number;
 };
 
