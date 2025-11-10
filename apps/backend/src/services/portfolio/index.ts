@@ -7,10 +7,11 @@ import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
-import { createPriceServiceMock } from "../price/mock";
 import { timeServiceMock } from "../time/time";
 import type { TransactionTimeKey, Ticker } from "../../domains/stock/types";
 import type { TypedEntries } from "../../types";
+import { createYahooFinance } from "../yahooFinance";
+import { createPriceService } from "../price";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -106,9 +107,13 @@ export const createPortfolioService = ({
           },
         );
       });
-      const priceService = createPriceServiceMock(priceIndex.index, {
+      const yahooFinanceService = createYahooFinance();
+
+      const priceService = await createPriceService(priceIndex.index, {
         timeService: timeServiceMock,
+        yahooFinanceService,
       });
+
       const prices = priceService.prices;
 
       console.dir({ index: priceIndex.index, prices }, { depth: 5 });
@@ -149,12 +154,14 @@ const calculatePortfolioInDay = (
   );
 };
 
-export type TickerPriceIndices = {
-  [key: Ticker]: Array<{ start: Date; end: Date | null }>;
+export type TickerPriceIndice = { start: Date; end: Date | null };
+
+export type TickerPriceIndex = {
+  [key: Ticker]: Array<TickerPriceIndice>;
 };
 
 export const createPriceIndex = () => {
-  const index: TickerPriceIndices = {};
+  const index: TickerPriceIndex = {};
   const registerTicker = (
     date: TransactionTimeKey,
     symbol: Ticker,

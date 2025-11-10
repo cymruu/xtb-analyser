@@ -1,14 +1,17 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Option } from "effect";
 
-import { createPriceServiceMock, MissingPriceError } from "./mock";
 import { timeServiceMock } from "../time/time";
 import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
+import { createPriceService, MissingPriceError } from ".";
+import { createYahooFinanceMock } from "../yahooFinance/mock";
+
+const yahooFinanceService = createYahooFinanceMock();
 
 describe("priceService", () => {
   describe("getPrice", () => {
     it("should return the price for a known symbol and date in the range", async () => {
-      const priceService = createPriceServiceMock(
+      const priceService = await createPriceService(
         {
           [TickerCtor("PKN")]: [
             { start: new Date(0), end: new Date("1970-01-01") },
@@ -16,6 +19,7 @@ describe("priceService", () => {
         },
         {
           timeService: timeServiceMock,
+          yahooFinanceService,
         },
       );
 
@@ -28,7 +32,7 @@ describe("priceService", () => {
     });
 
     it("should return Option.none() for a symbol that is not tracked at given date", async () => {
-      const priceService = createPriceServiceMock(
+      const priceService = await createPriceService(
         {
           [TickerCtor("PKN")]: [
             { start: new Date(0), end: new Date("1970-02-01") },
@@ -36,6 +40,7 @@ describe("priceService", () => {
         },
         {
           timeService: timeServiceMock,
+          yahooFinanceService,
         },
       );
 
@@ -48,7 +53,7 @@ describe("priceService", () => {
     });
 
     it("should return Option.none() for a date outside the available data range", async () => {
-      const priceService = createPriceServiceMock(
+      const priceService = await createPriceService(
         {
           [TickerCtor("PKN")]: [
             { start: new Date(0), end: new Date("1970-01-03") },
@@ -56,6 +61,8 @@ describe("priceService", () => {
         },
         {
           timeService: timeServiceMock,
+
+          yahooFinanceService,
         },
       );
 
@@ -71,7 +78,7 @@ describe("priceService", () => {
   });
   describe("calculateValue", () => {
     it("should return the value of portfolio for given date", async () => {
-      const priceService = createPriceServiceMock(
+      const priceService = await createPriceService(
         {
           [TickerCtor("PKN")]: [
             { start: new Date(0), end: new Date("1970-01-01") },
@@ -82,6 +89,7 @@ describe("priceService", () => {
         },
         {
           timeService: timeServiceMock,
+          yahooFinanceService,
         },
       );
 
@@ -96,7 +104,7 @@ describe("priceService", () => {
     });
 
     it("should return errors for missing prices", async () => {
-      const priceService = createPriceServiceMock(
+      const priceService = await createPriceService(
         {
           [TickerCtor("PKN")]: [
             { start: new Date(0), end: new Date("1970-01-01") },
@@ -104,6 +112,7 @@ describe("priceService", () => {
         },
         {
           timeService: timeServiceMock,
+          yahooFinanceService,
         },
       );
 
