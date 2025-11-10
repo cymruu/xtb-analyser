@@ -78,6 +78,12 @@ export const createPortfolioService = ({
             },
           ),
         ),
+        Effect.tap((transactionsByDay) => {
+          return Effect.logDebug(
+            "Calculated transactionsByDay",
+            transactionsByDay,
+          );
+        }),
       );
 
       const dailyPortfolioStocksEffect = pipe(
@@ -95,39 +101,32 @@ export const createPortfolioService = ({
           );
           return result;
         }),
-      );
-
-      const priceIndex = createPriceIndex();
-
-      //TODO: side effect - get rid of it
-      const buildIndexEffect = Effect.tap(
-        dailyPortfolioStocksEffect,
-        (dailyStocks) => {
-          Array.forEach(
-            Object.values(dailyStocks),
-            ({ key: date, current }) => {
-              Array.forEach(
-                Object.entries(current) as TypedEntries<typeof current>,
-                ([symbol, amount]) => {
-                  priceIndex.registerTicker(date, symbol, amount);
-                },
-              );
-            },
+        Effect.tap((dailyPortfolioStocksEffect) => {
+          return Effect.logDebug(
+            "Calculated dailyPortfolioStocksEffect",
+            dailyPortfolioStocksEffect,
           );
-        },
+        }),
       );
+
+      const priceIndexEffect = createPriceIndex(
+        dailyPortfolioStocksEffect,
+      ).pipe(
+        Effect.tap((index) => Effect.logDebug("Created price index", index)),
+      );
+
       const yahooFinanceService = createYahooFinance();
 
-      const priceService = await createPriceService(priceIndex.index, {
-        timeService: timeServiceMock,
-        yahooFinanceService,
-      });
+      //   timeService: timeServiceMock,
+      // const priceService = await createPriceService(priceIndex.index, {
+      //   yahooFinanceService,
+      // });
+      //
+      // const prices = priceService.prices;
 
-      const prices = priceService.prices;
+      // console.dir({ index: priceIndex.index, prices }, { depth: 5 });
 
-      console.dir({ index: priceIndex.index, prices }, { depth: 5 });
-
-      return buildIndexEffect;
+      return priceIndexEffect;
     },
   };
 };
@@ -169,28 +168,51 @@ export type TickerPriceIndex = {
   [key: Ticker]: Array<TickerPriceIndice>;
 };
 
-export const createPriceIndex = () => {
-  const index: TickerPriceIndex = {};
-  const registerTicker = (
-    date: TransactionTimeKey,
-    symbol: Ticker,
-    amount: number,
-  ) => {
-    const d = new Date(date);
-    if (!index[symbol]) index[symbol] = [];
+export const createPriceIndex = (
+  dailyPortfolioStocksEffect: Effect.Effect<
+    {
+      key: TransactionTimeKey;
+      current: PortfolioDayElements;
+    }[],
+    never,
+    never
+  >, // TODO: create a type for it
+) =>
+  pipe(
+    Effect.map(dailyPortfolioStocksEffect, (dailyPortfolioStocks) => {
+      return dailyPortfolioStocks.flatMap((v) =>
+        (Object.entries(v.current) as TypedEntries<typeof v.current>).map(
+          ([symbol, amount]) => ({
+            key: v.key,
+            symbol,
+            amount,
+          }),
+        ),
+      );
+    }),
+    Effect.andThen((flattenedDailyStocks) => {
+      return Array.reduce(
+        flattenedDailyStocks,
+        {} as TickerPriceIndex,
+        (index, curr) => {
+          const d = new Date(curr.key);
+          if (!index[curr.symbol]) index[curr.symbol] = [];
 
-    const tickerPeriods = index[symbol];
-    const lastPeriod = tickerPeriods[tickerPeriods.length - 1];
+          const tickerPeriods = index[curr.symbol]!;
+          const lastPeriod = tickerPeriods[tickerPeriods.length - 1];
 
-    if (amount > 0) {
-      if (!lastPeriod || lastPeriod.end !== null) {
-        tickerPeriods.push({ start: d, end: null });
-      }
-    } else {
-      if (lastPeriod && lastPeriod.end === null) {
-        lastPeriod.end = d;
-      }
-    }
-  };
-  return { index, registerTicker };
-};
+          if (curr.amount > 0) {
+            if (!lastPeriod || lastPeriod.end !== null) {
+              tickerPeriods.push({ start: d, end: null });
+            }
+          } else {
+            if (lastPeriod && lastPeriod.end === null) {
+              lastPeriod.end = d;
+            }
+          }
+
+          return index;
+        },
+      );
+    }),
+  );
