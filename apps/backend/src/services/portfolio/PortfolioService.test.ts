@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
-import { createPortfolioService, createPriceIndex } from ".";
 
+import { createPortfolioService, createPriceIndex } from ".";
 import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
 
 const PortfolioService = createPortfolioService({
@@ -21,7 +21,6 @@ describe("PortfolioService", () => {
           quantity: 5,
           time: new Date("1970-01-01"),
         },
-
         {
           id: 1,
           comment: "",

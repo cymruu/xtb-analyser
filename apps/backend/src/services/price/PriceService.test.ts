@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Option } from "effect";
 
-import { timeServiceMock } from "../time/time";
-import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
 import { createPriceService, MissingPriceError } from ".";
+import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
+import { timeServiceMock } from "../time/time";
 import { createYahooFinanceMock } from "../yahooFinance/mock";
 
 const yahooFinanceService = createYahooFinanceMock();
@@ -23,10 +23,11 @@ describe("priceService", () => {
         },
       );
 
-      const result = priceService.getPrice(
+      const effect = priceService.getPrice(
         TickerCtor("PKN"),
         TransactionTimeKeyCtor("1970-01-01"),
       );
+      const result = await Effect.runPromise(effect);
 
       expect(result).toEqual(Option.some(1));
     });
@@ -44,10 +45,11 @@ describe("priceService", () => {
         },
       );
 
-      const result = priceService.getPrice(
+      const effect = priceService.getPrice(
         TickerCtor("DINO"),
         TransactionTimeKeyCtor("1970-01-01"),
       );
+      const result = await Effect.runPromise(effect);
 
       expect(result).toEqual(Option.none());
     });
@@ -66,10 +68,11 @@ describe("priceService", () => {
         },
       );
 
-      const result = priceService.getPrice(
+      const effect = priceService.getPrice(
         TickerCtor("PKN"),
         TransactionTimeKeyCtor("1970-02-01"),
       );
+      const result = await Effect.runPromise(effect);
 
       expect(result).toEqual(Option.none());
     });

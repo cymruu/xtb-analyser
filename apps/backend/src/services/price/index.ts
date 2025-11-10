@@ -76,45 +76,45 @@ export const createPriceService = async (
     );
   };
 
-  const getPricesByDate = (flatPrices: PricePoint[]) =>
-    Array.reduce(flatPrices, {} as PricesByDate, (acc, pricePoint) => {
-      const key = pricePoint.dateKey;
-      if (!acc[key]) {
-        acc[key] = {};
-      }
+  const getPricesByDate = (flatPricesEffect: Effect.Effect<PricePoint[]>) =>
+    Effect.andThen(flatPricesEffect, (flatPrices) => {
+      return Array.reduce(flatPrices, {} as PricesByDate, (acc, pricePoint) => {
+        const key = pricePoint.dateKey;
+        if (!acc[key]) {
+          acc[key] = {};
+        }
 
-      acc[key][pricePoint.symbol] = {
-        symbol: pricePoint.symbol,
-        open: pricePoint.open,
-        high: pricePoint.high,
-        low: pricePoint.low,
-        close: pricePoint.close,
-        close_adjusted: pricePoint.close_adjusted,
-        source: pricePoint.source,
-      };
+        acc[key][pricePoint.symbol] = {
+          symbol: pricePoint.symbol,
+          open: pricePoint.open,
+          high: pricePoint.high,
+          low: pricePoint.low,
+          close: pricePoint.close,
+          close_adjusted: pricePoint.close_adjusted,
+          source: pricePoint.source,
+        };
 
-      return acc;
+        return acc;
+      });
     });
 
-  const { failures, successes: prices } = await Effect.runPromise(
-    getPrices(priceIndex),
-  );
-  console.log({ failures });
+  const getPricesEffect = getPrices(priceIndex);
+  const flatPricesEffect = Effect.map(getPricesEffect, (v) => v.successes);
 
-  const pricesByDate = getPricesByDate(prices);
+  const pricesByDateEffect = getPricesByDate(flatPricesEffect);
 
   const getPrice = (symbol: Ticker, date: TransactionTimeKey) => {
-    const price = pricesByDate[date]?.[symbol];
-
-    if (!price) {
-      // TODO: implement LOCF
-      return Option.none();
-    }
-    return Option.some(price.close);
+    return Effect.map(pricesByDateEffect, (pricesByDate) => {
+      const price = pricesByDate[date]?.[symbol];
+      if (!price) {
+        // TODO: implement LOCF
+        return Option.none();
+      }
+      return Option.some(price.close);
+    });
   };
 
   return {
-    prices,
     getPrice,
     calculateValue: (
       date: TransactionTimeKey,
@@ -123,21 +123,23 @@ export const createPriceService = async (
       return Effect.partition(
         Object.entries(portfolio) as TypedEntries<typeof portfolio>,
         ([ticker, amount]) => {
-          const priceOption = getPrice(ticker, date);
+          const priceEffect = getPrice(ticker, date);
 
-          return Option.match(priceOption, {
-            onNone: () => {
-              return Effect.fail(
-                new MissingPriceError({
-                  symbol: ticker,
-                  date,
-                }),
-              );
-            },
-            onSome(v) {
-              return Effect.succeed(v * amount);
-            },
-          });
+          return Effect.andThen(priceEffect, (priceOption) =>
+            Option.match(priceOption, {
+              onNone: () => {
+                return Effect.fail(
+                  new MissingPriceError({
+                    symbol: ticker,
+                    date,
+                  }),
+                );
+              },
+              onSome(v) {
+                return Effect.succeed(v * amount);
+              },
+            }),
+          );
         },
       ).pipe(
         Effect.map(([failures, successes]) => ({
