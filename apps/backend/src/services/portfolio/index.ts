@@ -5,13 +5,13 @@ import { z } from "zod";
 
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 
+import type { Ticker, TransactionTimeKey } from "../../domains/stock/types";
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
-import { timeServiceMock } from "../time/time";
-import type { TransactionTimeKey, Ticker } from "../../domains/stock/types";
 import type { TypedEntries } from "../../types";
-import { createYahooFinance } from "../yahooFinance";
 import { createPriceService } from "../price";
+import { timeServiceMock } from "../time/time";
+import { createYahooFinance } from "../yahooFinance";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -80,33 +80,42 @@ export const createPortfolioService = ({
         ),
       );
 
-      const transactionsByDay = await Effect.runPromise(
+      const dailyPortfolioStocksEffect = pipe(
         transactionsByDayEffect,
+        Effect.map((transactionsByDay) => {
+          const [_, result] = Array.mapAccum(
+            Object.entries(transactionsByDay) as TypedEntries<
+              typeof transactionsByDay
+            >,
+            {},
+            (state, [key, transactions]) => {
+              const current = calculatePortfolioInDay(state, transactions);
+              return [current, { key, current }];
+            },
+          );
+          return result;
+        }),
       );
-
-      console.dir({ transactionsByDay }, { depth: 5 });
-
-      const [_, result] = Array.mapAccum(
-        Object.entries(transactionsByDay) as TypedEntries<
-          typeof transactionsByDay
-        >,
-        {},
-        (state, [key, transactions]) => {
-          const current = calculatePortfolioInDay(state, transactions);
-          return [current, { key, current }];
-        },
-      );
-      console.dir({ result }, { depth: 5 });
 
       const priceIndex = createPriceIndex();
-      Array.forEach(Object.values(result), ({ key: date, current }) => {
-        Array.forEach(
-          Object.entries(current) as TypedEntries<typeof current>,
-          ([symbol, amount]) => {
-            priceIndex.registerTicker(date, symbol, amount);
-          },
-        );
-      });
+
+      //TODO: side effect - get rid of it
+      const buildIndexEffect = Effect.tap(
+        dailyPortfolioStocksEffect,
+        (dailyStocks) => {
+          Array.forEach(
+            Object.values(dailyStocks),
+            ({ key: date, current }) => {
+              Array.forEach(
+                Object.entries(current) as TypedEntries<typeof current>,
+                ([symbol, amount]) => {
+                  priceIndex.registerTicker(date, symbol, amount);
+                },
+              );
+            },
+          );
+        },
+      );
       const yahooFinanceService = createYahooFinance();
 
       const priceService = await createPriceService(priceIndex.index, {
@@ -118,7 +127,7 @@ export const createPortfolioService = ({
 
       console.dir({ index: priceIndex.index, prices }, { depth: 5 });
 
-      return result;
+      return buildIndexEffect;
     },
   };
 };

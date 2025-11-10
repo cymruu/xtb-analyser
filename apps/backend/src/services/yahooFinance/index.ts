@@ -2,8 +2,9 @@ import { Data, Effect, Request, RequestResolver } from "effect";
 import YahooFinance from "yahoo-finance2";
 import type { ChartResultArray } from "yahoo-finance2/modules/chart";
 
-import type { Ticker } from "../../domains/stock/types";
+import { type Ticker } from "../../domains/stock/types";
 import type { TickerPriceIndice } from "../portfolio";
+import { tickerToYahooTicker } from "./tickerToYahooTicker";
 
 export class GetHistoricalPricesError extends Data.TaggedError(
   "GetHistoricalPricesError",
@@ -25,7 +26,7 @@ export const createYahooFinance = () => {
       const resolver = RequestResolver.fromEffect(() =>
         Effect.tryPromise({
           try: () =>
-            yahooFinance.chart(ticker, {
+            yahooFinance.chart(tickerToYahooTicker(ticker), {
               period1: indice.start,
               period2: indice.end || undefined,
               interval: "1d",

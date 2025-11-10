@@ -99,6 +99,8 @@ export const createPriceService = async (
   const { failures, successes: prices } = await Effect.runPromise(
     getPrices(priceIndex),
   );
+  console.log({ failures });
+
   const pricesByDate = getPricesByDate(prices);
 
   const getPrice = (symbol: Ticker, date: TransactionTimeKey) => {
