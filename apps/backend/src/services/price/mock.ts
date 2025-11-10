@@ -1,6 +1,6 @@
 import { endOfDay, formatISO } from "date-fns";
 import { eachDayOfInterval } from "date-fns/fp";
-import { Array, Effect, Option, Sink, Stream } from "effect";
+import { Array, Data, Effect, Option, Sink, Stream } from "effect";
 
 import type { PortfolioDayElements, TickerPriceIndices } from "../portfolio";
 import { type ITimeService } from "../time/time";
@@ -26,6 +26,11 @@ type Prices = {
     [key: Ticker]: PriceEntry;
   };
 };
+
+export class MissingPriceError extends Data.TaggedError("MissingPriceError")<{
+  symbol: Ticker;
+  date: TransactionTimeKey;
+}> {}
 
 export const createPriceServiceMock = (
   priceIndex: TickerPriceIndices,
@@ -92,7 +97,10 @@ export const createPriceServiceMock = (
           return Option.match(priceOption, {
             onNone: () => {
               return Effect.fail(
-                new Error(`No price for ${ticker} at ${date}`),
+                new MissingPriceError({
+                  symbol: ticker,
+                  date,
+                }),
               );
             },
             onSome(v) {
