@@ -117,16 +117,14 @@ export const createPortfolioService = ({
 
       const yahooFinanceService = createYahooFinance();
 
-      //   timeService: timeServiceMock,
-      // const priceService = await createPriceService(priceIndex.index, {
-      //   yahooFinanceService,
-      // });
-      //
-      // const prices = priceService.prices;
+      const priceService = createPriceService(priceIndexEffect, {
+        yahooFinanceService,
+        timeService,
+      });
 
-      // console.dir({ index: priceIndex.index, prices }, { depth: 5 });
-
-      return priceIndexEffect;
+      return priceService.calculateValue(TransactionTimeKeyCtor("2025-10-10"), {
+        [TickerCtor("PKN.PL")]: 15,
+      });
     },
   };
 };

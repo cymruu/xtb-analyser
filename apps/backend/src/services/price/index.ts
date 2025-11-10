@@ -29,8 +29,8 @@ export class MissingPriceError extends Data.TaggedError("MissingPriceError")<{
   date: TransactionTimeKey;
 }> {}
 
-export const createPriceService = async (
-  priceIndex: TickerPriceIndex,
+export const createPriceService = (
+  priceIndexEffect: Effect.Effect<TickerPriceIndex>,
   {
     timeService,
     yahooFinanceService,
@@ -39,41 +39,43 @@ export const createPriceService = async (
     yahooFinanceService: ReturnType<typeof createYahooFinance>;
   },
 ) => {
-  const getPrices = (priceIndex: TickerPriceIndex) => {
-    return Effect.partition(
-      Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
-      flow(([symbol, indices]) => {
-        const historicalPrices = yahooFinanceService.getHistoricalPrices(
-          symbol,
-          {
-            start: indices?.[0]?.start || new Date(0),
-            end: timeService.now(),
-          },
-        );
-        return Effect.map(historicalPrices, (historicalPrices) => {
-          return Array.map(historicalPrices.quotes, (quote) => {
-            const dateKey = formatISO(quote.date, {
-              representation: "date",
-            }) as TransactionTimeKey;
+  const getPrices = (priceIndexEffect: Effect.Effect<TickerPriceIndex>) => {
+    return Effect.flatMap(priceIndexEffect, (priceIndex) => {
+      return Effect.partition(
+        Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
+        flow(([symbol, indices]) => {
+          const historicalPrices = yahooFinanceService.getHistoricalPrices(
+            symbol,
+            {
+              start: indices?.[0]?.start || new Date(0),
+              end: timeService.now(),
+            },
+          );
+          return Effect.map(historicalPrices, (historicalPrices) => {
+            return Array.map(historicalPrices.quotes, (quote) => {
+              const dateKey = formatISO(quote.date, {
+                representation: "date",
+              }) as TransactionTimeKey;
 
-            return <PricePoint>{
-              dateKey,
-              symbol,
-              open: quote.open,
-              high: quote.high,
-              low: quote.low,
-              close: quote.close,
-              close_adjusted: quote.adjclose || null,
-              source: "yahoo",
-            };
+              return <PricePoint>{
+                dateKey,
+                symbol,
+                open: quote.open,
+                high: quote.high,
+                low: quote.low,
+                close: quote.close,
+                close_adjusted: quote.adjclose || null,
+                source: "yahoo",
+              };
+            });
           });
-        });
-      }),
-    ).pipe(
-      Effect.map(([failures, successes]) => {
-        return { failures, successes: Array.flatten(successes) };
-      }),
-    );
+        }),
+      ).pipe(
+        Effect.map(([failures, successes]) => {
+          return { failures, successes: Array.flatten(successes) };
+        }),
+      );
+    });
   };
 
   const getPricesByDate = (flatPricesEffect: Effect.Effect<PricePoint[]>) =>
@@ -98,7 +100,7 @@ export const createPriceService = async (
       });
     });
 
-  const getPricesEffect = getPrices(priceIndex);
+  const getPricesEffect = getPrices(priceIndexEffect);
   const flatPricesEffect = Effect.map(getPricesEffect, (v) => v.successes);
 
   const pricesByDateEffect = getPricesByDate(flatPricesEffect);
