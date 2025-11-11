@@ -120,16 +120,17 @@ export const createPortfolioService = ({
       );
 
       const yahooFinanceService = createYahooFinance();
-      const yahooPriceRepository = createYahooPriceRepository({ prismaClient });
-
-      const priceService = createPriceService(priceIndexEffect, {
-        yahooFinanceService,
+      const yahooPriceRepository = createYahooPriceRepository({
+        prismaClient,
         timeService,
       });
 
-      return [
-        yahooPriceRepository.saveBulkPrices(priceService.getPricesEffect),
-      ];
+      // const priceService = createPriceService(priceIndexEffect, {
+      //   yahooFinanceService,
+      //   timeService,
+      // });
+
+      return [yahooPriceRepository.getPricesFromDb(priceIndexEffect)];
     },
   };
 };

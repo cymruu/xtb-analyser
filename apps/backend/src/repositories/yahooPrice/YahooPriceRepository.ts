@@ -1,13 +1,54 @@
 import { Array, Effect } from "effect";
 
-import type { PrismaClient } from "../../generated/prisma/client";
+import type { Prisma, PrismaClient } from "../../generated/prisma/client";
+import type { TickerPriceIndex } from "../../services/portfolio";
 import type { createPriceService } from "../../services/price";
+import type { ITimeService } from "../../services/time/time";
+import type { TypedEntries } from "../../types";
 
 export const createYahooPriceRepository = ({
   prismaClient,
+  timeService,
 }: {
   prismaClient: PrismaClient;
+  timeService: ITimeService;
 }) => {
+  const getPricesFromDb = (
+    priceIndexEffect: Effect.Effect<TickerPriceIndex>,
+  ): Effect.Effect<
+    ReturnType<PrismaClient["yahooPrice"]["createMany"]>,
+    Error
+  > => {
+    return Effect.andThen(priceIndexEffect, (priceIndex) => {
+      return Array.reduce(
+        Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
+        [] as Prisma.YahooPriceWhereInput[],
+        (acc, [symbol, indices]) => {
+          const elementFilter = {
+            symbol,
+            datetime: {
+              gte: indices[0]?.start || new Date(0),
+              lt: indices[indices.length - 1]?.end || timeService.now(),
+            },
+          };
+          acc.push(elementFilter);
+          return acc;
+        },
+      );
+    }).pipe(
+      Effect.flatMap((whereFilter) => {
+        return Effect.tryPromise({
+          try: () =>
+            prismaClient.yahooPrice.findMany({
+              where: { OR: whereFilter },
+            }),
+
+          catch: (unknown) => new Error(`something went wrong ${unknown}`),
+        });
+      }),
+    );
+  };
+
   const saveBulkPrices = (
     pricesEffect: ReturnType<typeof createPriceService>["getPricesEffect"],
   ) => {
@@ -38,5 +79,5 @@ export const createYahooPriceRepository = ({
     );
   };
 
-  return { saveBulkPrices };
+  return { saveBulkPrices, getPricesFromDb };
 };
