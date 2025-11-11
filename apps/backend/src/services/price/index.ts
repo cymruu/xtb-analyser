@@ -1,11 +1,12 @@
 import { formatISO } from "date-fns";
-import { Array, Data, Effect, flow, Option } from "effect";
+import { Array, Data, Effect, flow, Option, pipe } from "effect";
 
-import type { PortfolioDayElements, TickerPriceIndex } from "../portfolio";
-import { type ITimeService } from "../time/time";
 import type { Ticker, TransactionTimeKey } from "../../domains/stock/types";
 import type { TypedEntries } from "../../types";
+import type { PortfolioDayElements, TickerPriceIndex } from "../portfolio";
+import { type ITimeService } from "../time/time";
 import type { createYahooFinance } from "../yahooFinance";
+import { tickerToYahooTicker } from "../yahooFinance/tickerToYahooTicker";
 
 type PriceEntry = {
   symbol: Ticker;
@@ -44,12 +45,19 @@ export const createPriceService = (
       return Effect.partition(
         Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
         flow(([symbol, indices]) => {
-          const historicalPrices = yahooFinanceService.getHistoricalPrices(
-            symbol,
-            {
-              start: indices?.[0]?.start || new Date(0),
-              end: timeService.now(),
-            },
+          const yahooTicker = tickerToYahooTicker(symbol);
+          const historicalPrices = pipe(
+            Effect.logDebug(`Requesting YahooFinance historical prices`, {
+              ticker: symbol,
+              yahooTicker,
+              indices,
+            }),
+            Effect.andThen(() =>
+              yahooFinanceService.getHistoricalPrices(symbol, {
+                start: indices?.[0]?.start || new Date(0),
+                end: timeService.now(),
+              }),
+            ),
           );
           return Effect.map(historicalPrices, (historicalPrices) => {
             return Array.map(historicalPrices.quotes, (quote) => {

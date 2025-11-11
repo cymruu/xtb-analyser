@@ -5,12 +5,17 @@ import { z } from "zod";
 
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 
-import type { Ticker, TransactionTimeKey } from "../../domains/stock/types";
+import {
+  TickerCtor,
+  TransactionTimeKeyCtor,
+  type Ticker,
+  type TransactionTimeKey,
+} from "../../domains/stock/types";
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
 import { createPriceService } from "../price";
-import { timeServiceMock } from "../time/time";
+import { timeService, timeServiceMock } from "../time/time";
 import { createYahooFinance } from "../yahooFinance";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };

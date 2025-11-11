@@ -1,4 +1,4 @@
-import { Data, Effect, Request, RequestResolver } from "effect";
+import { Data, Effect, pipe, Request, RequestResolver } from "effect";
 import YahooFinance from "yahoo-finance2";
 import type { ChartResultArray } from "yahoo-finance2/modules/chart";
 
@@ -23,10 +23,11 @@ export const createYahooFinance = () => {
   const yahooFinance = new YahooFinance();
   return {
     getHistoricalPrices: (ticker: Ticker, indice: TickerPriceIndice) => {
+      const yahooTicker = tickerToYahooTicker(ticker);
       const resolver = RequestResolver.fromEffect(() =>
         Effect.tryPromise({
           try: () =>
-            yahooFinance.chart(tickerToYahooTicker(ticker), {
+            yahooFinance.chart(yahooTicker, {
               period1: indice.start,
               period2: indice.end || undefined,
               interval: "1d",
@@ -43,7 +44,9 @@ export const createYahooFinance = () => {
         }),
       );
 
-      return Effect.request(GetHistoricalPrices({ ticker, indice }), resolver);
+      return pipe(
+        Effect.request(GetHistoricalPrices({ ticker, indice }), resolver),
+      );
     },
   };
 };
