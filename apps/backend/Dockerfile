@@ -6,13 +6,16 @@ COPY . .
 
 FROM build_base AS build
 RUN bun install --frozen-lockfile
-RUN cd ./apps/backend/ && bunx prisma generate && bun run build
+RUN cd ./apps/backend/ && bunx prisma generate 
+
+FROM build_base as prod
+RUN bun install --frozen-lockfile --production
 
 FROM base AS app
 WORKDIR /home/bun/app/
-COPY --from=build /tmp/build/apps/backend/dist/ dist/
+COPY --from=prod /tmp/build/apps/backend/node_modules/ node_modules/
+COPY --from=build /tmp/build/apps/backend/src/ src/
 COPY --from=build /tmp/build/apps/backend/package.json .
-RUN bun install --frozen-lockfile --production
 
 USER bun
 CMD ["/bin/sh"]
