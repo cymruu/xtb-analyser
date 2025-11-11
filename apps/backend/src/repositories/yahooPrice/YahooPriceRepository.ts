@@ -16,7 +16,7 @@ export const createYahooPriceRepository = ({
   const getPricesFromDb = (
     priceIndexEffect: Effect.Effect<TickerPriceIndex>,
   ): Effect.Effect<
-    ReturnType<PrismaClient["yahooPrice"]["createMany"]>,
+    Awaited<ReturnType<PrismaClient["yahooPrice"]["createMany"]>>,
     Error
   > => {
     return Effect.andThen(priceIndexEffect, (priceIndex) => {
@@ -43,7 +43,7 @@ export const createYahooPriceRepository = ({
               where: { OR: whereFilter },
             }),
 
-          catch: (unknown) => new Error(`something went wrong ${unknown}`),
+          catch: (unknown) => new Error(`Failed loading prices from database`),
         });
       }),
     );
@@ -71,9 +71,7 @@ export const createYahooPriceRepository = ({
         },
 
         catch: (error) => {
-          Effect.logError(error);
-          console.error(error);
-          return new Error("Failed prices to database");
+          return new Error("Failed writing prices to database");
         },
       }),
     );

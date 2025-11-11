@@ -107,7 +107,7 @@ describe("priceService", () => {
     });
 
     it("should return errors for missing prices", async () => {
-      const priceService = await createPriceService(
+      const priceService = createPriceService(
         Effect.succeed({
           [TickerCtor("PKN")]: [
             { start: new Date(0), end: new Date("1970-01-01") },

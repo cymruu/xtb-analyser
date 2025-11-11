@@ -10,12 +10,12 @@ import {
   type TransactionTimeKey,
 } from "../../domains/stock/types";
 import { PrismaClient } from "../../generated/prisma/client";
+import { createYahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
 import { createPriceService } from "../price";
 import { timeService } from "../time/time";
-import { createYahooFinance } from "../yahooFinance";
-import { createYahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
+import { createYahooFinanceMock } from "../yahooFinance/mock";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -105,10 +105,10 @@ export const createPortfolioService = ({
           );
           return result;
         }),
-        Effect.tap((dailyPortfolioStocksEffect) => {
+        Effect.tap((dailyPortfolioStocks) => {
           return Effect.logDebug(
-            "Calculated dailyPortfolioStocksEffect",
-            dailyPortfolioStocksEffect,
+            "Calculated dailyPortfolioStocks",
+            dailyPortfolioStocks,
           );
         }),
       );
@@ -119,18 +119,17 @@ export const createPortfolioService = ({
         Effect.tap((index) => Effect.logDebug("Created price index", index)),
       );
 
-      const yahooFinanceService = createYahooFinance();
+      const yahooFinanceService = createYahooFinanceMock();
       const yahooPriceRepository = createYahooPriceRepository({
         prismaClient,
         timeService,
       });
 
-      // const priceService = createPriceService(priceIndexEffect, {
-      //   yahooFinanceService,
-      //   timeService,
-      // });
-
-      return [yahooPriceRepository.getPricesFromDb(priceIndexEffect)];
+      const priceService = createPriceService(priceIndexEffect, {
+        yahooFinanceService,
+        timeService,
+      });
+      return [Effect.succeed(1)];
     },
   };
 };
