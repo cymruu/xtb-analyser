@@ -6,8 +6,6 @@ import { z } from "zod";
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 
 import {
-  TickerCtor,
-  TransactionTimeKeyCtor,
   type Ticker,
   type TransactionTimeKey,
 } from "../../domains/stock/types";
@@ -15,8 +13,9 @@ import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
 import { createPriceService } from "../price";
-import { timeService, timeServiceMock } from "../time/time";
+import { timeService } from "../time/time";
 import { createYahooFinance } from "../yahooFinance";
+import { createYahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -121,15 +120,16 @@ export const createPortfolioService = ({
       );
 
       const yahooFinanceService = createYahooFinance();
+      const yahooPriceRepository = createYahooPriceRepository({ prismaClient });
 
       const priceService = createPriceService(priceIndexEffect, {
         yahooFinanceService,
         timeService,
       });
 
-      return priceService.calculateValue(TransactionTimeKeyCtor("2025-10-10"), {
-        [TickerCtor("PKN.PL")]: 15,
-      });
+      return [
+        yahooPriceRepository.saveBulkPrices(priceService.getPricesEffect),
+      ];
     },
   };
 };

@@ -125,6 +125,7 @@ export const createPriceService = (
   };
 
   return {
+    getPricesEffect,
     getPrice,
     calculateValue: (
       date: TransactionTimeKey,
