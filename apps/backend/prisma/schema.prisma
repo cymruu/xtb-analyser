@@ -17,3 +17,19 @@ model Portfolio {
   schemaVersion String
   schema        Json
 }
+
+model YahooPrice {
+  id        Int      @id @default(autoincrement())
+  symbol    String
+  datetime  DateTime
+  open      Decimal
+  high      Decimal
+  low       Decimal
+  close     Decimal
+  close_adj Decimal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([symbol, datetime])
+}
