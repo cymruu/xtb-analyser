@@ -32,6 +32,7 @@ export const createYahooPriceRepository = ({
         catch: (error) => {
           Effect.logError(error);
           console.error(error);
+          return new Error("Failed prices to database");
         },
       }),
     );
