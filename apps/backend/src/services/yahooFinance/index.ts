@@ -4,7 +4,7 @@ import type { ChartResultArray } from "yahoo-finance2/modules/chart";
 
 import { type Ticker } from "../../domains/stock/types";
 import type { TickerPriceIndice } from "../portfolio";
-import { tickerToYahooTicker } from "./tickerToYahooTicker";
+import { tickerToYahooTicker } from "./ticker";
 
 export class GetHistoricalPricesError extends Data.TaggedError(
   "GetHistoricalPricesError",

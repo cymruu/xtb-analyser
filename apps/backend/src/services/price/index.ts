@@ -5,7 +5,6 @@ import type { Ticker, TransactionTimeKey } from "../../domains/stock/types";
 import type { TypedEntries } from "../../types";
 import type { PortfolioDayElements, TickerPriceIndex } from "../portfolio";
 import { YahooFinance } from "../yahooFinance";
-import { tickerToYahooTicker } from "../yahooFinance/tickerToYahooTicker";
 import { TimeService } from "../time/time";
 
 type PriceEntry = {
@@ -38,11 +37,9 @@ export const fetchPrices = (priceIndex: TickerPriceIndex) =>
     return yield* Effect.partition(
       Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
       flow(([symbol, indices]) => {
-        const yahooTicker = tickerToYahooTicker(symbol);
         const historicalPrices = pipe(
           Effect.logError(`Requesting YahooFinance historical prices`, {
             ticker: symbol,
-            yahooTicker,
             indices,
           }),
           Effect.andThen(() =>
