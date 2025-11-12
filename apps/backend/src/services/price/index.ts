@@ -133,7 +133,7 @@ export const createPriceResolver = (flatPrices: PricePoint[]) => {
           return Option.some(v.close);
         },
       );
-      return Array.findFirst(lookup, Option.isSome).pipe(Option.flatten);
+      return pipe(lookup, Array.findFirst(Option.isSome), Option.flatten);
     }
     return Option.some(price.close);
   };
