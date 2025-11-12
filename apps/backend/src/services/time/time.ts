@@ -4,7 +4,7 @@ export interface ITimeService {
   now(): Date;
 }
 
-const timeService = {
+export const timeService = {
   now() {
     return new Date();
   },
