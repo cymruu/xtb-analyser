@@ -12,10 +12,11 @@ import {
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
-import { createPriceResolver, fetchPrices, type PricePoint } from "../price";
+import { createPriceResolver, fetchPrices } from "../price";
 import { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
 import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
 import { mapYahooPriceToPricePoint } from "./mapYahooPriceToPricePoint";
+import { createMissingPricesIndex } from "./missingPriceIndex";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -106,7 +107,17 @@ export const createPortfolioService = ({
         const priceIndex = createPriceIndex(dailyPortfolioStocks);
         yield* Effect.logDebug("Created price index", priceIndex);
 
-        const prices = yield* fetchPrices(priceIndex);
+        const dbPrices =
+          yield* yahooPriceRepository.getPricesFromDb(priceIndex);
+
+        const missingPriceIndex = yield* createMissingPricesIndex(
+          priceIndex,
+          dbPrices,
+        );
+
+        yield* Effect.logDebug("Created missingPriceIndex", missingPriceIndex);
+
+        const prices = yield* fetchPrices(missingPriceIndex);
         const pricePoints = Array.map(
           prices.successes,
           mapYahooPriceToPricePoint,
@@ -122,6 +133,12 @@ export const createPortfolioService = ({
           }),
           Effect.flatMap(Effect.all),
         );
+
+        const savedResult = yield* yahooPriceRepository.saveBulkPrices(
+          prices.successes,
+        );
+
+        yield* Effect.logDebug("saved prices to database", savedResult);
 
         return yield* effects;
       });

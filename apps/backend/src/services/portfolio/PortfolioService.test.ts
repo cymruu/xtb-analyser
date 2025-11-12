@@ -19,7 +19,7 @@ const PortfolioService = createPortfolioService({
 });
 
 describe("PortfolioService", () => {
-  describe.skip("calculatePortfolioDailyValue", () => {
+  describe("calculatePortfolioDailyValue", () => {
     it("b", async () => {
       const file = Bun.file(
         "/Users/filipbachul/Downloads/account_2888512_en_xlsx_2005-12-31_2025-11-08/account_2888512_en_xlsx_2005-12-31_2025-11-08.xlsx",
@@ -44,10 +44,8 @@ describe("PortfolioService", () => {
         ),
       );
 
-      const a = Bun.file("out.json");
+      const a = Bun.file("out1.json");
       a.write(JSON.stringify(result));
-
-      console.log({ result });
     });
 
     it.skip("calculatePortfolioDailyValue", async () => {

@@ -25,7 +25,7 @@ export const createMissingPricesIndex = (
 
     return yield* pipe(
       Effect.reduce(dbPrices, clamped, (acc, curr) => {
-        const ticker = TickerCtor(curr.symbol);
+        const ticker = TickerCtor(curr.symbol); //TODO: handle ticker conversion
         const indiceOption = Array.head(acc[ticker] || []);
 
         return Option.match(indiceOption, {
