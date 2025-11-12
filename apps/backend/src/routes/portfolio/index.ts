@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { validator } from "hono/validator";
 import z from "zod";
 
-import { HonoEnv } from "../../types";
+import type { HonoEnv } from "../../types";
 
 export const portfolioRouter = new Hono<HonoEnv>();
 
