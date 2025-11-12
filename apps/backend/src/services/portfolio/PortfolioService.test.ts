@@ -302,7 +302,7 @@ describe("createMissingPricesIndex", () => {
     });
   });
 
-  it("should update the start date to the latest existing dbPrice datetime", async () => {
+  it("should update the start date to the latest +1 one day existing dbPrice datetime", async () => {
     const index = createPriceIndex([
       {
         key: TransactionTimeKeyCtor("2023-03-01"),
@@ -322,7 +322,7 @@ describe("createMissingPricesIndex", () => {
     const result = await Effect.runPromise(effect);
 
     expect(result).toEqual({
-      [TickerCtor("PKN")]: [{ start: new Date("2023-03-15"), end: null }],
+      [TickerCtor("PKN")]: [{ start: new Date("2023-03-16"), end: null }],
     });
   });
 
@@ -347,6 +347,32 @@ describe("createMissingPricesIndex", () => {
     const result = await Effect.runPromise(effect);
 
     expect(result).toEqual({});
+  });
+
+  it("should clamp indice if some prices exist", async () => {
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: { [TickerCtor("PKN")]: 10 },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-15"),
+        current: { [TickerCtor("PKN")]: -10 },
+      },
+    ]);
+
+    const effect = createMissingPricesIndex(index, [
+      { symbol: "PKN", datetime: new Date("1970-01-01") },
+      { symbol: "PKN", datetime: new Date("1970-01-02") },
+    ] as any);
+
+    const result = await Effect.runPromise(effect);
+
+    expect(result).toEqual({
+      [TickerCtor("PKN")]: [
+        { start: new Date("1970-01-03"), end: new Date("1970-01-15") },
+      ],
+    });
   });
 });
 

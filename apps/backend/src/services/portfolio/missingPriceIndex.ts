@@ -3,6 +3,7 @@ import type { TickerPriceIndex } from ".";
 import type { PrismaClient } from "../../generated/prisma/client";
 import type { TypedEntries } from "../../types";
 import { TickerCtor } from "../../domains/stock/types";
+import { addDays, isEqual } from "date-fns";
 
 export const createMissingPricesIndex = (
   priceIndex: TickerPriceIndex,
@@ -32,12 +33,13 @@ export const createMissingPricesIndex = (
             return Effect.succeed(acc);
           },
           onSome: function (indice) {
-            if (indice.start >= curr.datetime) {
-              delete acc[ticker];
-              return Effect.succeed(acc);
+            if (indice.start < curr.datetime) {
+              indice.start = addDays(curr.datetime, 1);
             }
-            if (indice.start < curr["datetime"])
-              indice.start = curr["datetime"];
+
+            if (indice.end && isEqual(indice.start, indice.end)) {
+              delete acc[ticker];
+            }
             return Effect.succeed(acc);
           },
         });
