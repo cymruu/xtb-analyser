@@ -10,7 +10,7 @@ const timeService = {
   },
 };
 
-const timeServiceMock = {
+export const timeServiceMock = {
   now() {
     return new Date(0);
   },

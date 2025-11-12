@@ -1,78 +1,73 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Option } from "effect";
 
-import { createPriceService, MissingPriceError } from ".";
-import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
-import { timeServiceMock } from "../time/time";
-import { createYahooFinanceMock } from "../yahooFinance/mock";
+import { createPriceResolver, MissingPriceError } from ".";
+import {
+  TickerCtor,
+  TransactionTimeKeyCtor,
+  type Ticker,
+  type TransactionTimeKey,
+} from "../../domains/stock/types";
 
-const yahooFinanceService = createYahooFinanceMock();
+const createPricePoint = (dateKey: TransactionTimeKey, symbol: Ticker) => {
+  return {
+    dateKey,
+    symbol,
+    open: 1,
+    high: 1,
+    low: 1,
+    close: 1,
+    close_adjusted: 1,
+    source: "mock",
+  } as const;
+};
 
-describe("priceService", () => {
+describe("priceResolver", () => {
   describe("getPrice", () => {
     it("should return the price for a known symbol and date in the range", async () => {
-      const priceService = createPriceService(
-        Effect.succeed({
-          [TickerCtor("PKN")]: [
-            { start: new Date(0), end: new Date("1970-01-01") },
-          ],
-        }),
-        {
-          timeService: timeServiceMock,
-          yahooFinanceService,
-        },
-      );
+      const priceResolver = createPriceResolver([
+        createPricePoint(
+          TransactionTimeKeyCtor("1970-01-01"),
+          TickerCtor("PKN"),
+        ),
+      ]);
 
-      const effect = priceService.getPrice(
+      const result = priceResolver.getPrice(
         TickerCtor("PKN"),
         TransactionTimeKeyCtor("1970-01-01"),
       );
-      const result = await Effect.runPromise(effect);
 
       expect(result).toEqual(Option.some(1));
     });
 
     it("should return Option.none() for a symbol that is not tracked at given date", async () => {
-      const priceService = createPriceService(
-        Effect.succeed({
-          [TickerCtor("PKN")]: [
-            { start: new Date(0), end: new Date("1970-02-01") },
-          ],
-        }),
-        {
-          timeService: timeServiceMock,
-          yahooFinanceService,
-        },
-      );
+      const priceService = createPriceResolver([
+        createPricePoint(
+          TransactionTimeKeyCtor("1970-01-01"),
+          TickerCtor("PKN"),
+        ),
+      ]);
 
-      const effect = priceService.getPrice(
+      const result = priceService.getPrice(
         TickerCtor("DINO"),
         TransactionTimeKeyCtor("1970-01-01"),
       );
-      const result = await Effect.runPromise(effect);
 
       expect(result).toEqual(Option.none());
     });
 
     it("should return Option.none() for a date outside the available data range", async () => {
-      const priceService = createPriceService(
-        Effect.succeed({
-          [TickerCtor("PKN")]: [
-            { start: new Date(0), end: new Date("1970-01-03") },
-          ],
-        }),
-        {
-          timeService: timeServiceMock,
+      const priceService = createPriceResolver([
+        createPricePoint(
+          TransactionTimeKeyCtor("1970-01-03"),
+          TickerCtor("PKN"),
+        ),
+      ]);
 
-          yahooFinanceService,
-        },
-      );
-
-      const effect = priceService.getPrice(
+      const result = priceService.getPrice(
         TickerCtor("PKN"),
         TransactionTimeKeyCtor("1970-02-01"),
       );
-      const result = await Effect.runPromise(effect);
 
       expect(result).toEqual(Option.none());
     });
@@ -81,20 +76,16 @@ describe("priceService", () => {
   });
   describe("calculateValue", () => {
     it("should return the value of portfolio for given date", async () => {
-      const priceService = createPriceService(
-        Effect.succeed({
-          [TickerCtor("PKN")]: [
-            { start: new Date(0), end: new Date("1970-01-01") },
-          ],
-          [TickerCtor("DINO")]: [
-            { start: new Date(0), end: new Date("1970-01-01") },
-          ],
-        }),
-        {
-          timeService: timeServiceMock,
-          yahooFinanceService,
-        },
-      );
+      const priceService = createPriceResolver([
+        createPricePoint(
+          TransactionTimeKeyCtor("1970-01-01"),
+          TickerCtor("PKN"),
+        ),
+        createPricePoint(
+          TransactionTimeKeyCtor("1970-01-01"),
+          TickerCtor("DINO"),
+        ),
+      ]);
 
       const result = await Effect.runPromise(
         priceService.calculateValue(TransactionTimeKeyCtor("1970-01-01"), {
@@ -107,17 +98,12 @@ describe("priceService", () => {
     });
 
     it("should return errors for missing prices", async () => {
-      const priceService = createPriceService(
-        Effect.succeed({
-          [TickerCtor("PKN")]: [
-            { start: new Date(0), end: new Date("1970-01-01") },
-          ],
-        }),
-        {
-          timeService: timeServiceMock,
-          yahooFinanceService,
-        },
-      );
+      const priceService = createPriceResolver([
+        createPricePoint(
+          TransactionTimeKeyCtor("1970-01-01"),
+          TickerCtor("PKN"),
+        ),
+      ]);
 
       const result = await Effect.runPromise(
         priceService.calculateValue(TransactionTimeKeyCtor("1970-01-01"), {
