@@ -117,16 +117,15 @@ export const createPortfolioService = ({
         const prices = yield* fetchPrices(priceIndex);
         const priceResolver = createPriceResolver(prices.successes);
 
-        const a = yield* priceResolver.calculateValue("1970-01-01", {
-          UPS: 15,
-          META: 15,
-        });
-        console.log({ a });
+        const effects = Array.map(
+          dailyPortfolioStocks,
 
-        return [
-          priceResolver.getPrice("UPS", "2020-12-12"),
-          priceResolver.getPrice("META", "2020-12-12"),
-        ];
+          ({ key, current }) => {
+            return priceResolver.calculateValue(key, current);
+          },
+        );
+
+        return yield* Effect.all(effects);
       });
     },
   };

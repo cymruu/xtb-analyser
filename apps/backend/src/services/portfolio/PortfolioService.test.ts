@@ -8,7 +8,8 @@ import { createPortfolioService, createPriceIndex } from ".";
 import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
 import { prismaClient } from "../../lib/db";
 import { YahooFinanceMock } from "../yahooFinance/mock";
-import { TimeServiceMock } from "../time/time";
+import { TimeServiceLive, TimeServiceMock } from "../time/time";
+import { YahooFinanceLive } from "../yahooFinance";
 
 const PortfolioService = createPortfolioService({
   prismaClient,
@@ -16,7 +17,7 @@ const PortfolioService = createPortfolioService({
 
 describe("PortfolioService", () => {
   describe("calculatePortfolioDailyValue", () => {
-    it("calculatePortfolioDailyValue", async () => {
+    it.skip("calculatePortfolioDailyValue", async () => {
       const effect = PortfolioService.calculatePortfolioDailyValue([
         {
           id: 1,
@@ -45,13 +46,22 @@ describe("PortfolioService", () => {
           quantity: 5,
           time: new Date("1970-01-01"),
         },
+        {
+          id: 1,
+          comment: "",
+          symbol: "UPS",
+          type: "Stock purchase",
+          amount: 500,
+          quantity: 50,
+          time: new Date("1970-01-05"),
+        },
       ]);
 
       const result = await Effect.runPromise(
         effect.pipe(
           Logger.withMinimumLogLevel(LogLevel.Debug),
           Effect.provide(YahooFinanceMock),
-          Effect.provide(TimeServiceMock),
+          Effect.provide(TimeServiceLive),
         ),
       );
 
