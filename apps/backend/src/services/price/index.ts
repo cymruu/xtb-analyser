@@ -1,12 +1,16 @@
-import { formatISO } from "date-fns";
 import { Array, Data, Effect, flow, Option, pipe } from "effect";
 
-import type { Ticker, TransactionTimeKey } from "../../domains/stock/types";
+import {
+  TransactionTimeKeyCtor,
+  type Ticker,
+  type TransactionTimeKey,
+} from "../../domains/stock/types";
 import type { TypedEntries } from "../../types";
 import type { PortfolioDayElements, TickerPriceIndex } from "../portfolio";
 import { YahooFinance } from "../yahooFinance";
 import { TimeService } from "../time/time";
 import type { YahooTicker } from "../yahooFinance/ticker";
+import { eachDayOfInterval, formatISO, subDays } from "date-fns";
 
 type PriceEntry = {
   symbol: Ticker;
@@ -113,8 +117,23 @@ export const createPriceResolver = (flatPrices: PricePoint[]) => {
   const getPrice = (symbol: Ticker, date: TransactionTimeKey) => {
     const price = pricesByDate[date]?.[symbol];
     if (!price) {
-      // TODO: implement LOCF
-      return Option.none();
+      const lookup = Array.map(
+        eachDayOfInterval({
+          start: subDays(new Date(date), 5), // search for a price 5 days back
+          end: new Date(date),
+        }),
+        (date) => {
+          const key = TransactionTimeKeyCtor(
+            formatISO(date, { representation: "date" }),
+          );
+          const v = pricesByDate[key]?.[symbol];
+          if (!v) {
+            return Option.none();
+          }
+          return Option.some(v.close);
+        },
+      );
+      return Array.findFirst(lookup, Option.isSome).pipe(Option.flatten);
     }
     return Option.some(price.close);
   };

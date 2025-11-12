@@ -85,12 +85,6 @@ export const createPortfolioService = ({
               },
             ),
           ),
-          Effect.tap((transactionsByDay) => {
-            return Effect.logDebug(
-              "Calculated transactionsByDay",
-              transactionsByDay,
-            );
-          }),
         );
         yield* Effect.logDebug("transactionsByDay", transactionsByDay);
 
