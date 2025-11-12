@@ -2,9 +2,9 @@ import { Array, Context, Effect, Layer } from "effect";
 
 import type { Prisma, PrismaClient } from "../../generated/prisma/client";
 import type { TickerPriceIndex } from "../../services/portfolio";
-import type { createPriceService } from "../../services/price";
 import type { ITimeService } from "../../services/time/time";
 import type { TypedEntries } from "../../types";
+import type { PricePoint } from "../../services/price";
 
 export const createYahooPriceRepository = ({
   prismaClient,
@@ -14,67 +14,59 @@ export const createYahooPriceRepository = ({
   timeService: ITimeService;
 }) => {
   const getPricesFromDb = (
-    priceIndexEffect: Effect.Effect<TickerPriceIndex>,
+    priceIndex: TickerPriceIndex,
   ): Effect.Effect<
-    Awaited<ReturnType<PrismaClient["yahooPrice"]["createMany"]>>,
+    Awaited<ReturnType<PrismaClient["yahooPrice"]["findMany"]>>,
     Error
   > => {
-    return Effect.andThen(priceIndexEffect, (priceIndex) => {
-      return Array.reduce(
-        Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
-        [] as Prisma.YahooPriceWhereInput[],
-        (acc, [symbol, indices]) => {
-          const elementFilter = {
-            symbol,
-            datetime: {
-              gte: indices[0]?.start || new Date(0),
-              lt: indices[indices.length - 1]?.end || timeService.now(),
-            },
-          };
-          acc.push(elementFilter);
-          return acc;
-        },
-      );
-    }).pipe(
-      Effect.flatMap((whereFilter) => {
-        return Effect.tryPromise({
-          try: () =>
-            prismaClient.yahooPrice.findMany({
-              where: { OR: whereFilter },
-            }),
-
-          catch: (unknown) => new Error(`Failed loading prices from database`),
-        });
-      }),
+    const whereFilter = Array.reduce(
+      Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
+      [] as Prisma.YahooPriceWhereInput[],
+      (acc, [symbol, indices]) => {
+        const elementFilter = {
+          symbol,
+          datetime: {
+            gte: indices[0]?.start || new Date(0),
+            lt: indices[indices.length - 1]?.end || timeService.now(),
+          },
+        };
+        acc.push(elementFilter);
+        return acc;
+      },
     );
+
+    return Effect.tryPromise({
+      try: () =>
+        prismaClient.yahooPrice.findMany({
+          where: { OR: whereFilter },
+        }),
+
+      catch: (unknown) => new Error(`Failed loading prices from database`),
+    });
   };
 
-  const saveBulkPrices = (
-    pricesEffect: ReturnType<typeof createPriceService>["getPricesEffect"],
-  ) => {
-    return Effect.flatMap(pricesEffect, ({ successes }) =>
-      Effect.tryPromise({
-        try: () => {
-          const closePrices = Array.filter(successes, (price) => !!price.close);
+  const saveBulkPrices = (prices: PricePoint[]) => {
+    return Effect.tryPromise({
+      try: () => {
+        const closePrices = Array.filter(prices, (price) => !!price.close);
 
-          return prismaClient.yahooPrice.createMany({
-            data: Array.map(closePrices, (price) => ({
-              close: price.close,
-              symbol: price.symbol,
-              datetime: new Date(price.dateKey),
-              open: price.open,
-              high: price.high,
-              low: price.low,
-              close_adj: price.close_adjusted,
-            })),
-          });
-        },
+        return prismaClient.yahooPrice.createMany({
+          data: Array.map(closePrices, (price) => ({
+            close: price.close,
+            symbol: price.symbol,
+            datetime: new Date(price.dateKey),
+            open: price.open,
+            high: price.high,
+            low: price.low,
+            close_adj: price.close_adjusted,
+          })),
+        });
+      },
 
-        catch: (error) => {
-          return new Error("Failed writing prices to database");
-        },
-      }),
-    );
+      catch: (error) => {
+        return new Error("Failed writing prices to database");
+      },
+    });
   };
 
   return { saveBulkPrices, getPricesFromDb };

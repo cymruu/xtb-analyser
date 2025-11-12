@@ -23,7 +23,7 @@ type PricesByDate = {
     [key: Ticker]: PriceEntry;
   };
 };
-type PricePoint = PriceEntry & { dateKey: TransactionTimeKey };
+export type PricePoint = PriceEntry & { dateKey: TransactionTimeKey };
 
 export class MissingPriceError extends Data.TaggedError("MissingPriceError")<{
   symbol: Ticker;
