@@ -67,6 +67,22 @@ describe("PortfolioService", () => {
 
       console.dir({ result }, { depth: 5 });
     });
+    it("b", async () => {
+      const file = Bun.file(
+        "/Users/filipbachul/Downloads/account_2888512_en_xlsx_2005-12-31_2025-11-08/account_2888512_en_xlsx_2005-12-31_2025-11-08.xlsx",
+      );
+      const excelize = await init(
+        "./node_modules/excelize-wasm/excelize.wasm.gz",
+      );
+      const parsed = await Effect.runPromise(
+        parseCSV(await file.bytes(), { excelize }),
+      );
+
+      const r = await PortfolioService.calculatePortfolioDailyValue(
+        parsed.cashOperations.successes,
+      );
+      console.dir({ r }, { depth: 5 });
+    });
   });
 });
 

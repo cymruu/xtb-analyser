@@ -22,11 +22,11 @@ model YahooPrice {
   id        Int      @id @default(autoincrement())
   symbol    String
   datetime  DateTime
-  open      Int
-  high      Int
-  low       Int
-  close     Int
-  close_adj Int
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  close_adj Float
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

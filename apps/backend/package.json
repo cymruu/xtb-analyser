@@ -13,6 +13,7 @@
     "@xtb-analyser/xtb-csv-parser": "workspace:packages",
     "date-fns": "^4.1.0",
     "effect": "^3.19.2",
+    "excelize-wasm": "^0.1.0",
     "hono": "^4.10.3",
     "yahoo-finance2": "^3.10.1",
     "zod": "^4.1.12"
