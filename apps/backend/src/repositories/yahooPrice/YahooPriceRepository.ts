@@ -6,7 +6,6 @@ import { TimeService } from "../../services/time/time";
 import type { TypedEntries } from "../../types";
 import type { YahooPrice } from "../../services/price";
 
-// TODO: create prismaclient layer
 import { prismaClient } from "../../lib/db";
 
 export class YahooPriceRepository extends Context.Tag("YahooPriceRepository")<
