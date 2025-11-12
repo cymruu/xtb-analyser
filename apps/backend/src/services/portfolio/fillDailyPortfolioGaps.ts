@@ -32,7 +32,7 @@ const fillGap = (
   return filledRecords;
 };
 
-export const createFullDailyPortfolioStocks = (
+export const fillDailyPortfolioGaps = (
   dailyPortfolioStocks: {
     key: TransactionTimeKey;
     current: PortfolioDayElements;

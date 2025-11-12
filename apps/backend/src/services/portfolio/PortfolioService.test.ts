@@ -1,15 +1,21 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Logger, LogLevel } from "effect";
-import { init } from "excelize-wasm";
 
-import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
-
-import { createPortfolioService, createPriceIndex } from ".";
-import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
+import {
+  createPortfolioService,
+  createPriceIndex,
+  type PortfolioDayElements,
+} from ".";
+import {
+  TickerCtor,
+  TransactionTimeKeyCtor,
+  type TransactionTimeKey,
+} from "../../domains/stock/types";
 import { prismaClient } from "../../lib/db";
 import { YahooFinanceMock } from "../yahooFinance/mock";
-import { TimeServiceLive, TimeServiceMock } from "../time/time";
-import { YahooFinanceLive } from "../yahooFinance";
+import { TimeServiceLive } from "../time/time";
+import { YahooPriceRepositoryMock } from "../../repositories/yahooPrice/mock";
+import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
 
 const PortfolioService = createPortfolioService({
   prismaClient,
@@ -17,7 +23,7 @@ const PortfolioService = createPortfolioService({
 
 describe("PortfolioService", () => {
   describe("calculatePortfolioDailyValue", () => {
-    it.skip("calculatePortfolioDailyValue", async () => {
+    it("calculatePortfolioDailyValue", async () => {
       const effect = PortfolioService.calculatePortfolioDailyValue([
         {
           id: 1,
@@ -62,26 +68,11 @@ describe("PortfolioService", () => {
           Logger.withMinimumLogLevel(LogLevel.Debug),
           Effect.provide(YahooFinanceMock),
           Effect.provide(TimeServiceLive),
+          Effect.provide(YahooPriceRepositoryMock),
         ),
       );
 
       console.dir({ result }, { depth: 5 });
-    });
-    it("b", async () => {
-      const file = Bun.file(
-        "/Users/filipbachul/Downloads/account_2888512_en_xlsx_2005-12-31_2025-11-08/account_2888512_en_xlsx_2005-12-31_2025-11-08.xlsx",
-      );
-      const excelize = await init(
-        "./node_modules/excelize-wasm/excelize.wasm.gz",
-      );
-      const parsed = await Effect.runPromise(
-        parseCSV(await file.bytes(), { excelize }),
-      );
-
-      const r = await PortfolioService.calculatePortfolioDailyValue(
-        parsed.cashOperations.successes,
-      );
-      console.dir({ r }, { depth: 5 });
     });
   });
 });
@@ -241,9 +232,9 @@ describe("createPriceIndex", () => {
   });
 });
 
-describe("fullportfolio", () => {
+describe("fillDailyPortfolioGaps", () => {
   it("should fill missing gaps", () => {
-    const result = createFullDailyPortfolioStocks([
+    const result = fillDailyPortfolioGaps([
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
         current: { [TickerCtor("PNK")]: 5 },

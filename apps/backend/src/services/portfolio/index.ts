@@ -14,6 +14,7 @@ import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
 import { createPriceResolver, fetchPrices, type PricePoint } from "../price";
 import { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
+import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -137,7 +138,7 @@ export const createPortfolioService = ({
         const priceResolver = createPriceResolver(prices.successes);
 
         const effects = Array.map(
-          dailyPortfolioStocks,
+          fillDailyPortfolioGaps(dailyPortfolioStocks),
 
           ({ key, current }) => {
             return priceResolver.calculateValue(key, current);
