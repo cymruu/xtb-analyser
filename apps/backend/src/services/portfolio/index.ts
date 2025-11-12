@@ -10,12 +10,9 @@ import {
   type TransactionTimeKey,
 } from "../../domains/stock/types";
 import { PrismaClient } from "../../generated/prisma/client";
-import { createYahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
-import { timeService } from "../time/time";
 import { createPriceResolver, fetchPrices } from "../price";
-import { provide } from "effect/Layer";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -122,6 +119,12 @@ export const createPortfolioService = ({
 
         const prices = yield* fetchPrices(priceIndexEffect);
         const priceResolver = createPriceResolver(prices.successes);
+
+        const a = yield* priceResolver.calculateValue("1970-01-01", {
+          UPS: 15,
+          META: 15,
+        });
+        console.log({ a });
 
         return [
           priceResolver.getPrice("UPS", "2020-12-12"),
