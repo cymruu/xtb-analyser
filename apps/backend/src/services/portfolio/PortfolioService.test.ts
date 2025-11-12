@@ -12,13 +12,14 @@ import { TimeServiceLive, TimeServiceMock } from "../time/time";
 import { YahooFinanceLive } from "../yahooFinance";
 import { YahooPriceRepositoryMock } from "../../repositories/yahooPrice/mock";
 import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
+import { createMissingPricesIndex } from "./missingPriceIndex";
 
 const PortfolioService = createPortfolioService({
   prismaClient,
 });
 
 describe("PortfolioService", () => {
-  describe("calculatePortfolioDailyValue", () => {
+  describe.skip("calculatePortfolioDailyValue", () => {
     it("b", async () => {
       const file = Bun.file(
         "/Users/filipbachul/Downloads/account_2888512_en_xlsx_2005-12-31_2025-11-08/account_2888512_en_xlsx_2005-12-31_2025-11-08.xlsx",
@@ -255,6 +256,97 @@ describe("createPriceIndex", () => {
     ]);
 
     expect(index[TickerCtor("PKN")]).toEqual([]);
+  });
+});
+
+describe("createMissingPricesIndex", () => {
+  it("should return the full clamped range when dbPrices is empty", async () => {
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("2023-01-01"),
+        current: { [TickerCtor("PKN")]: 10 },
+      },
+      {
+        key: TransactionTimeKeyCtor("2023-01-05"),
+        current: { [TickerCtor("PKN")]: 15 },
+      },
+    ]);
+
+    const effect = createMissingPricesIndex(index, []);
+    const result = await Effect.runPromise(effect);
+
+    expect(result).toEqual({
+      [TickerCtor("PKN")]: [{ start: new Date("2023-01-01"), end: null }],
+    });
+  });
+
+  it("should NOT update the start date if the latest dbPrice is older than the required range start", async () => {
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("2023-02-01"),
+        current: { [TickerCtor("AAPL")]: 100 },
+      },
+      {
+        key: TransactionTimeKeyCtor("2023-02-10"),
+        current: { [TickerCtor("AAPL")]: 105 },
+      },
+    ]);
+
+    const effect = createMissingPricesIndex(index, [
+      { symbol: "AAPL", datetime: new Date("2023-01-15") } as any,
+    ]);
+    const result = await Effect.runPromise(effect);
+
+    expect(result).toEqual({
+      [TickerCtor("AAPL")]: [{ start: new Date("2023-02-01"), end: null }],
+    });
+  });
+
+  it("should update the start date to the latest existing dbPrice datetime", async () => {
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("2023-03-01"),
+        current: { [TickerCtor("PKN")]: 10 },
+      },
+      {
+        key: TransactionTimeKeyCtor("2023-03-31"),
+        current: { [TickerCtor("PKN")]: 15 },
+      },
+    ]);
+
+    const effect = createMissingPricesIndex(index, [
+      { symbol: "PKN", datetime: new Date("2023-03-10") },
+      { symbol: "PKN", datetime: new Date("2023-03-15") },
+    ] as any);
+
+    const result = await Effect.runPromise(effect);
+
+    expect(result).toEqual({
+      [TickerCtor("PKN")]: [{ start: new Date("2023-03-15"), end: null }],
+    });
+  });
+
+  it("should remove entry from index if all prices exist", async () => {
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: { [TickerCtor("PKN")]: 10 },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-03"),
+        current: { [TickerCtor("PKN")]: -10 },
+      },
+    ]);
+
+    const effect = createMissingPricesIndex(index, [
+      { symbol: "PKN", datetime: new Date("1970-01-01") },
+      { symbol: "PKN", datetime: new Date("1970-01-02") },
+      { symbol: "PKN", datetime: new Date("1970-01-03") },
+    ] as any);
+
+    const result = await Effect.runPromise(effect);
+
+    expect(result).toEqual({});
   });
 });
 
