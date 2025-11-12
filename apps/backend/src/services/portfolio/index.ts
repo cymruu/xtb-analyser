@@ -58,7 +58,7 @@ export const createPortfolioService = ({
           }),
         );
 
-        const transactionsByDayEffect = Stream.fromIterable(transactions).pipe(
+        const transactionsByDay = yield* Stream.fromIterable(transactions).pipe(
           Stream.groupByKey(
             (transaction) =>
               formatISO(startOfDay(transaction.time), {
@@ -91,28 +91,21 @@ export const createPortfolioService = ({
             );
           }),
         );
+        yield* Effect.logDebug("transactionsByDay", transactionsByDay);
 
-        const dailyPortfolioStocks = yield* pipe(
-          transactionsByDayEffect,
-          Effect.map((transactionsByDay) => {
-            const [_, result] = Array.mapAccum(
-              Object.entries(transactionsByDay) as TypedEntries<
-                typeof transactionsByDay
-              >,
-              {},
-              (state, [key, transactions]) => {
-                const current = calculatePortfolioInDay(state, transactions);
-                return [current, { key, current }];
-              },
-            );
-            return result;
-          }),
-          Effect.tap((dailyPortfolioStocks) => {
-            return Effect.logDebug(
-              "Calculated dailyPortfolioStocks",
-              dailyPortfolioStocks,
-            );
-          }),
+        const [_, dailyPortfolioStocks] = Array.mapAccum(
+          Object.entries(transactionsByDay) as TypedEntries<
+            typeof transactionsByDay
+          >,
+          {},
+          (state, [key, transactions]) => {
+            const current = calculatePortfolioInDay(state, transactions);
+            return [current, { key, current }];
+          },
+        );
+        yield* Effect.logDebug(
+          "Calculated dailyPortfolioStocks",
+          dailyPortfolioStocks,
         );
 
         const priceIndex = createPriceIndex(dailyPortfolioStocks);
