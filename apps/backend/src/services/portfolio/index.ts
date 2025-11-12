@@ -88,7 +88,7 @@ export const createPortfolioService = ({
           }),
         );
 
-        const dailyPortfolioStocksEffect = pipe(
+        const dailyPortfolioStocks = yield* pipe(
           transactionsByDayEffect,
           Effect.map((transactionsByDay) => {
             const [_, result] = Array.mapAccum(
@@ -111,13 +111,10 @@ export const createPortfolioService = ({
           }),
         );
 
-        const priceIndexEffect = createPriceIndex(
-          dailyPortfolioStocksEffect,
-        ).pipe(
-          Effect.tap((index) => Effect.logDebug("Created price index", index)),
-        );
+        const priceIndex = createPriceIndex(dailyPortfolioStocks);
+        yield* Effect.logDebug("Created price index", priceIndex);
 
-        const prices = yield* fetchPrices(priceIndexEffect);
+        const prices = yield* fetchPrices(priceIndex);
         const priceResolver = createPriceResolver(prices.successes);
 
         const a = yield* priceResolver.calculateValue("1970-01-01", {
@@ -173,50 +170,44 @@ export type TickerPriceIndex = {
 };
 
 export const createPriceIndex = (
-  dailyPortfolioStocksEffect: Effect.Effect<
-    {
-      key: TransactionTimeKey;
-      current: PortfolioDayElements;
-    }[],
-    never,
-    never
-  >, // TODO: create a type for it
-) =>
-  pipe(
-    Effect.map(dailyPortfolioStocksEffect, (dailyPortfolioStocks) => {
-      return dailyPortfolioStocks.flatMap((v) =>
-        (Object.entries(v.current) as TypedEntries<typeof v.current>).map(
-          ([symbol, amount]) => ({
-            key: v.key,
-            symbol,
-            amount,
-          }),
-        ),
-      );
-    }),
-    Effect.andThen((flattenedDailyStocks) => {
-      return Array.reduce(
-        flattenedDailyStocks,
-        {} as TickerPriceIndex,
-        (index, curr) => {
-          const d = new Date(curr.key);
-          if (!index[curr.symbol]) index[curr.symbol] = [];
+  dailyPortfolioStocksEffect: {
+    key: TransactionTimeKey;
+    current: PortfolioDayElements;
+  }[],
+) => {
+  const flattenedDailyStocks = pipe(
+    dailyPortfolioStocksEffect,
+    Array.flatMap((v) =>
+      (Object.entries(v.current) as TypedEntries<typeof v.current>).map(
+        ([symbol, amount]) => ({
+          key: v.key,
+          symbol,
+          amount,
+        }),
+      ),
+    ),
+  );
 
-          const tickerPeriods = index[curr.symbol]!;
-          const lastPeriod = tickerPeriods[tickerPeriods.length - 1];
+  return pipe(
+    flattenedDailyStocks,
+    Array.reduce({} as TickerPriceIndex, (index, curr) => {
+      const d = new Date(curr.key);
+      if (!index[curr.symbol]) index[curr.symbol] = [];
 
-          if (curr.amount > 0) {
-            if (!lastPeriod || lastPeriod.end !== null) {
-              tickerPeriods.push({ start: d, end: null });
-            }
-          } else {
-            if (lastPeriod && lastPeriod.end === null) {
-              lastPeriod.end = d;
-            }
-          }
+      const tickerPeriods = index[curr.symbol]!;
+      const lastPeriod = tickerPeriods[tickerPeriods.length - 1];
 
-          return index;
-        },
-      );
+      if (curr.amount > 0) {
+        if (!lastPeriod || lastPeriod.end !== null) {
+          tickerPeriods.push({ start: d, end: null });
+        }
+      } else {
+        if (lastPeriod && lastPeriod.end === null) {
+          lastPeriod.end = d;
+        }
+      }
+
+      return index;
     }),
   );
+};

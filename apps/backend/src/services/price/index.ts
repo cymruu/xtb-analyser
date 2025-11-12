@@ -30,14 +30,10 @@ export class MissingPriceError extends Data.TaggedError("MissingPriceError")<{
   date: TransactionTimeKey;
 }> {}
 
-export const fetchPrices = (
-  priceIndexEffect: Effect.Effect<TickerPriceIndex>,
-) =>
+export const fetchPrices = (priceIndex: TickerPriceIndex) =>
   Effect.gen(function* () {
     const yahooFinanceService = yield* YahooFinance;
     const timeService = yield* TimeService;
-
-    const priceIndex = yield* priceIndexEffect;
 
     return yield* Effect.partition(
       Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,

@@ -1,17 +1,23 @@
 import { describe, expect, it } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Logger, LogLevel } from "effect";
+import { init } from "excelize-wasm";
+
+import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
 
 import { createPortfolioService, createPriceIndex } from ".";
 import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
+import { prismaClient } from "../../lib/db";
+import { YahooFinanceMock } from "../yahooFinance/mock";
+import { TimeServiceMock } from "../time/time";
 
 const PortfolioService = createPortfolioService({
-  prismaClient: null as any,
+  prismaClient,
 });
 
 describe("PortfolioService", () => {
   describe("calculatePortfolioDailyValue", () => {
     it("calculatePortfolioDailyValue", async () => {
-      const r = await PortfolioService.calculatePortfolioDailyValue([
+      const effect = PortfolioService.calculatePortfolioDailyValue([
         {
           id: 1,
           comment: "",
@@ -40,25 +46,30 @@ describe("PortfolioService", () => {
           time: new Date("1970-01-01"),
         },
       ]);
-      console.dir({ r }, { depth: 5 });
+
+      const result = await Effect.runPromise(
+        effect.pipe(
+          Logger.withMinimumLogLevel(LogLevel.Debug),
+          Effect.provide(YahooFinanceMock),
+          Effect.provide(TimeServiceMock),
+        ),
+      );
+
+      console.dir({ result }, { depth: 5 });
     });
   });
 });
 
 describe("createPriceIndex", () => {
   it("starts a new period when a stock appears", async () => {
-    const effect = createPriceIndex(
-      Effect.succeed([
-        {
-          key: TransactionTimeKeyCtor("1970-01-01"),
-          current: {
-            [TickerCtor("PKN")]: 10,
-          },
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: {
+          [TickerCtor("PKN")]: 10,
         },
-      ]),
-    );
-
-    const index = await Effect.runPromise(effect);
+      },
+    ]);
 
     expect(index[TickerCtor("PKN")]).toEqual([
       {
@@ -69,24 +80,20 @@ describe("createPriceIndex", () => {
   });
 
   it("ends an open period when a stock amount goes to zero", async () => {
-    const effect = createPriceIndex(
-      Effect.succeed([
-        {
-          key: TransactionTimeKeyCtor("1970-01-01"),
-          current: {
-            [TickerCtor("PKN")]: 10,
-          },
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: {
+          [TickerCtor("PKN")]: 10,
         },
-        {
-          key: TransactionTimeKeyCtor("1970-02-01"),
-          current: {
-            [TickerCtor("PKN")]: 0,
-          },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-02-01"),
+        current: {
+          [TickerCtor("PKN")]: 0,
         },
-      ]),
-    );
-
-    const index = await Effect.runPromise(effect);
+      },
+    ]);
 
     expect(index[TickerCtor("PKN")]).toEqual([
       {
@@ -97,31 +104,27 @@ describe("createPriceIndex", () => {
   });
 
   it("creates multiple periods when a stock is re-added later", async () => {
-    const effect = createPriceIndex(
-      Effect.succeed([
-        {
-          key: TransactionTimeKeyCtor("1970-01-01"),
-          current: {
-            [TickerCtor("PKN")]: 10,
-          },
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: {
+          [TickerCtor("PKN")]: 10,
         },
+      },
 
-        {
-          key: TransactionTimeKeyCtor("1970-02-01"),
-          current: {
-            [TickerCtor("PKN")]: 0,
-          },
+      {
+        key: TransactionTimeKeyCtor("1970-02-01"),
+        current: {
+          [TickerCtor("PKN")]: 0,
         },
-        {
-          key: TransactionTimeKeyCtor("1970-03-01"),
-          current: {
-            [TickerCtor("PKN")]: 5,
-          },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-03-01"),
+        current: {
+          [TickerCtor("PKN")]: 5,
         },
-      ]),
-    );
-
-    const index = await Effect.runPromise(effect);
+      },
+    ]);
 
     expect(index[TickerCtor("PKN")]).toEqual([
       {
@@ -133,30 +136,26 @@ describe("createPriceIndex", () => {
   });
 
   it("handles multiple tickers independently", async () => {
-    const effect = createPriceIndex(
-      Effect.succeed([
-        {
-          key: TransactionTimeKeyCtor("1970-01-01"),
-          current: {
-            [TickerCtor("PKN")]: 10,
-          },
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: {
+          [TickerCtor("PKN")]: 10,
         },
-        {
-          key: TransactionTimeKeyCtor("1970-01-10"),
-          current: {
-            [TickerCtor("DINO")]: 15,
-          },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-10"),
+        current: {
+          [TickerCtor("DINO")]: 15,
         },
-        {
-          key: TransactionTimeKeyCtor("1970-02-01"),
-          current: {
-            [TickerCtor("PKN")]: 0,
-          },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-02-01"),
+        current: {
+          [TickerCtor("PKN")]: 0,
         },
-      ]),
-    );
-
-    const index = await Effect.runPromise(effect);
+      },
+    ]);
 
     expect(index[TickerCtor("PKN")]).toEqual([
       {
@@ -173,30 +172,26 @@ describe("createPriceIndex", () => {
   });
 
   it("does not duplicate open periods when called repeatedly with positive amount", async () => {
-    const effect = createPriceIndex(
-      Effect.succeed([
-        {
-          key: TransactionTimeKeyCtor("1970-01-01"),
-          current: {
-            [TickerCtor("PKN")]: 10,
-          },
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: {
+          [TickerCtor("PKN")]: 10,
         },
-        {
-          key: TransactionTimeKeyCtor("1970-01-05"),
-          current: {
-            [TickerCtor("PKN")]: 20,
-          },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-05"),
+        current: {
+          [TickerCtor("PKN")]: 20,
         },
-        {
-          key: TransactionTimeKeyCtor("1970-01-10"),
-          current: {
-            [TickerCtor("PKN")]: 15,
-          },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-10"),
+        current: {
+          [TickerCtor("PKN")]: 15,
         },
-      ]),
-    );
-
-    const index = await Effect.runPromise(effect);
+      },
+    ]);
 
     expect(index[TickerCtor("PKN")]).toEqual([
       {
@@ -207,18 +202,14 @@ describe("createPriceIndex", () => {
   });
 
   it("ignores zero updates when no open period exists", async () => {
-    const effect = createPriceIndex(
-      Effect.succeed([
-        {
-          key: TransactionTimeKeyCtor("1970-01-01"),
-          current: {
-            [TickerCtor("PKN")]: 0,
-          },
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: {
+          [TickerCtor("PKN")]: 0,
         },
-      ]),
-    );
-
-    const index = await Effect.runPromise(effect);
+      },
+    ]);
 
     expect(index[TickerCtor("PKN")]).toEqual([]);
   });
