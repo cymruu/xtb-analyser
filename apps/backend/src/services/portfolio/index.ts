@@ -14,7 +14,6 @@ import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
 import { createPriceResolver, fetchPrices, type PricePoint } from "../price";
 import { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
-import type { YahooTicker } from "../yahooFinance/tickerToYahooTicker";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 

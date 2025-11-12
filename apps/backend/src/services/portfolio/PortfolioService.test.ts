@@ -240,3 +240,54 @@ describe("createPriceIndex", () => {
     expect(index[TickerCtor("PKN")]).toEqual([]);
   });
 });
+
+describe("fullportfolio", () => {
+  it("should fill missing gaps", () => {
+    const result = createFullDailyPortfolioStocks([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: { [TickerCtor("PNK")]: 5 },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-05"),
+        current: { [TickerCtor("PNK")]: 6 },
+      },
+    ]);
+
+    expect(result).toEqual([
+      {
+        key: "1970-01-01",
+        current: {
+          PNK: 5,
+        },
+      },
+      {
+        key: "1970-01-02",
+        current: {
+          PNK: 5,
+        },
+      },
+      {
+        key: "1970-01-03",
+        current: {
+          PNK: 5,
+        },
+      },
+      {
+        key: "1970-01-04",
+        current: {
+          PNK: 5,
+        },
+      },
+      {
+        key: "1970-01-05",
+        current: {
+          PNK: 6,
+        },
+      },
+    ] as unknown as {
+      key: TransactionTimeKey;
+      current: PortfolioDayElements;
+    }[]);
+  });
+});
