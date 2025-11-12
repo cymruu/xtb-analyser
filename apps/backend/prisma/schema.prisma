@@ -21,6 +21,7 @@ model Portfolio {
 model YahooPrice {
   id        Int      @id @default(autoincrement())
   symbol    String
+  currency  String
   datetime  DateTime
   open      Float
   high      Float

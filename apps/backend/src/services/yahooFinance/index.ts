@@ -8,7 +8,12 @@ import { tickerToYahooTicker } from "./ticker";
 
 export class GetHistoricalPricesError extends Data.TaggedError(
   "GetHistoricalPricesError",
-)<{ message: string; ticker: Ticker; indice: TickerPriceIndice }> {}
+)<{
+  message: string;
+  ticker: Ticker;
+  indice: TickerPriceIndice;
+  error: unknown;
+}> {}
 
 export const GetHistoricalPrices = Request.tagged<
   Request.Request<ChartResultArray, GetHistoricalPricesError> & {
@@ -42,12 +47,11 @@ export const YahooFinanceLive = Layer.effect(
                 interval: "1d",
               }),
             catch: (error) => {
-              Effect.logWarning(error);
-              console.error(error);
               return new GetHistoricalPricesError({
                 message: "Error when querying prices from YahooFinance",
                 ticker,
                 indice,
+                error,
               });
             },
           }),

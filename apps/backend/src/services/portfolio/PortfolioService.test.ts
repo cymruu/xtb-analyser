@@ -4,16 +4,8 @@ import { init } from "excelize-wasm";
 
 import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
 
-import {
-  createPortfolioService,
-  createPriceIndex,
-  type PortfolioDayElements,
-} from ".";
-import {
-  TickerCtor,
-  TransactionTimeKeyCtor,
-  type TransactionTimeKey,
-} from "../../domains/stock/types";
+import { createPortfolioService, createPriceIndex } from ".";
+import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
 import { prismaClient } from "../../lib/db";
 import { YahooFinanceMock } from "../yahooFinance/mock";
 import { TimeServiceLive, TimeServiceMock } from "../time/time";
@@ -27,7 +19,7 @@ const PortfolioService = createPortfolioService({
 
 describe("PortfolioService", () => {
   describe("calculatePortfolioDailyValue", () => {
-    it.skip("b", async () => {
+    it("b", async () => {
       const file = Bun.file(
         "/Users/filipbachul/Downloads/account_2888512_en_xlsx_2005-12-31_2025-11-08/account_2888512_en_xlsx_2005-12-31_2025-11-08.xlsx",
       );
@@ -50,6 +42,9 @@ describe("PortfolioService", () => {
           Effect.provide(TimeServiceLive),
         ),
       );
+
+      const a = Bun.file("out.json");
+      a.write(JSON.stringify(result));
 
       console.log({ result });
     });

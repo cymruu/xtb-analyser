@@ -6,6 +6,7 @@ import type { TypedEntries } from "../../types";
 import type { PortfolioDayElements, TickerPriceIndex } from "../portfolio";
 import { YahooFinance } from "../yahooFinance";
 import { TimeService } from "../time/time";
+import type { YahooTicker } from "../yahooFinance/ticker";
 
 type PriceEntry = {
   symbol: Ticker;
@@ -29,6 +30,18 @@ export class MissingPriceError extends Data.TaggedError("MissingPriceError")<{
   date: TransactionTimeKey;
 }> {}
 
+export type YahooPrice = {
+  currency: string;
+  date: Date;
+  ticker: YahooTicker;
+  xtbTicker: Ticker;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  close_adjusted: number;
+};
+
 export const fetchPrices = (priceIndex: TickerPriceIndex) =>
   Effect.gen(function* () {
     const yahooFinanceService = yield* YahooFinance;
@@ -51,13 +64,11 @@ export const fetchPrices = (priceIndex: TickerPriceIndex) =>
         );
         return Effect.map(historicalPrices, (historicalPrices) => {
           return Array.map(historicalPrices.quotes, (quote) => {
-            const dateKey = formatISO(quote.date, {
-              representation: "date",
-            }) as TransactionTimeKey;
-
-            return <PricePoint>{
-              dateKey,
-              symbol,
+            return <YahooPrice>{
+              currency: historicalPrices.meta.currency,
+              date: quote.date,
+              ticker: historicalPrices.meta.symbol as YahooTicker,
+              xtbTicker: symbol,
               open: quote.open,
               high: quote.high,
               low: quote.low,

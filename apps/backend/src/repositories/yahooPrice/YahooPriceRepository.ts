@@ -4,7 +4,7 @@ import type { Prisma, PrismaClient } from "../../generated/prisma/client";
 import type { TickerPriceIndex } from "../../services/portfolio";
 import { TimeService } from "../../services/time/time";
 import type { TypedEntries } from "../../types";
-import type { PricePoint } from "../../services/price";
+import type { YahooPrice } from "../../services/price";
 
 // TODO: create prismaclient layer
 import { prismaClient } from "../../lib/db";
@@ -19,7 +19,7 @@ export class YahooPriceRepository extends Context.Tag("YahooPriceRepository")<
       Error
     >;
     saveBulkPrices(
-      prices: PricePoint[],
+      prices: YahooPrice[],
     ): Effect.Effect<
       Awaited<ReturnType<PrismaClient["yahooPrice"]["createMany"]>>,
       Error
@@ -64,16 +64,17 @@ export const YahooPriceRepositoryLive = Layer.effect(
           catch: (unknown) => new Error(`Failed loading prices from database`),
         });
       },
-      saveBulkPrices: (prices: PricePoint[]) => {
+      saveBulkPrices: (prices: YahooPrice[]) => {
         return Effect.tryPromise({
           try: () => {
             const closePrices = Array.filter(prices, (price) => !!price.close);
 
             return prismaClient.yahooPrice.createMany({
               data: Array.map(closePrices, (price) => ({
+                currency: price.currency,
                 close: price.close,
-                symbol: price.symbol,
-                datetime: new Date(price.dateKey),
+                symbol: price.ticker,
+                datetime: price.date,
                 open: price.open,
                 high: price.high,
                 low: price.low,
