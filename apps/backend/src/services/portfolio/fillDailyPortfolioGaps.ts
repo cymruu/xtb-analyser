@@ -1,10 +1,12 @@
-import { Array } from "effect";
+import { addDays, formatISO, isSameDay } from "date-fns";
+import { Array, Effect } from "effect";
+
 import type { PortfolioDayElements } from ".";
 import {
   TransactionTimeKeyCtor,
   type TransactionTimeKey,
 } from "../../domains/stock/types";
-import { addDays, formatISO } from "date-fns";
+import { TimeService } from "../time/time";
 
 const fillGap = (
   currentRecord: { key: TransactionTimeKey; current: PortfolioDayElements },
@@ -38,20 +40,36 @@ export const fillDailyPortfolioGaps = (
     current: PortfolioDayElements;
   }[],
 ) => {
-  return Array.reduce(
-    dailyPortfolioStocks,
-    [] as {
-      key: TransactionTimeKey;
-      current: PortfolioDayElements;
-    }[],
-    (acc, curr, index) => {
-      acc.push(curr);
-      if (index < dailyPortfolioStocks.length - 1) {
-        const nextRecord = dailyPortfolioStocks[index + 1]!;
-        const gapRecords = fillGap(curr, nextRecord);
-        acc.push(...gapRecords);
-      }
-      return acc;
-    },
-  );
+  return Effect.gen(function* () {
+    const timeService = yield* TimeService;
+
+    const copy = [...dailyPortfolioStocks];
+
+    const last = yield* Array.last(dailyPortfolioStocks);
+    if (!isSameDay(timeService.now(), last.key)) {
+      copy.push({
+        key: TransactionTimeKeyCtor(
+          formatISO(timeService.now(), { representation: "date" }),
+        ),
+        current: last.current,
+      });
+    }
+
+    return Array.reduce(
+      copy,
+      [] as {
+        key: TransactionTimeKey;
+        current: PortfolioDayElements;
+      }[],
+      (acc, curr, index) => {
+        acc.push(curr);
+        if (index < copy.length - 1) {
+          const nextRecord = copy[index + 1]!;
+          const gapRecords = fillGap(curr, nextRecord);
+          acc.push(...gapRecords);
+        }
+        return acc;
+      },
+    );
+  });
 };

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Logger, LogLevel } from "effect";
+import { init } from "excelize-wasm";
+
+import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
 
 import {
   createPortfolioService,
@@ -13,7 +16,8 @@ import {
 } from "../../domains/stock/types";
 import { prismaClient } from "../../lib/db";
 import { YahooFinanceMock } from "../yahooFinance/mock";
-import { TimeServiceLive } from "../time/time";
+import { TimeServiceLive, TimeServiceMock } from "../time/time";
+import { YahooFinanceLive } from "../yahooFinance";
 import { YahooPriceRepositoryMock } from "../../repositories/yahooPrice/mock";
 import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
 
@@ -23,7 +27,34 @@ const PortfolioService = createPortfolioService({
 
 describe("PortfolioService", () => {
   describe("calculatePortfolioDailyValue", () => {
-    it("calculatePortfolioDailyValue", async () => {
+    it.skip("b", async () => {
+      const file = Bun.file(
+        "/Users/filipbachul/Downloads/account_2888512_en_xlsx_2005-12-31_2025-11-08/account_2888512_en_xlsx_2005-12-31_2025-11-08.xlsx",
+      );
+      const excelize = await init(
+        "./node_modules/excelize-wasm/excelize.wasm.gz",
+      );
+      const parsed = await Effect.runPromise(
+        parseCSV(await file.bytes(), { excelize }),
+      );
+
+      const r = PortfolioService.calculatePortfolioDailyValue(
+        parsed.cashOperations.successes,
+      );
+
+      const result = await Effect.runPromise(
+        r.pipe(
+          Logger.withMinimumLogLevel(LogLevel.Debug),
+          Effect.provide(YahooFinanceLive),
+          Effect.provide(YahooPriceRepositoryMock),
+          Effect.provide(TimeServiceLive),
+        ),
+      );
+
+      console.log({ result });
+    });
+
+    it.skip("calculatePortfolioDailyValue", async () => {
       const effect = PortfolioService.calculatePortfolioDailyValue([
         {
           id: 1,
@@ -233,52 +264,87 @@ describe("createPriceIndex", () => {
 });
 
 describe("fillDailyPortfolioGaps", () => {
-  it("should fill missing gaps", () => {
-    const result = fillDailyPortfolioGaps([
+  it("should fill missing gaps", async () => {
+    const effect = fillDailyPortfolioGaps([
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
-        current: { [TickerCtor("PNK")]: 5 },
+        current: { [TickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-05"),
-        current: { [TickerCtor("PNK")]: 6 },
+        current: { [TickerCtor("PKN")]: 6 },
       },
     ]);
 
-    expect(result).toEqual([
+    const result = await Effect.runPromise(
+      effect.pipe(Effect.provide(TimeServiceMock(new Date("1970-01-06")))),
+    );
+
+    expect(result).toMatchObject([
       {
-        key: "1970-01-01",
-        current: {
-          PNK: 5,
-        },
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: { [TickerCtor("PKN")]: 5 },
       },
       {
-        key: "1970-01-02",
-        current: {
-          PNK: 5,
-        },
+        key: TransactionTimeKeyCtor("1970-01-02"),
+        current: { [TickerCtor("PKN")]: 5 },
       },
       {
-        key: "1970-01-03",
-        current: {
-          PNK: 5,
-        },
+        key: TransactionTimeKeyCtor("1970-01-03"),
+        current: { [TickerCtor("PKN")]: 5 },
       },
       {
-        key: "1970-01-04",
-        current: {
-          PNK: 5,
-        },
+        key: TransactionTimeKeyCtor("1970-01-04"),
+        current: { [TickerCtor("PKN")]: 5 },
       },
       {
-        key: "1970-01-05",
-        current: {
-          PNK: 6,
-        },
+        key: TransactionTimeKeyCtor("1970-01-05"),
+        current: { [TickerCtor("PKN")]: 6 },
       },
-    ] as unknown as {
-      key: TransactionTimeKey;
-      current: PortfolioDayElements;
-    }[]);
+      {
+        key: TransactionTimeKeyCtor("1970-01-06"),
+        current: { [TickerCtor("PKN")]: 6 },
+      },
+    ]);
+  });
+
+  it("should not add extra record if last entry is from today", async () => {
+    const effect = fillDailyPortfolioGaps([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: { [TickerCtor("PKN")]: 5 },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-05"),
+        current: { [TickerCtor("PKN")]: 6 },
+      },
+    ]);
+
+    const result = await Effect.runPromise(
+      effect.pipe(Effect.provide(TimeServiceMock(new Date("1970-01-05")))),
+    );
+
+    expect(result).toMatchObject([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: { [TickerCtor("PKN")]: 5 },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-02"),
+        current: { [TickerCtor("PKN")]: 5 },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-03"),
+        current: { [TickerCtor("PKN")]: 5 },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-04"),
+        current: { [TickerCtor("PKN")]: 5 },
+      },
+      {
+        key: TransactionTimeKeyCtor("1970-01-05"),
+        current: { [TickerCtor("PKN")]: 6 },
+      },
+    ]);
   });
 });

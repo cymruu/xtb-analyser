@@ -24,4 +24,9 @@ export class TimeService extends Context.Tag("TimeService")<
 >() {}
 
 export const TimeServiceLive = Layer.succeed(TimeService, timeService);
-export const TimeServiceMock = Layer.succeed(TimeService, timeServiceMock);
+export const TimeServiceMock = (mockedNow: Date) =>
+  Layer.succeed(TimeService, {
+    now() {
+      return mockedNow;
+    },
+  });

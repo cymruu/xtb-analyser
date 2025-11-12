@@ -137,15 +137,17 @@ export const createPortfolioService = ({
         const prices = yield* fetchPrices(priceIndex);
         const priceResolver = createPriceResolver(prices.successes);
 
-        const effects = Array.map(
+        const effects = pipe(
           fillDailyPortfolioGaps(dailyPortfolioStocks),
-
-          ({ key, current }) => {
-            return priceResolver.calculateValue(key, current);
-          },
+          Effect.map((v) => {
+            return Array.map(v, ({ key, current }) => {
+              return priceResolver.calculateValue(key, current);
+            });
+          }),
+          Effect.flatMap(Effect.all),
         );
 
-        return yield* Effect.all(effects);
+        return yield* effects;
       });
     },
   };
