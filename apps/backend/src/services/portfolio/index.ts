@@ -12,7 +12,9 @@ import {
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
-import { createPriceResolver, fetchPrices } from "../price";
+import { createPriceResolver, fetchPrices, type PricePoint } from "../price";
+import { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
+import type { YahooTicker } from "../yahooFinance/tickerToYahooTicker";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -34,6 +36,8 @@ export const createPortfolioService = ({
     },
     calculatePortfolioDailyValue(operations: ParsedCashOperationRow[]) {
       return Effect.gen(function* () {
+        const yahooPriceRepository = yield* YahooPriceRepository;
+
         const transactions = pipe(
           Array.filter(operations, (v) => {
             return v.type === "Stock purchase" || v.type === "Stock sale";
@@ -113,6 +117,29 @@ export const createPortfolioService = ({
 
         const priceIndex = createPriceIndex(dailyPortfolioStocks);
         yield* Effect.logDebug("Created price index", priceIndex);
+
+        const pricesFromDb: PricePoint[] = yield* pipe(
+          yahooPriceRepository.getPricesFromDb(priceIndex),
+          Effect.map((prices) =>
+            pipe(
+              prices,
+              Array.map((price) => {
+                return {
+                  symbol: price.symbol, //TODO: this is in fact YahooTicker
+                  open: price.open,
+                  high: price.high,
+                  low: price.low,
+                  close: price.close,
+                  close_adjusted: price.close_adj,
+                  source: "yahoo",
+                  dateKey: formatISO(price.datetime, {
+                    representation: "date",
+                  }),
+                } as PricePoint;
+              }),
+            ),
+          ),
+        );
 
         const prices = yield* fetchPrices(priceIndex);
         const priceResolver = createPriceResolver(prices.successes);
