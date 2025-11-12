@@ -13,9 +13,9 @@ import { PrismaClient } from "../../generated/prisma/client";
 import { createYahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
-import { createPriceService } from "../price";
 import { timeService } from "../time/time";
-import { createYahooFinanceMock } from "../yahooFinance/mock";
+import { createPriceResolver, fetchPrices } from "../price";
+import { provide } from "effect/Layer";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -35,101 +35,99 @@ export const createPortfolioService = ({
 
       return result;
     },
-    async calculatePortfolioDailyValue(operations: ParsedCashOperationRow[]) {
-      const transactions = pipe(
-        Array.filter(operations, (v) => {
-          return v.type === "Stock purchase" || v.type === "Stock sale";
-        }),
-        Array.map((transaction) => {
-          const quantityMultiplier = Match.value(transaction.type).pipe(
-            Match.when("Stock purchase", () => 1),
-            Match.when("Stock sale", () => -1),
-            Match.exhaustive,
-          );
+    calculatePortfolioDailyValue(operations: ParsedCashOperationRow[]) {
+      return Effect.gen(function* () {
+        const transactions = pipe(
+          Array.filter(operations, (v) => {
+            return v.type === "Stock purchase" || v.type === "Stock sale";
+          }),
+          Array.map((transaction) => {
+            const quantityMultiplier = Match.value(transaction.type).pipe(
+              Match.when("Stock purchase", () => 1),
+              Match.when("Stock sale", () => -1),
+              Match.exhaustive,
+            );
 
-          const quantity = transaction.quantity * quantityMultiplier;
-          return {
-            quantity,
-            time: transaction.time,
-            symbol: transaction.symbol,
-          } as PortfolioTransaction;
-        }),
-      );
+            const quantity = transaction.quantity * quantityMultiplier;
+            return {
+              quantity,
+              time: transaction.time,
+              symbol: transaction.symbol,
+            } as PortfolioTransaction;
+          }),
+        );
 
-      const transactionsByDayEffect = Stream.fromIterable(transactions).pipe(
-        Stream.groupByKey(
-          (transaction) =>
-            formatISO(startOfDay(transaction.time), {
-              representation: "date",
-            }) as TransactionTimeKey,
-        ),
-        GroupBy.evaluate((key, stream) =>
-          stream.pipe(Stream.map((transaction) => ({ key, transaction }))),
-        ),
-        Stream.run(
-          Sink.foldLeft(
-            {} as {
-              [key: TransactionTimeKey]: PortfolioTransaction[];
-            },
-            (acc, curr) => {
-              if (!acc[curr.key]) {
-                acc[curr.key] = [curr.transaction];
-                return acc;
-              }
-
-              acc[curr.key]!.push(curr.transaction);
-              return acc;
-            },
+        const transactionsByDayEffect = Stream.fromIterable(transactions).pipe(
+          Stream.groupByKey(
+            (transaction) =>
+              formatISO(startOfDay(transaction.time), {
+                representation: "date",
+              }) as TransactionTimeKey,
           ),
-        ),
-        Effect.tap((transactionsByDay) => {
-          return Effect.logDebug(
-            "Calculated transactionsByDay",
-            transactionsByDay,
-          );
-        }),
-      );
+          GroupBy.evaluate((key, stream) =>
+            stream.pipe(Stream.map((transaction) => ({ key, transaction }))),
+          ),
+          Stream.run(
+            Sink.foldLeft(
+              {} as {
+                [key: TransactionTimeKey]: PortfolioTransaction[];
+              },
+              (acc, curr) => {
+                if (!acc[curr.key]) {
+                  acc[curr.key] = [curr.transaction];
+                  return acc;
+                }
 
-      const dailyPortfolioStocksEffect = pipe(
-        transactionsByDayEffect,
-        Effect.map((transactionsByDay) => {
-          const [_, result] = Array.mapAccum(
-            Object.entries(transactionsByDay) as TypedEntries<
-              typeof transactionsByDay
-            >,
-            {},
-            (state, [key, transactions]) => {
-              const current = calculatePortfolioInDay(state, transactions);
-              return [current, { key, current }];
-            },
-          );
-          return result;
-        }),
-        Effect.tap((dailyPortfolioStocks) => {
-          return Effect.logDebug(
-            "Calculated dailyPortfolioStocks",
-            dailyPortfolioStocks,
-          );
-        }),
-      );
+                acc[curr.key]!.push(curr.transaction);
+                return acc;
+              },
+            ),
+          ),
+          Effect.tap((transactionsByDay) => {
+            return Effect.logDebug(
+              "Calculated transactionsByDay",
+              transactionsByDay,
+            );
+          }),
+        );
 
-      const priceIndexEffect = createPriceIndex(
-        dailyPortfolioStocksEffect,
-      ).pipe(
-        Effect.tap((index) => Effect.logDebug("Created price index", index)),
-      );
+        const dailyPortfolioStocksEffect = pipe(
+          transactionsByDayEffect,
+          Effect.map((transactionsByDay) => {
+            const [_, result] = Array.mapAccum(
+              Object.entries(transactionsByDay) as TypedEntries<
+                typeof transactionsByDay
+              >,
+              {},
+              (state, [key, transactions]) => {
+                const current = calculatePortfolioInDay(state, transactions);
+                return [current, { key, current }];
+              },
+            );
+            return result;
+          }),
+          Effect.tap((dailyPortfolioStocks) => {
+            return Effect.logDebug(
+              "Calculated dailyPortfolioStocks",
+              dailyPortfolioStocks,
+            );
+          }),
+        );
 
-      const yahooFinanceService = createYahooFinanceMock();
-      const yahooPriceRepository = createYahooPriceRepository({
-        prismaClient,
-        timeService,
+        const priceIndexEffect = createPriceIndex(
+          dailyPortfolioStocksEffect,
+        ).pipe(
+          Effect.tap((index) => Effect.logDebug("Created price index", index)),
+        );
+
+        const prices = yield* fetchPrices(priceIndexEffect);
+        const priceResolver = createPriceResolver(prices.successes);
+
+        return [
+          priceResolver.getPrice("UPS", "2020-12-12"),
+          priceResolver.getPrice("META", "2020-12-12"),
+        ];
       });
-
-      const priceService = createPriceService(priceIndexEffect, {
-        yahooFinanceService,
-        timeService,
-      });
-      return [Effect.succeed(1)];
     },
   };
 };

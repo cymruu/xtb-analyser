@@ -1,5 +1,5 @@
-import { Data, Effect, pipe, Request, RequestResolver } from "effect";
-import YahooFinance from "yahoo-finance2";
+import { Context, Data, Effect, Layer, Request, RequestResolver } from "effect";
+import YahooFinanceClient from "yahoo-finance2";
 import type { ChartResultArray } from "yahoo-finance2/modules/chart";
 
 import { type Ticker } from "../../domains/stock/types";
@@ -16,37 +16,48 @@ export const GetHistoricalPrices = Request.tagged<
   }
 >("GetHistoricalPrices");
 
-export interface IYahooFinanceService
-  extends ReturnType<typeof createYahooFinance> {}
+export class YahooFinance extends Context.Tag("YahooFinanceLive")<
+  YahooFinance,
+  {
+    getHistoricalPrices: (
+      ticker: Ticker,
+      indice: TickerPriceIndice,
+    ) => Effect.Effect<ChartResultArray, GetHistoricalPricesError>;
+  }
+>() {}
 
-export const createYahooFinance = () => {
-  const yahooFinance = new YahooFinance();
-  return {
-    getHistoricalPrices: (ticker: Ticker, indice: TickerPriceIndice) => {
-      const yahooTicker = tickerToYahooTicker(ticker);
-      const resolver = RequestResolver.fromEffect(() =>
-        Effect.tryPromise({
-          try: () =>
-            yahooFinance.chart(yahooTicker, {
-              period1: indice.start,
-              period2: indice.end || undefined,
-              interval: "1d",
-            }),
-          catch: (error) => {
-            Effect.logWarning(error);
-            console.error(error);
-            return new GetHistoricalPricesError({
-              message: "Error when querying prices from YahooFinance",
-              ticker,
-              indice,
-            });
-          },
-        }),
-      );
+export const YahooFinanceLive = Layer.effect(
+  YahooFinance,
+  Effect.gen(function* () {
+    const yahooFinance = new YahooFinanceClient();
+    return {
+      getHistoricalPrices: (ticker: Ticker, indice: TickerPriceIndice) => {
+        const yahooTicker = tickerToYahooTicker(ticker);
+        const resolver = RequestResolver.fromEffect(() =>
+          Effect.tryPromise({
+            try: () =>
+              yahooFinance.chart(yahooTicker, {
+                period1: indice.start,
+                period2: indice.end || undefined,
+                interval: "1d",
+              }),
+            catch: (error) => {
+              Effect.logWarning(error);
+              console.error(error);
+              return new GetHistoricalPricesError({
+                message: "Error when querying prices from YahooFinance",
+                ticker,
+                indice,
+              });
+            },
+          }),
+        );
 
-      return pipe(
-        Effect.request(GetHistoricalPrices({ ticker, indice }), resolver),
-      );
-    },
-  };
-};
+        return Effect.request(
+          GetHistoricalPrices({ ticker, indice }),
+          resolver,
+        );
+      },
+    };
+  }),
+);
