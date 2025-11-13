@@ -1,6 +1,15 @@
 import { formatISO } from "date-fns";
 import { startOfDay } from "date-fns/fp";
-import { Array, Effect, GroupBy, Match, pipe, Sink, Stream } from "effect";
+import {
+  Array,
+  Effect,
+  Either,
+  GroupBy,
+  Match,
+  pipe,
+  Sink,
+  Stream,
+} from "effect";
 import { z } from "zod";
 
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
@@ -134,11 +143,17 @@ export const createPortfolioService = ({
           Effect.flatMap(Effect.all),
         );
 
-        const savedResult = yield* yahooPriceRepository.saveBulkPrices(
-          prices.successes,
+        const saveResult = yield* Effect.either(
+          yahooPriceRepository.saveBulkPrices(prices.successes),
         );
-
-        yield* Effect.logDebug("saved prices to database", savedResult);
+        if (Either.isLeft(saveResult)) {
+          yield* Effect.logError(
+            "Error saving prices to database",
+            saveResult.left,
+          );
+        } else {
+          yield* Effect.logDebug("saved prices to database", saveResult.right);
+        }
 
         return yield* effects;
       });

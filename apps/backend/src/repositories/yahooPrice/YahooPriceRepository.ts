@@ -1,4 +1,4 @@
-import { Array, Context, Effect, Layer } from "effect";
+import { Array, Context, Data, Effect, Layer } from "effect";
 
 import type { Prisma, PrismaClient } from "../../generated/prisma/client";
 import type { TickerPriceIndex } from "../../services/portfolio";
@@ -8,6 +8,10 @@ import type { YahooPrice } from "../../services/price";
 
 import { prismaClient } from "../../lib/db";
 
+export class DatabaseError extends Data.TaggedError("DatabaseError")<{
+  error: unknown;
+}> {}
+
 export class YahooPriceRepository extends Context.Tag("YahooPriceRepository")<
   YahooPriceRepository,
   {
@@ -15,13 +19,13 @@ export class YahooPriceRepository extends Context.Tag("YahooPriceRepository")<
       priceIndex: TickerPriceIndex,
     ): Effect.Effect<
       Awaited<ReturnType<PrismaClient["yahooPrice"]["findMany"]>>,
-      Error
+      DatabaseError
     >;
     saveBulkPrices(
       prices: YahooPrice[],
     ): Effect.Effect<
       Awaited<ReturnType<PrismaClient["yahooPrice"]["createMany"]>>,
-      Error
+      DatabaseError
     >;
   }
 >() {}
@@ -36,7 +40,7 @@ export const YahooPriceRepositoryLive = Layer.effect(
         priceIndex: TickerPriceIndex,
       ): Effect.Effect<
         Awaited<ReturnType<PrismaClient["yahooPrice"]["findMany"]>>,
-        Error
+        DatabaseError
       > => {
         const whereFilter = Array.reduce(
           Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
@@ -60,7 +64,7 @@ export const YahooPriceRepositoryLive = Layer.effect(
               where: { OR: whereFilter },
             }),
 
-          catch: (unknown) => new Error(`Failed loading prices from database`),
+          catch: (error) => new DatabaseError({ error }),
         });
       },
       saveBulkPrices: (prices: YahooPrice[]) => {
@@ -83,7 +87,7 @@ export const YahooPriceRepositoryLive = Layer.effect(
           },
 
           catch: (error) => {
-            return new Error("Failed writing prices to database");
+            return new DatabaseError({ error });
           },
         });
       },
