@@ -1,6 +1,6 @@
 import { drawTreemap } from "./drawTreemap";
 import { IMetricsService } from "../../services/metricsService";
-import { DrawTreemapSettings } from "./portfolio-treemap";
+import { DrawTreemapSettings } from "./main";
 
 //TODO: find a nice house for this type
 export type TreemapLeaf = {
