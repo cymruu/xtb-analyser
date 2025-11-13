@@ -15,9 +15,7 @@ import { YahooFinanceMock } from "../yahooFinance/mock";
 import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
 import { createMissingPricesIndex, createPriceIndex } from "./priceIndex";
 
-const PortfolioService = createPortfolioService({
-  prismaClient,
-});
+const PortfolioService = createPortfolioService();
 
 describe("PortfolioService", () => {
   describe("calculatePortfolioDailyValue", () => {

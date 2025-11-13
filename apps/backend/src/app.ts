@@ -1,12 +1,13 @@
-import { type Context, Hono, type Next } from "hono";
+import { Hono, type Context, type Next } from "hono";
 import { createMiddleware } from "hono/factory";
 import { logger } from "hono/logger";
 import z from "zod";
 
+import { cors } from "hono/cors";
+import { validator } from "hono/validator";
+import { portfolioRouter } from "./routes/portfolio";
 import type { IServices } from "./services";
 import type { HonoEnv } from "./types";
-import { validator } from "hono/validator";
-import { cors } from "hono/cors";
 
 export const useServices = (services: IServices) =>
   createMiddleware<HonoEnv>(async (c: Context<HonoEnv>, next: Next) => {
@@ -27,6 +28,8 @@ export const createApp = (services: IServices) => {
   app.get("/health", (c) => c.text("OK", 200));
 
   app.use(cors({ origin: "https://dev.xtb-analyser.com" }));
+
+  app.route("/portfolio", portfolioRouter);
 
   app.post(
     "/metrics",

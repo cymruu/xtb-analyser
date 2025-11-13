@@ -29,11 +29,7 @@ import type {
 import { createMissingPricesIndex, createPriceIndex } from "./priceIndex";
 import { tickerToYahooTicker } from "../yahooFinance/ticker.ts";
 
-type PortfolioServiceDeps = { prismaClient: PrismaClient };
-
-export const createPortfolioService = ({
-  prismaClient,
-}: PortfolioServiceDeps) => {
+export const createPortfolioService = () => {
   return {
     async create(
       portfolioPayload: z.infer<typeof CreatePortfolioRequestBodySchema>,

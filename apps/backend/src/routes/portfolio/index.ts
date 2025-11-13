@@ -3,7 +3,15 @@ import { validator } from "hono/validator";
 import z from "zod";
 
 import type { HonoEnv } from "../../types";
+import { Effect, Logger, LogLevel } from "effect";
+import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
+import { init } from "excelize-wasm";
+import { createPortfolioService } from "../../services/portfolio";
+import { YahooFinanceLive } from "../../services/yahooFinance";
+import { YahooPriceRepositoryLive } from "../../repositories/yahooPrice/YahooPriceRepository";
+import { TimeServiceLive } from "../../services/time/time";
 
+const portfolioService = createPortfolioService();
 export const portfolioRouter = new Hono<HonoEnv>();
 
 const PortfolioSchemaV1 = z.object({
@@ -48,3 +56,32 @@ portfolioRouter.post(
     return c.json({ message: "Portfolio created" });
   },
 );
+
+portfolioRouter.post("/xtb-file", async (c) => {
+  const excelize = await init("./node_modules/excelize-wasm/excelize.wasm.gz");
+
+  const body = await c.req.parseBody();
+  const file = body["file"];
+  if (!file || !(file instanceof File)) {
+    return c.body(null, 400);
+  }
+
+  const parsed = await Effect.runPromise(
+    parseCSV(await file.bytes(), { excelize }),
+  );
+
+  const effect = portfolioService.calculatePortfolioDailyValue(
+    parsed.cashOperations.successes,
+  );
+
+  const result = await Effect.runPromise(
+    effect.pipe(
+      Logger.withMinimumLogLevel(LogLevel.Debug),
+      Effect.provide(YahooFinanceLive),
+      Effect.provide(YahooPriceRepositoryLive),
+      Effect.provide(TimeServiceLive),
+    ),
+  );
+
+  return c.json(result);
+});
