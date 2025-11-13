@@ -55,16 +55,17 @@ export const fetchPrices = (priceIndex: TickerPriceIndex) =>
     return yield* Effect.partition(
       Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
       flow(([symbol, indices]) => {
+        const dataRange = {
+          start: indices?.[0]?.start || new Date(0),
+          end: endOfDay(subDays(timeService.now()), 1),
+        }; // clamp to the day before today, to avoiding fetching incomplete data
         const historicalPrices = pipe(
           Effect.logError(`Requesting YahooFinance historical prices`, {
             ticker: symbol,
-            indices,
+            indices: dataRange,
           }),
           Effect.andThen(() =>
-            yahooFinanceService.getHistoricalPrices(symbol, {
-              start: indices?.[0]?.start || new Date(0),
-              end: timeService.now(),
-            }),
+            yahooFinanceService.getHistoricalPrices(symbol, dataRange),
           ),
         );
         return Effect.map(historicalPrices, (historicalPrices) => {
