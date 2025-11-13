@@ -7,3 +7,7 @@ export type HonoEnv = {
 };
 
 export type TypedEntries<T> = { [K in keyof T]: [K, T[K]] }[keyof T][];
+
+export type BrandedType<T, K extends string> = T & {
+  __brand: K;
+};

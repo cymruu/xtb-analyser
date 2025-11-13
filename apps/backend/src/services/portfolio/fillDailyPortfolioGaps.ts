@@ -1,4 +1,4 @@
-import { addDays, eachDayOfInterval, formatISO, isSameDay } from "date-fns";
+import { eachDayOfInterval, formatISO } from "date-fns";
 import { Array, Effect, Option } from "effect";
 
 import {
@@ -39,7 +39,7 @@ export const fillDailyPortfolioGaps = (
         const key = TransactionTimeKeyCtor(
           formatISO(n, { representation: "date" }),
         );
-        const stock = dailyStocks[key]?.current ?? state;
+        const stock = (dailyStocks[key]?.current ?? state)!;
         return [stock, { key, current: stock }];
       },
     );

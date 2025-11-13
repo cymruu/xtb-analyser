@@ -1,11 +1,12 @@
 import { addDays, isAfter, isEqual, startOfDay, subDays } from "date-fns";
 import { Array, Effect, Option, pipe } from "effect";
 
+import type { TransactionTimeKey } from "../../domains/stock/types";
 import type { PrismaClient } from "../../generated/prisma/client";
 import type { TypedEntries } from "../../types";
-import type { PortfolioDayElements, Ticker } from "./types";
-import type { YahooTicker } from "../yahooFinance/ticker";
 import { TimeService } from "../time/time";
+import type { YahooTicker } from "../yahooFinance/ticker";
+import type { PortfolioDayElements } from "./types";
 
 export type TickerPriceIndice = { start: Date; end: Date | null };
 
@@ -15,7 +16,7 @@ export type TickerPriceIndex = {
 
 export const createPriceIndex = (
   dailyPortfolioStocksEffect: {
-    key: Ticker;
+    key: TransactionTimeKey;
     current: PortfolioDayElements;
   }[],
 ) => {

@@ -6,7 +6,6 @@ import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
 
 import { createPortfolioService } from ".";
 import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
-import { prismaClient } from "../../lib/db";
 import { YahooPriceRepositoryMock } from "../../repositories/yahooPrice/mock";
 import { YahooPriceRepositoryLive } from "../../repositories/yahooPrice/YahooPriceRepository";
 import { TimeServiceLive, TimeServiceMock } from "../time/time";

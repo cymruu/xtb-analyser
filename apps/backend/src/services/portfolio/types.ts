@@ -1,5 +1,4 @@
 import type { YahooTicker } from "../yahooFinance/ticker";
-export type { Ticker, TransactionTimeKey } from "../../domains/stock/types";
 
 export type PortfolioTransaction = {
   quantity: number;

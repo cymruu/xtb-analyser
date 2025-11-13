@@ -2,15 +2,14 @@ import { Context, Data, Effect, Layer, Request, RequestResolver } from "effect";
 import YahooFinanceClient from "yahoo-finance2";
 import type { ChartResultArray } from "yahoo-finance2/modules/chart";
 
-import { type Ticker } from "../../domains/stock/types";
-import type { TickerPriceIndice } from "../portfolio";
-import { tickerToYahooTicker } from "./ticker";
+import type { TickerPriceIndice } from "../portfolio/priceIndex";
+import { type YahooTicker } from "./ticker";
 
 export class GetHistoricalPricesError extends Data.TaggedError(
   "GetHistoricalPricesError",
 )<{
   message: string;
-  ticker: Ticker;
+  ticker: YahooTicker;
   indice: TickerPriceIndice;
   error: unknown;
 }> {}
@@ -25,7 +24,7 @@ export class YahooFinance extends Context.Tag("YahooFinanceLive")<
   YahooFinance,
   {
     getHistoricalPrices: (
-      ticker: Ticker,
+      ticker: YahooTicker,
       indice: TickerPriceIndice,
     ) => Effect.Effect<ChartResultArray, GetHistoricalPricesError>;
   }
@@ -36,12 +35,11 @@ export const YahooFinanceLive = Layer.effect(
   Effect.gen(function* () {
     const yahooFinance = new YahooFinanceClient();
     return {
-      getHistoricalPrices: (ticker: Ticker, indice: TickerPriceIndice) => {
-        const yahooTicker = tickerToYahooTicker(ticker);
+      getHistoricalPrices: (ticker: YahooTicker, indice: TickerPriceIndice) => {
         const resolver = RequestResolver.fromEffect(() =>
           Effect.tryPromise({
             try: () =>
-              yahooFinance.chart(yahooTicker, {
+              yahooFinance.chart(ticker, {
                 period1: indice.start,
                 period2: indice.end || undefined,
                 interval: "1d",

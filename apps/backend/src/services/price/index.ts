@@ -1,20 +1,19 @@
 import { Array, Data, Effect, flow, Option, pipe } from "effect";
 
-import { eachDayOfInterval, formatISO, subDays, endOfDay } from "date-fns";
+import { eachDayOfInterval, endOfDay, formatISO, subDays } from "date-fns";
 import {
   TransactionTimeKeyCtor,
-  type Ticker,
   type TransactionTimeKey,
 } from "../../domains/stock/types";
 import type { TypedEntries } from "../../types";
 import type { TickerPriceIndex } from "../portfolio/priceIndex";
+import type { PortfolioDayElements } from "../portfolio/types";
 import { TimeService } from "../time/time";
 import { YahooFinance } from "../yahooFinance";
 import type { YahooTicker } from "../yahooFinance/ticker";
-import type { PortfolioDayElements } from "../portfolio/types";
 
 type PriceEntry = {
-  symbol: Ticker;
+  symbol: YahooTicker;
   open: number;
   high: number;
   low: number;
@@ -25,13 +24,13 @@ type PriceEntry = {
 
 type PricesByDate = {
   [key: TransactionTimeKey]: {
-    [key: Ticker]: PriceEntry;
+    [key: YahooTicker]: PriceEntry;
   };
 };
 export type PricePoint = PriceEntry & { dateKey: TransactionTimeKey };
 
 export class MissingPriceError extends Data.TaggedError("MissingPriceError")<{
-  symbol: Ticker;
+  symbol: YahooTicker;
   date: TransactionTimeKey;
 }> {}
 
@@ -39,7 +38,6 @@ export type YahooPrice = {
   currency: string;
   date: Date;
   ticker: YahooTicker;
-  xtbTicker: Ticker;
   open: number;
   high: number;
   low: number;
@@ -57,7 +55,7 @@ export const fetchPrices = (priceIndex: TickerPriceIndex) =>
       flow(([symbol, indices]) => {
         const dataRange = {
           start: indices?.[0]?.start || new Date(0),
-          end: endOfDay(subDays(timeService.now()), 1),
+          end: endOfDay(subDays(timeService.now(), 1)),
         }; // clamp to the day before today, to avoiding fetching incomplete data
         const historicalPrices = pipe(
           Effect.logError(`Requesting YahooFinance historical prices`, {
@@ -74,7 +72,6 @@ export const fetchPrices = (priceIndex: TickerPriceIndex) =>
               currency: historicalPrices.meta.currency,
               date: quote.date,
               ticker: historicalPrices.meta.symbol as YahooTicker,
-              xtbTicker: symbol,
               open: quote.open,
               high: quote.high,
               low: quote.low,
@@ -116,7 +113,7 @@ export const createPriceResolver = (flatPrices: PricePoint[]) => {
     },
   );
 
-  const getPrice = (symbol: Ticker, date: TransactionTimeKey) => {
+  const getPrice = (symbol: YahooTicker, date: TransactionTimeKey) => {
     const price = pricesByDate[date]?.[symbol];
     if (!price) {
       const lookup = Array.map(
