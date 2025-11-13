@@ -1,10 +1,11 @@
-import { addDays, isAfter, isBefore, isEqual, isSameDay } from "date-fns";
+import { addDays, isAfter, isEqual, startOfDay, subDays } from "date-fns";
 import { Array, Effect, Option, pipe } from "effect";
 
 import type { PrismaClient } from "../../generated/prisma/client";
 import type { TypedEntries } from "../../types";
 import type { PortfolioDayElements, Ticker } from "./types";
 import type { YahooTicker } from "../yahooFinance/ticker";
+import { TimeService } from "../time/time";
 
 export type TickerPriceIndice = { start: Date; end: Date | null };
 
@@ -60,6 +61,8 @@ export const createMissingPricesIndex = (
   dbPrices: Awaited<ReturnType<PrismaClient["yahooPrice"]["findMany"]>>,
 ) => {
   return Effect.gen(function* () {
+    const timeService = yield* TimeService;
+
     const clamped = Array.reduce(
       Object.entries(priceIndex) as TypedEntries<typeof priceIndex>,
       {} as TickerPriceIndex,
@@ -67,7 +70,12 @@ export const createMissingPricesIndex = (
         const start = Array.head(indices).pipe(Option.getOrThrow);
         const end = Array.last(indices).pipe(Option.getOrThrow);
 
-        acc[key] = [{ start: start.start, end: end.end }];
+        acc[key] = [
+          {
+            start: start.start,
+            end: end.end || subDays(startOfDay(timeService.now()), 1),
+          },
+        ];
 
         return acc;
       },
@@ -87,7 +95,11 @@ export const createMissingPricesIndex = (
               indice.start = addDays(curr.datetime, 1);
             }
 
-            if (indice.end && isAfter(indice.start, indice.end)) {
+            if (
+              indice.end &&
+              (isAfter(indice.start, indice.end) ||
+                isEqual(indice.start, indice!.end))
+            ) {
               delete acc[ticker];
             }
             return Effect.succeed(acc);
