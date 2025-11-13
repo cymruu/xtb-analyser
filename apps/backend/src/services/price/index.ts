@@ -1,16 +1,17 @@
 import { Array, Data, Effect, flow, Option, pipe } from "effect";
 
+import { eachDayOfInterval, formatISO, subDays } from "date-fns";
 import {
   TransactionTimeKeyCtor,
   type Ticker,
   type TransactionTimeKey,
 } from "../../domains/stock/types";
 import type { TypedEntries } from "../../types";
-import type { PortfolioDayElements, TickerPriceIndex } from "../portfolio";
-import { YahooFinance } from "../yahooFinance";
+import type { TickerPriceIndex } from "../portfolio/priceIndex";
 import { TimeService } from "../time/time";
+import { YahooFinance } from "../yahooFinance";
 import type { YahooTicker } from "../yahooFinance/ticker";
-import { eachDayOfInterval, formatISO, subDays } from "date-fns";
+import type { PortfolioDayElements } from "../portfolio/types";
 
 type PriceEntry = {
   symbol: Ticker;
