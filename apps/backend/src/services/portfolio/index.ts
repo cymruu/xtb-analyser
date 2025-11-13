@@ -16,12 +16,15 @@ import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
-import { createPriceResolver, fetchPrices } from "../price";
+import { createPriceResolver, fetchPrices, type PricePoint } from "../price";
 import { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
 import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
 import { mapYahooPriceToPricePoint } from "./mapYahooPriceToPricePoint";
 import type { PortfolioDayElements, PortfolioTransaction } from "./types";
-import { tickerToYahooTicker } from "../yahooFinance/ticker.ts";
+import {
+  tickerToYahooTicker,
+  type YahooTicker,
+} from "../yahooFinance/ticker.ts";
 import type { Ticker, TransactionTimeKey } from "../../domains/stock/types.ts";
 import { createMissingPricesIndex, createPriceIndex } from "./priceIndex.ts";
 
@@ -119,7 +122,24 @@ export const createPortfolioService = () => {
           prices.successes,
           mapYahooPriceToPricePoint,
         );
-        const priceResolver = createPriceResolver(pricePoints);
+        const dbPricePoints = Array.map(dbPrices, (price): PricePoint => {
+          return {
+            dateKey: formatISO(price.datetime, {
+              representation: "date",
+            }) as TransactionTimeKey,
+            symbol: price.symbol as YahooTicker,
+            open: price.open,
+            high: price.high,
+            low: price.low,
+            close: price.close,
+            close_adjusted: price.close_adj,
+            source: "yahoo",
+          };
+        });
+        const priceResolver = createPriceResolver([
+          ...pricePoints,
+          ...dbPricePoints,
+        ]);
 
         const effects = pipe(
           fillDailyPortfolioGaps(dailyPortfolioStocks),
