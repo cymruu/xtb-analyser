@@ -6,7 +6,7 @@ import { TimeService } from "../../services/time/time";
 import type { TypedEntries } from "../../types";
 import { prismaClient } from "../../lib/db";
 import type { TickerPriceIndex } from "../../services/portfolio/priceIndex";
-import { endOfDay, formatISO, startOfDay } from "date-fns";
+import { endOfDay, startOfDay } from "date-fns";
 
 export class DatabaseError extends Data.TaggedError("DatabaseError")<{
   error: unknown;
