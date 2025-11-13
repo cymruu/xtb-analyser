@@ -7,6 +7,7 @@ const YahooTickerCtor = Brand.nominal<YahooTicker>();
 export const tickerToYahooTicker = (ticker: Ticker): YahooTicker => {
   const TICKER_MAP: Record<Ticker, YahooTicker> = {
     [TickerCtor("VOW1.DE")]: YahooTickerCtor("VOW.DE"),
+    [TickerCtor("LYPS.PL")]: YahooTickerCtor("LYPS.DE"),
   };
 
   if (TICKER_MAP[ticker]) {
