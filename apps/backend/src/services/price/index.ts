@@ -1,6 +1,6 @@
 import { Array, Data, Effect, flow, Option, pipe } from "effect";
 
-import { eachDayOfInterval, formatISO, subDays } from "date-fns";
+import { eachDayOfInterval, formatISO, subDays, endOfDay } from "date-fns";
 import {
   TransactionTimeKeyCtor,
   type Ticker,

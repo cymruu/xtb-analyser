@@ -49,7 +49,7 @@ describe("PortfolioService", () => {
       a.write(JSON.stringify(result));
     });
 
-    it.skip("calculatePortfolioDailyValue", async () => {
+    it("calculatePortfolioDailyValue", async () => {
       const effect = PortfolioService.calculatePortfolioDailyValue([
         {
           id: 1,
@@ -73,7 +73,7 @@ describe("PortfolioService", () => {
           id: 1,
           comment: "",
           symbol: "META",
-          type: "Stock sale",
+          type: "Stock purchase",
           amount: 500,
           quantity: 5,
           time: new Date("1970-01-01"),
@@ -242,6 +242,19 @@ describe("createPriceIndex", () => {
         end: null,
       },
     ]);
+  });
+
+  it("ignores zero updates when no open period exists", async () => {
+    const index = createPriceIndex([
+      {
+        key: TransactionTimeKeyCtor("1970-01-01"),
+        current: {
+          [TickerCtor("PKN")]: 0,
+        },
+      },
+    ]);
+
+    expect(index[TickerCtor("PKN")]).toEqual([]);
   });
 
   it("ignores zero updates when no open period exists", async () => {

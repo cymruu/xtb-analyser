@@ -60,8 +60,6 @@ export const YahooPriceRepositoryLive = Layer.effect(
           },
         );
 
-        console.log({ whereFilter: JSON.stringify(whereFilter) });
-
         return Effect.tryPromise({
           try: () =>
             prismaClient.yahooPrice.findMany({
