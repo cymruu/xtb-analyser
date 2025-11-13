@@ -1,13 +1,12 @@
-import type { Ticker } from "../../domains/stock/types";
-export type { Ticker } from "../../domains/stock/types";
-export type { TransactionTimeKey } from "../../domains/stock/types";
+import type { YahooTicker } from "../yahooFinance/ticker";
+export type { Ticker, TransactionTimeKey } from "../../domains/stock/types";
 
 export type PortfolioTransaction = {
   quantity: number;
   time: Date;
-  symbol: Ticker;
+  symbol: YahooTicker;
 };
 
 export type PortfolioDayElements = {
-  [key: Ticker]: number;
+  [key: YahooTicker]: number;
 };

@@ -1,14 +1,15 @@
-import { addDays, isEqual } from "date-fns";
+import { addDays, isAfter, isBefore, isEqual, isSameDay } from "date-fns";
 import { Array, Effect, Option, pipe } from "effect";
 
 import type { PrismaClient } from "../../generated/prisma/client";
 import type { TypedEntries } from "../../types";
 import type { PortfolioDayElements, Ticker } from "./types";
+import type { YahooTicker } from "../yahooFinance/ticker";
 
 export type TickerPriceIndice = { start: Date; end: Date | null };
 
 export type TickerPriceIndex = {
-  [key: Ticker]: Array<TickerPriceIndice>;
+  [key: YahooTicker]: Array<TickerPriceIndice>;
 };
 
 export const createPriceIndex = (
@@ -74,7 +75,7 @@ export const createMissingPricesIndex = (
 
     return yield* pipe(
       Effect.reduce(dbPrices, clamped, (acc, curr) => {
-        const ticker = curr.symbol as Ticker; //TODO: handle ticker conversion
+        const ticker = curr.symbol as YahooTicker;
         const indiceOption = Array.head(acc[ticker] || []);
 
         return Option.match(indiceOption, {
@@ -86,7 +87,7 @@ export const createMissingPricesIndex = (
               indice.start = addDays(curr.datetime, 1);
             }
 
-            if (indice.end && isEqual(indice.start, indice.end)) {
+            if (indice.end && isAfter(indice.start, indice.end)) {
               delete acc[ticker];
             }
             return Effect.succeed(acc);

@@ -6,6 +6,7 @@ import { TimeService } from "../../services/time/time";
 import type { TypedEntries } from "../../types";
 import { prismaClient } from "../../lib/db";
 import type { TickerPriceIndex } from "../../services/portfolio/priceIndex";
+import { endOfDay, formatISO, startOfDay } from "date-fns";
 
 export class DatabaseError extends Data.TaggedError("DatabaseError")<{
   error: unknown;
@@ -49,13 +50,17 @@ export const YahooPriceRepositoryLive = Layer.effect(
               symbol,
               datetime: {
                 gte: indices[0]?.start || new Date(0),
-                lt: indices[indices.length - 1]?.end || timeService.now(),
+                lte:
+                  indices[indices.length - 1]?.end ||
+                  endOfDay(timeService.now()),
               },
             };
             acc.push(elementFilter);
             return acc;
           },
         );
+
+        console.log({ whereFilter: JSON.stringify(whereFilter) });
 
         return Effect.tryPromise({
           try: () =>
@@ -72,11 +77,12 @@ export const YahooPriceRepositoryLive = Layer.effect(
             const closePrices = Array.filter(prices, (price) => !!price.close);
 
             return prismaClient.yahooPrice.createMany({
+              skipDuplicates: true,
               data: Array.map(closePrices, (price) => ({
                 currency: price.currency,
                 close: price.close,
                 symbol: price.ticker,
-                datetime: price.date,
+                datetime: startOfDay(price.date),
                 open: price.open,
                 high: price.high,
                 low: price.low,

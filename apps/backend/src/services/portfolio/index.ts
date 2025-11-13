@@ -27,6 +27,7 @@ import type {
   TransactionTimeKey,
 } from "./types";
 import { createMissingPricesIndex, createPriceIndex } from "./priceIndex";
+import { tickerToYahooTicker } from "../yahooFinance/ticker.ts";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -54,7 +55,7 @@ export const createPortfolioService = ({
           Array.filter(operations, (v) => {
             return v.type === "Stock purchase" || v.type === "Stock sale";
           }),
-          Array.map((transaction) => {
+          Array.map((transaction): PortfolioTransaction => {
             const quantityMultiplier = Match.value(transaction.type).pipe(
               Match.when("Stock purchase", () => 1),
               Match.when("Stock sale", () => -1),
@@ -65,8 +66,8 @@ export const createPortfolioService = ({
             return {
               quantity,
               time: transaction.time,
-              symbol: transaction.symbol,
-            } as PortfolioTransaction;
+              symbol: tickerToYahooTicker(transaction.symbol),
+            };
           }),
         );
 
@@ -120,11 +121,14 @@ export const createPortfolioService = ({
         const dbPrices =
           yield* yahooPriceRepository.getPricesFromDb(priceIndex);
 
+        yield* Effect.logDebug(
+          `Retrieved ${dbPrices.length} prices from db cache`,
+        );
+
         const missingPriceIndex = yield* createMissingPricesIndex(
           priceIndex,
           dbPrices,
         );
-        //
         yield* Effect.logDebug("Created missingPriceIndex", missingPriceIndex);
 
         const prices = yield* fetchPrices(missingPriceIndex);
