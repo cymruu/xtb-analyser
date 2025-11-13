@@ -4,15 +4,15 @@ import { init } from "excelize-wasm";
 
 import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
 
-import { createPortfolioService, createPriceIndex } from ".";
+import { createPortfolioService } from ".";
 import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
 import { prismaClient } from "../../lib/db";
-import { YahooFinanceMock } from "../yahooFinance/mock";
+import { YahooPriceRepositoryMock } from "../../repositories/yahooPrice/mock";
 import { TimeServiceLive, TimeServiceMock } from "../time/time";
 import { YahooFinanceLive } from "../yahooFinance";
-import { YahooPriceRepositoryMock } from "../../repositories/yahooPrice/mock";
+import { YahooFinanceMock } from "../yahooFinance/mock";
 import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
-import { createMissingPricesIndex } from "./missingPriceIndex";
+import { createMissingPricesIndex, createPriceIndex } from "./priceIndex";
 
 const PortfolioService = createPortfolioService({
   prismaClient,
@@ -20,7 +20,7 @@ const PortfolioService = createPortfolioService({
 
 describe("PortfolioService", () => {
   describe("calculatePortfolioDailyValue", () => {
-    it("b", async () => {
+    it.skip("b", async () => {
       const file = Bun.file(
         "/Users/filipbachul/Downloads/account_2888512_en_xlsx_2005-12-31_2025-11-08/account_2888512_en_xlsx_2005-12-31_2025-11-08.xlsx",
       );
@@ -31,12 +31,12 @@ describe("PortfolioService", () => {
         parseCSV(await file.bytes(), { excelize }),
       );
 
-      const r = PortfolioService.calculatePortfolioDailyValue(
+      const effect = PortfolioService.calculatePortfolioDailyValue(
         parsed.cashOperations.successes,
       );
 
       const result = await Effect.runPromise(
-        r.pipe(
+        effect.pipe(
           Logger.withMinimumLogLevel(LogLevel.Debug),
           Effect.provide(YahooFinanceLive),
           Effect.provide(YahooPriceRepositoryMock),

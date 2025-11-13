@@ -1,9 +1,58 @@
+import { addDays, isEqual } from "date-fns";
 import { Array, Effect, Option, pipe } from "effect";
-import type { TickerPriceIndex } from ".";
+
 import type { PrismaClient } from "../../generated/prisma/client";
 import type { TypedEntries } from "../../types";
-import { TickerCtor } from "../../domains/stock/types";
-import { addDays, isEqual } from "date-fns";
+import type { PortfolioDayElements, Ticker } from "./types";
+
+export type TickerPriceIndice = { start: Date; end: Date | null };
+
+export type TickerPriceIndex = {
+  [key: Ticker]: Array<TickerPriceIndice>;
+};
+
+export const createPriceIndex = (
+  dailyPortfolioStocksEffect: {
+    key: Ticker;
+    current: PortfolioDayElements;
+  }[],
+) => {
+  const flattenedDailyStocks = pipe(
+    dailyPortfolioStocksEffect,
+    Array.flatMap((v) =>
+      (Object.entries(v.current) as TypedEntries<typeof v.current>).map(
+        ([symbol, amount]) => ({
+          key: v.key,
+          symbol,
+          amount,
+        }),
+      ),
+    ),
+  );
+
+  return pipe(
+    flattenedDailyStocks,
+    Array.reduce({} as TickerPriceIndex, (index, curr) => {
+      const d = new Date(curr.key);
+      if (!index[curr.symbol]) index[curr.symbol] = [];
+
+      const tickerPeriods = index[curr.symbol]!;
+      const lastPeriod = tickerPeriods[tickerPeriods.length - 1];
+
+      if (curr.amount > 0) {
+        if (!lastPeriod || lastPeriod.end !== null) {
+          tickerPeriods.push({ start: d, end: null });
+        }
+      } else {
+        if (lastPeriod && lastPeriod.end === null) {
+          lastPeriod.end = d;
+        }
+      }
+
+      return index;
+    }),
+  );
+};
 
 export const createMissingPricesIndex = (
   priceIndex: TickerPriceIndex,
@@ -25,7 +74,7 @@ export const createMissingPricesIndex = (
 
     return yield* pipe(
       Effect.reduce(dbPrices, clamped, (acc, curr) => {
-        const ticker = TickerCtor(curr.symbol); //TODO: handle ticker conversion
+        const ticker = curr.symbol as Ticker; //TODO: handle ticker conversion
         const indiceOption = Array.head(acc[ticker] || []);
 
         return Option.match(indiceOption, {

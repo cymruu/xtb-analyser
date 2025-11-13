@@ -14,10 +14,6 @@ import { z } from "zod";
 
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 
-import {
-  type Ticker,
-  type TransactionTimeKey,
-} from "../../domains/stock/types";
 import { PrismaClient } from "../../generated/prisma/client";
 import { CreatePortfolioRequestBodySchema } from "../../routes/portfolio/index";
 import type { TypedEntries } from "../../types";
@@ -25,7 +21,12 @@ import { createPriceResolver, fetchPrices } from "../price";
 import { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
 import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
 import { mapYahooPriceToPricePoint } from "./mapYahooPriceToPricePoint";
-import { createMissingPricesIndex } from "./missingPriceIndex";
+import type {
+  PortfolioDayElements,
+  PortfolioTransaction,
+  TransactionTimeKey,
+} from "./types";
+import { createMissingPricesIndex, createPriceIndex } from "./priceIndex";
 
 type PortfolioServiceDeps = { prismaClient: PrismaClient };
 
@@ -123,10 +124,10 @@ export const createPortfolioService = ({
           priceIndex,
           dbPrices,
         );
-
+        //
         yield* Effect.logDebug("Created missingPriceIndex", missingPriceIndex);
 
-        const prices = yield* fetchPrices(missingPriceIndex);
+        const prices = yield* fetchPrices(priceIndex);
         const pricePoints = Array.map(
           prices.successes,
           mapYahooPriceToPricePoint,
@@ -161,16 +162,6 @@ export const createPortfolioService = ({
   };
 };
 
-type PortfolioTransaction = {
-  quantity: number;
-  time: Date;
-  symbol: Ticker;
-};
-
-export type PortfolioDayElements = {
-  [key: Ticker]: number;
-};
-
 const PRECISION = 10 ^ 2;
 
 const calculatePortfolioInDay = (
@@ -189,54 +180,5 @@ const calculatePortfolioInDay = (
 
       return acc;
     },
-  );
-};
-
-export type TickerPriceIndice = { start: Date; end: Date | null };
-
-export type TickerPriceIndex = {
-  [key: Ticker]: Array<TickerPriceIndice>;
-};
-
-export const createPriceIndex = (
-  dailyPortfolioStocksEffect: {
-    key: TransactionTimeKey;
-    current: PortfolioDayElements;
-  }[],
-) => {
-  const flattenedDailyStocks = pipe(
-    dailyPortfolioStocksEffect,
-    Array.flatMap((v) =>
-      (Object.entries(v.current) as TypedEntries<typeof v.current>).map(
-        ([symbol, amount]) => ({
-          key: v.key,
-          symbol,
-          amount,
-        }),
-      ),
-    ),
-  );
-
-  return pipe(
-    flattenedDailyStocks,
-    Array.reduce({} as TickerPriceIndex, (index, curr) => {
-      const d = new Date(curr.key);
-      if (!index[curr.symbol]) index[curr.symbol] = [];
-
-      const tickerPeriods = index[curr.symbol]!;
-      const lastPeriod = tickerPeriods[tickerPeriods.length - 1];
-
-      if (curr.amount > 0) {
-        if (!lastPeriod || lastPeriod.end !== null) {
-          tickerPeriods.push({ start: d, end: null });
-        }
-      } else {
-        if (lastPeriod && lastPeriod.end === null) {
-          lastPeriod.end = d;
-        }
-      }
-
-      return index;
-    }),
   );
 };
