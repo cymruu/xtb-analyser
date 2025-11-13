@@ -72,7 +72,39 @@ describe("priceResolver", () => {
       expect(result).toEqual(Option.none());
     });
 
-    //TODO: LCOF tests
+    describe("LCOF", () => {
+      it("should return a previous price for a known symbol ", async () => {
+        const priceResolver = createPriceResolver([
+          createPricePoint(
+            TransactionTimeKeyCtor("1970-01-01"),
+            TickerCtor("PKN"),
+          ),
+        ]);
+
+        const result = priceResolver.getPrice(
+          TickerCtor("PKN"),
+          TransactionTimeKeyCtor("1970-01-02"),
+        );
+
+        expect(result).toEqual(Option.some(1));
+      });
+
+      it("should NOT return a price older than 5 days ", async () => {
+        const priceResolver = createPriceResolver([
+          createPricePoint(
+            TransactionTimeKeyCtor("2025-11-10"),
+            TickerCtor("PKN"),
+          ),
+        ]);
+
+        const result = priceResolver.getPrice(
+          TickerCtor("PKN"),
+          TransactionTimeKeyCtor("2025-11-16"),
+        );
+
+        expect(result).toEqual(Option.none());
+      });
+    });
   });
   describe("calculateValue", () => {
     it("should return the value of portfolio for given date", async () => {
