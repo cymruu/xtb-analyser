@@ -1,12 +1,11 @@
 import { Array, Context, Data, Effect, Layer } from "effect";
 
 import type { Prisma, PrismaClient } from "../../generated/prisma/client";
-import type { TickerPriceIndex } from "../../services/portfolio";
+import type { YahooPrice } from "../../services/price";
 import { TimeService } from "../../services/time/time";
 import type { TypedEntries } from "../../types";
-import type { YahooPrice } from "../../services/price";
-
 import { prismaClient } from "../../lib/db";
+import type { TickerPriceIndex } from "../../services/portfolio/priceIndex";
 
 export class DatabaseError extends Data.TaggedError("DatabaseError")<{
   error: unknown;
