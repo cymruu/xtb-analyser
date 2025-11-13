@@ -127,7 +127,7 @@ export const createPortfolioService = ({
         //
         yield* Effect.logDebug("Created missingPriceIndex", missingPriceIndex);
 
-        const prices = yield* fetchPrices(priceIndex);
+        const prices = yield* fetchPrices(missingPriceIndex);
         const pricePoints = Array.map(
           prices.successes,
           mapYahooPriceToPricePoint,
