@@ -1,11 +1,33 @@
 {% extends "base.html" %} 
 {% block page_style %}
 <style>
+#drop-area {
+  border: 2px dashed #ccc;
+  width: 300px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px;
+  padding: 10px;
+}
+#error-message {
+  margin-top: 20px;
+  white-space: pre-wrap;
+  background-color: #f4f4f4;
+  padding: 10px;
+}
+.error-message {
+  color: red;
+}
 </style>
 {% endblock page_style %}
 
 {% block content %}
   <h2>Render portfolio value chart</h2>
-  <div id="container">generated portfolio treemap will appear here</div>
+  <div id="drop-area">Drop your XLSX transaction history files here</div>
+ 
+  <div id="error-message"></div>
+  <div id="container">the generated chart will appear here</div>
   <script type="module" src="/js/portfolio-value/main.js"></script>
 {% endblock content %}

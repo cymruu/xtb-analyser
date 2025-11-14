@@ -36,7 +36,19 @@ export const parseCSV = (
   { excelize }: { excelize: Awaited<ReturnType<typeof init>> },
 ) =>
   Effect.gen(function* () {
-    const xlsxFile = yield* Effect.try(() => excelize.OpenReader(bytes));
+    const xlsxFile = yield* Effect.try({
+      try: () => {
+        const result = excelize.OpenReader(bytes);
+        if (result.error) {
+          throw new Error(result.error);
+        }
+        return result;
+      },
+      catch: (error) =>
+        new CSVParsingError({
+          message: (error as Error)?.message || "unknown error",
+        }),
+    });
     const getSheetRows = createGetSheetRows(xlsxFile);
 
     const closedPositionRows = yield* getSheetRows(CLOSED_POSITIONS_SHEET_NAME);

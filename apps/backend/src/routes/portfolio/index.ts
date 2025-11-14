@@ -3,13 +3,14 @@ import { validator } from "hono/validator";
 import z from "zod";
 
 import type { HonoEnv } from "../../types";
-import { Effect, Logger, LogLevel } from "effect";
+import { Effect, Exit, Logger, LogLevel } from "effect";
 import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
 import { init } from "excelize-wasm";
 import { createPortfolioService } from "../../services/portfolio";
 import { YahooFinanceLive } from "../../services/yahooFinance";
 import { YahooPriceRepositoryLive } from "../../repositories/yahooPrice/YahooPriceRepository";
 import { TimeServiceLive } from "../../services/time/time";
+import { YahooFinanceMock } from "../../services/yahooFinance/mock";
 
 const portfolioService = createPortfolioService();
 export const portfolioRouter = new Hono<HonoEnv>();
@@ -62,26 +63,53 @@ portfolioRouter.post("/xtb-file", async (c) => {
 
   const body = await c.req.parseBody();
   const file = body["file"];
+  console.log({ file });
+
   if (!file || !(file instanceof File)) {
     return c.body(null, 400);
   }
 
-  const parsed = await Effect.runPromise(
-    parseCSV(await file.bytes(), { excelize }),
-  );
+  const fileBytes = await file.bytes();
 
-  const effect = portfolioService.calculatePortfolioDailyValue(
-    parsed.cashOperations.successes,
-  );
+  const effect = Effect.gen(function* () {
+    const parsed = yield* parseCSV(fileBytes, { excelize });
+    const effect = yield* portfolioService.calculatePortfolioDailyValue(
+      parsed.cashOperations.successes,
+    );
 
-  const result = await Effect.runPromise(
-    effect.pipe(
-      Logger.withMinimumLogLevel(LogLevel.Debug),
-      Effect.provide(YahooFinanceLive),
-      Effect.provide(YahooPriceRepositoryLive),
-      Effect.provide(TimeServiceLive),
-    ),
-  );
+    return effect;
+  });
 
-  return c.json(result);
+  const result = await Effect.runPromiseExit(effect);
+  if (Exit.isFailure(result)) {
+    return c.json(result.cause, 200);
+  }
+
+  return c.json(result.value);
 });
+//
+//   const effect = Effect.gen(function* () {
+//     const parsed = yield* parseCSV(fileBytes, { excelize });
+//
+//     const effect = yield* portfolioService.calculatePortfolioDailyValue(
+//       parsed.cashOperations.successes,
+//     );
+//     return effect;
+//   });
+//
+//   return await Effect.runPromise(
+//     effect.pipe(
+//       Effect.provide(YahooFinanceMock),
+//       Effect.provide(TimeServiceLive),
+//       Effect.provide(YahooFinanceMock),
+//     ),
+//   )
+//     .then((result) => {
+//       c.json(result);
+//     })
+//     .catch((err) => {
+//       console.log({ err });
+//
+//       return c.json(err);
+//     });
+// });
