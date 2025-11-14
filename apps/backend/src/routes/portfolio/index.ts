@@ -2,17 +2,15 @@ import { Hono } from "hono";
 import { validator } from "hono/validator";
 import z from "zod";
 
-import type { HonoEnv } from "../../types";
-import { Effect, Exit, Logger, LogLevel } from "effect";
 import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
+import { Effect } from "effect";
 import { init } from "excelize-wasm";
 import { createPortfolioService } from "../../services/portfolio";
-import { YahooFinanceLive } from "../../services/yahooFinance";
-import { YahooPriceRepositoryLive } from "../../repositories/yahooPrice/YahooPriceRepository";
-import { TimeServiceLive } from "../../services/time/time";
-import { YahooFinanceMock } from "../../services/yahooFinance/mock";
+import type { HonoEnv } from "../../types";
+import { MainRuntime } from "../../server";
 
 const portfolioService = createPortfolioService();
+export const portfolioRouter = new Hono<HonoEnv>();
 
 const PortfolioSchemaV1 = z.object({
   volume: z.number(),
@@ -34,87 +32,83 @@ export const CreatePortfolioRequestBodySchema = z.discriminatedUnion(
   ],
 );
 
-export const createPortfolioRouter = Effect.gen(function* () {
-  const portfolioRouter = new Hono<HonoEnv>();
-  portfolioRouter.post(
-    "/",
-    validator("json", async (payload, c) => {
-      const parseResult =
-        await CreatePortfolioRequestBodySchema.safeParseAsync(payload);
+portfolioRouter.post(
+  "/",
+  validator("json", async (payload, c) => {
+    const parseResult =
+      await CreatePortfolioRequestBodySchema.safeParseAsync(payload);
 
-      if (!parseResult.success) {
-        return c.json(
-          { error: "Invalid request body", details: parseResult.error },
-          400,
-        );
-      }
-      return parseResult.data;
-    }),
-    async (c) => {
-      const body = c.req.valid("json");
-      console.log("creating portfolio with body:", body);
-      await c.var.services.portfolio.create(body);
+    if (!parseResult.success) {
+      return c.json(
+        { error: "Invalid request body", details: parseResult.error },
+        400,
+      );
+    }
+    return parseResult.data;
+  }),
+  async (c) => {
+    const body = c.req.valid("json");
+    console.log("creating portfolio with body:", body);
+    await c.var.services.portfolio.create(body);
 
-      return c.json({ message: "Portfolio created" });
-    },
-  );
+    return c.json({ message: "Portfolio created" });
+  },
+);
 
-  portfolioRouter.post("/xtb-file", async (c) => {
-    const excelize = await init(
-      "./node_modules/excelize-wasm/excelize.wasm.gz",
+portfolioRouter.post("/xtb-file", async (c) => {
+  const excelize = await init("./node_modules/excelize-wasm/excelize.wasm.gz");
+
+  const body = await c.req.parseBody();
+  const file = body["file"];
+  if (!file || !(file instanceof File)) {
+    return c.body(null, 400);
+  }
+
+  const fileBytes = await file.bytes();
+
+  return Effect.gen(function* () {
+    const parsedCSV = yield* parseCSV(fileBytes, { excelize });
+
+    const result = yield* portfolioService.calculatePortfolioDailyValue(
+      parsedCSV.cashOperations.successes,
     );
 
-    const body = await c.req.parseBody();
-    const file = body["file"];
-    console.log({ file });
-
-    if (!file || !(file instanceof File)) {
-      return c.body(null, 400);
-    }
-
-    const fileBytes = await file.bytes();
-
-    const parsed = yield * parseCSV(fileBytes, { excelize });
-    const effect =
-      yield *
-      portfolioService.calculatePortfolioDailyValue(
-        parsed.cashOperations.successes,
-      );
-
-    const result = await Effect.runPromiseExit(effect);
-    if (Exit.isFailure(result)) {
-      return c.json(result.cause, 200);
-    }
-
-    return c.json({}, 200);
-  });
-
-  return portfolioRouter;
+    return c.json(result, 200);
+  }).pipe(
+    Effect.catchTags({
+      CSVParsingError: (e) =>
+        Effect.succeed(
+          c.json(
+            {
+              success: false,
+              message: "CSVParsingError",
+            },
+            400,
+          ),
+        ),
+      HeaderParsingError: () => {
+        return Effect.succeed(
+          c.json(
+            {
+              success: false,
+              message: "Header parsing error",
+            },
+            400,
+          ),
+        );
+      },
+      DatabaseError: () => {
+        return Effect.succeed(
+          c.json(
+            {
+              success: false,
+              message: "DatabaseError",
+            },
+            500,
+          ),
+        );
+      },
+    }),
+    MainRuntime.runPromise,
+  );
 });
-
-//
-//   const effect = Effect.gen(function* () {
-//     const parsed = yield* parseCSV(fileBytes, { excelize });
-//
-//     const effect = yield* portfolioService.calculatePortfolioDailyValue(
-//       parsed.cashOperations.successes,
-//     );
-//     return effect;
-//   });
-//
-//   return await Effect.runPromise(
-//     effect.pipe(
-//       Effect.provide(YahooFinanceMock),
-//       Effect.provide(TimeServiceLive),
-//       Effect.provide(YahooFinanceMock),
-//     ),
-//   )
-//     .then((result) => {
-//       c.json(result);
-//     })
-//     .catch((err) => {
-//       console.log({ err });
-//
-//       return c.json(err);
-//     });
-// });

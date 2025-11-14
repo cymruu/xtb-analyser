@@ -1,26 +1,46 @@
-import { Effect } from "effect";
+import { Effect, Runtime } from "effect";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
 import { validator } from "hono/validator";
 import z from "zod";
 
 import { AppURL } from "./lib/config/AppConfigSchema";
 import type { HonoEnv } from "./types";
-import { createPortfolioRouter } from "./routes/portfolio";
+import { portfolioRouter } from "./routes/portfolio";
 
 const MetricSchema = z.object({
   name: z.string(),
   payload: z.any(),
 });
 
+const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
+  Effect.gen(function* () {
+    const runtime = yield* Effect.runtime<never>();
+
+    app.use("/*", async (c, next) => {
+      const { method, path } = c.req;
+
+      await Effect.gen(function* () {
+        yield* Effect.logInfo(`[Request] ${method} ${path}`);
+
+        yield* Effect.promise(next);
+
+        yield* Effect.logInfo(`[Response] ${method} ${path} (${c.res.status})`);
+      }).pipe(
+        Effect.withSpan(`${method} ${path}`),
+        Effect.withLogSpan("duration"),
+        Effect.annotateLogs({ method, path }),
+        Runtime.runPromise(runtime),
+      );
+    });
+  });
+
 export const createApp = Effect.gen(function* () {
   const appUrl = yield* AppURL;
 
-  const portfolioRouter = yield* createPortfolioRouter;
-
   const app = new Hono<HonoEnv>();
-  app.use(logger());
+
+  yield* LoggerMiddlewareWithRuntime({ app });
 
   app.get("/health", (c) => c.text("OK", 200));
 
