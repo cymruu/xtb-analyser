@@ -145,7 +145,9 @@ export const createPortfolioService = () => {
           fillDailyPortfolioGaps(dailyPortfolioStocks),
           Effect.map((v) => {
             return Array.map(v, ({ key, current }) => {
-              return priceResolver.calculateValue(key, current);
+              return priceResolver
+                .calculateValue(key, current)
+                .pipe(Effect.map((result) => ({ key, value: result.value })));
             });
           }),
           Effect.flatMap(Effect.all),

@@ -58,7 +58,7 @@ export const fetchPrices = (priceIndex: TickerPriceIndex) =>
           end: endOfDay(subDays(timeService.now(), 1)),
         }; // clamp to the day before today, to avoiding fetching incomplete data
         const historicalPrices = pipe(
-          Effect.logError(`Requesting YahooFinance historical prices`, {
+          Effect.logDebug(`Requesting YahooFinance historical prices`, {
             ticker: symbol,
             indices: dataRange,
           }),
