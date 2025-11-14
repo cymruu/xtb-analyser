@@ -13,7 +13,6 @@ import { TimeServiceLive } from "../../services/time/time";
 import { YahooFinanceMock } from "../../services/yahooFinance/mock";
 
 const portfolioService = createPortfolioService();
-export const portfolioRouter = new Hono<HonoEnv>();
 
 const PortfolioSchemaV1 = z.object({
   volume: z.number(),
@@ -35,58 +34,64 @@ export const CreatePortfolioRequestBodySchema = z.discriminatedUnion(
   ],
 );
 
-portfolioRouter.post(
-  "/",
-  validator("json", async (payload, c) => {
-    const parseResult =
-      await CreatePortfolioRequestBodySchema.safeParseAsync(payload);
+export const createPortfolioRouter = Effect.gen(function* () {
+  const portfolioRouter = new Hono<HonoEnv>();
+  portfolioRouter.post(
+    "/",
+    validator("json", async (payload, c) => {
+      const parseResult =
+        await CreatePortfolioRequestBodySchema.safeParseAsync(payload);
 
-    if (!parseResult.success) {
-      return c.json(
-        { error: "Invalid request body", details: parseResult.error },
-        400,
-      );
-    }
-    return parseResult.data;
-  }),
-  async (c) => {
-    const body = c.req.valid("json");
-    console.log("creating portfolio with body:", body);
-    await c.var.services.portfolio.create(body);
+      if (!parseResult.success) {
+        return c.json(
+          { error: "Invalid request body", details: parseResult.error },
+          400,
+        );
+      }
+      return parseResult.data;
+    }),
+    async (c) => {
+      const body = c.req.valid("json");
+      console.log("creating portfolio with body:", body);
+      await c.var.services.portfolio.create(body);
 
-    return c.json({ message: "Portfolio created" });
-  },
-);
+      return c.json({ message: "Portfolio created" });
+    },
+  );
 
-portfolioRouter.post("/xtb-file", async (c) => {
-  const excelize = await init("./node_modules/excelize-wasm/excelize.wasm.gz");
-
-  const body = await c.req.parseBody();
-  const file = body["file"];
-  console.log({ file });
-
-  if (!file || !(file instanceof File)) {
-    return c.body(null, 400);
-  }
-
-  const fileBytes = await file.bytes();
-
-  const effect = Effect.gen(function* () {
-    const parsed = yield* parseCSV(fileBytes, { excelize });
-    const effect = yield* portfolioService.calculatePortfolioDailyValue(
-      parsed.cashOperations.successes,
+  portfolioRouter.post("/xtb-file", async (c) => {
+    const excelize = await init(
+      "./node_modules/excelize-wasm/excelize.wasm.gz",
     );
 
-    return effect;
+    const body = await c.req.parseBody();
+    const file = body["file"];
+    console.log({ file });
+
+    if (!file || !(file instanceof File)) {
+      return c.body(null, 400);
+    }
+
+    const fileBytes = await file.bytes();
+
+    const parsed = yield * parseCSV(fileBytes, { excelize });
+    const effect =
+      yield *
+      portfolioService.calculatePortfolioDailyValue(
+        parsed.cashOperations.successes,
+      );
+
+    const result = await Effect.runPromiseExit(effect);
+    if (Exit.isFailure(result)) {
+      return c.json(result.cause, 200);
+    }
+
+    return c.json({}, 200);
   });
 
-  const result = await Effect.runPromiseExit(effect);
-  if (Exit.isFailure(result)) {
-    return c.json(result.cause, 200);
-  }
-
-  return c.json(result.value);
+  return portfolioRouter;
 });
+
 //
 //   const effect = Effect.gen(function* () {
 //     const parsed = yield* parseCSV(fileBytes, { excelize });

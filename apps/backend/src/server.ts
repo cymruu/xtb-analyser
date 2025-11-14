@@ -1,15 +1,14 @@
-import { Effect } from "effect";
-import { HTTPServerPort } from "./lib/config/AppConfigSchema";
-import { createApp } from "./app";
 import { BunRuntime } from "@effect/platform-bun";
+import { Effect } from "effect";
+
+import { createApp } from "./app";
+import { HTTPServerPort } from "./lib/config/AppConfigSchema";
 
 class HTTPServer extends Effect.Service<HTTPServer>()("HTTPServer", {
   effect: Effect.gen(function* () {
     const app = yield* createApp;
     return app;
   }),
-
-  dependencies: [],
 }) {}
 
 const main = Effect.gen(function* () {

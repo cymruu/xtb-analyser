@@ -6,8 +6,8 @@ import { validator } from "hono/validator";
 import z from "zod";
 
 import { AppURL } from "./lib/config/AppConfigSchema";
-import { portfolioRouter } from "./routes/portfolio";
 import type { HonoEnv } from "./types";
+import { createPortfolioRouter } from "./routes/portfolio";
 
 const MetricSchema = z.object({
   name: z.string(),
@@ -16,6 +16,8 @@ const MetricSchema = z.object({
 
 export const createApp = Effect.gen(function* () {
   const appUrl = yield* AppURL;
+
+  const portfolioRouter = yield* createPortfolioRouter;
 
   const app = new Hono<HonoEnv>();
   app.use(logger());
