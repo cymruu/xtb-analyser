@@ -1,4 +1,4 @@
-import { Effect, Runtime } from "effect";
+import { Effect } from "effect";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { validator } from "hono/validator";
@@ -15,8 +15,6 @@ const MetricSchema = z.object({
 
 const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
   Effect.gen(function* () {
-    const runtime = yield* Effect.runtime<never>();
-
     app.use("/*", async (c, next) => {
       const { method, path } = c.req;
 
@@ -30,7 +28,7 @@ const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
         Effect.withSpan(`${method} ${path}`),
         Effect.withLogSpan("duration"),
         Effect.annotateLogs({ method, path }),
-        Runtime.runPromise(runtime),
+        Effect.runPromise,
       );
     });
   });

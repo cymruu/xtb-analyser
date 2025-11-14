@@ -7,7 +7,7 @@ import { Effect } from "effect";
 import { init } from "excelize-wasm";
 import { createPortfolioService } from "../../services/portfolio";
 import type { HonoEnv } from "../../types";
-import { MainRuntime } from "../../server";
+import { MainRuntimeLive } from "../../runtime";
 
 const portfolioService = createPortfolioService();
 export const portfolioRouter = new Hono<HonoEnv>();
@@ -109,6 +109,6 @@ portfolioRouter.post("/xtb-file", async (c) => {
         );
       },
     }),
-    MainRuntime.runPromise,
+    MainRuntimeLive.runPromise,
   );
 });

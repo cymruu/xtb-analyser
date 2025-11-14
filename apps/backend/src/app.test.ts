@@ -1,20 +1,13 @@
 import { describe, expect, it } from "bun:test";
 
-import { ConfigProvider, Effect, Logger, LogLevel } from "effect";
+import { Effect } from "effect";
 import { createApp } from "./app";
-
-const MOCK_CONFIG = ConfigProvider.fromMap(
-  new Map([["APP_URL", "https://localhost"]]),
-);
 
 describe("app", () => {
   describe("/health", () => {
     it("Should return 200 response", async () => {
       const req = new Request("http://localhost/health");
-
-      const app = await Effect.runPromise(
-        Effect.withConfigProvider(createApp, MOCK_CONFIG),
-      );
+      const app = await Effect.runPromise(createApp);
 
       const res = await app.fetch(req);
 
@@ -35,17 +28,9 @@ describe("app", () => {
           method: "POST",
           body: formData,
         });
-
-        const app = await Effect.runPromise(
-          Effect.withConfigProvider(createApp, MOCK_CONFIG).pipe(
-            Logger.withMinimumLogLevel(LogLevel.Debug),
-          ),
-        );
+        const app = await Effect.runPromise(createApp);
 
         const res = await app.fetch(req);
-
-        const rsp = await res.json();
-        console.dir({ rsp }, { depth: 5 });
 
         expect(res.status).toBe(400);
       });
@@ -54,10 +39,7 @@ describe("app", () => {
         const req = new Request("http://localhost/portfolio/xtb-file", {
           method: "POST",
         });
-
-        const app = await Effect.runPromise(
-          Effect.withConfigProvider(createApp, MOCK_CONFIG),
-        );
+        const app = await Effect.runPromise(createApp);
 
         const res = await app.fetch(req);
 
