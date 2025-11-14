@@ -6,7 +6,7 @@ import z from "zod";
 
 import { AppURL } from "./lib/config/AppConfigSchema";
 import type { HonoEnv } from "./types";
-import { portfolioRouter } from "./routes/portfolio";
+import { createPortfolioRouter } from "./routes/portfolio";
 
 const MetricSchema = z.object({
   name: z.string(),
@@ -44,6 +44,7 @@ export const createApp = Effect.gen(function* () {
 
   app.use(cors({ origin: appUrl.toString() }));
 
+  const portfolioRouter = yield* createPortfolioRouter;
   app.route("/portfolio", portfolioRouter);
 
   app.post(

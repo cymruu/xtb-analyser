@@ -2,12 +2,21 @@ import { describe, expect, it } from "bun:test";
 
 import { Effect } from "effect";
 import { createApp } from "./app";
+import { TimeServiceMock } from "./services/time/time";
+import { YahooFinanceMock } from "./services/yahooFinance/mock";
+import { YahooPriceRepositoryMock } from "./repositories/yahooPrice/mock";
 
 describe("app", () => {
   describe("/health", () => {
     it("Should return 200 response", async () => {
       const req = new Request("http://localhost/health");
-      const app = await Effect.runPromise(createApp);
+      const app = await Effect.runPromise(
+        createApp.pipe(
+          Effect.provide(YahooPriceRepositoryMock),
+          Effect.provide(YahooFinanceMock),
+          Effect.provide(TimeServiceMock(new Date(0))),
+        ),
+      );
 
       const res = await app.fetch(req);
 
@@ -28,7 +37,13 @@ describe("app", () => {
           method: "POST",
           body: formData,
         });
-        const app = await Effect.runPromise(createApp);
+        const app = await Effect.runPromise(
+          createApp.pipe(
+            Effect.provide(YahooPriceRepositoryMock),
+            Effect.provide(YahooFinanceMock),
+            Effect.provide(TimeServiceMock(new Date(0))),
+          ),
+        );
 
         const res = await app.fetch(req);
 
@@ -39,7 +54,13 @@ describe("app", () => {
         const req = new Request("http://localhost/portfolio/xtb-file", {
           method: "POST",
         });
-        const app = await Effect.runPromise(createApp);
+        const app = await Effect.runPromise(
+          createApp.pipe(
+            Effect.provide(YahooPriceRepositoryMock),
+            Effect.provide(YahooFinanceMock),
+            Effect.provide(TimeServiceMock(new Date(0))),
+          ),
+        );
 
         const res = await app.fetch(req);
 

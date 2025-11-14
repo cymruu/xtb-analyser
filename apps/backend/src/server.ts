@@ -3,6 +3,7 @@ import { Effect } from "effect";
 
 import { createApp } from "./app";
 import { HTTPServerPort } from "./lib/config/AppConfigSchema";
+import { MainLayerLive } from "./runtime";
 
 export class HTTPServer extends Effect.Service<HTTPServer>()("HTTPServer", {
   effect: Effect.gen(function* () {
@@ -20,4 +21,6 @@ const main = Effect.gen(function* () {
   yield* Effect.logInfo(`Server listening on port ${port} hono`);
 });
 
-BunRuntime.runMain(main.pipe(Effect.provide(HTTPServer.Default)));
+BunRuntime.runMain(
+  main.pipe(Effect.provide(HTTPServer.Default), Effect.provide(MainLayerLive)),
+);

@@ -3,14 +3,16 @@ import { validator } from "hono/validator";
 import z from "zod";
 
 import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
-import { Effect } from "effect";
+import { Effect, Runtime } from "effect";
 import { init } from "excelize-wasm";
 import { createPortfolioService } from "../../services/portfolio";
 import type { HonoEnv } from "../../types";
 import { MainRuntimeLive } from "../../runtime";
+import type { TimeService } from "../../services/time/time";
+import type { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
+import type { YahooFinance } from "../../services/yahooFinance";
 
 const portfolioService = createPortfolioService();
-export const portfolioRouter = new Hono<HonoEnv>();
 
 const PortfolioSchemaV1 = z.object({
   volume: z.number(),
@@ -32,83 +34,95 @@ export const CreatePortfolioRequestBodySchema = z.discriminatedUnion(
   ],
 );
 
-portfolioRouter.post(
-  "/",
-  validator("json", async (payload, c) => {
-    const parseResult =
-      await CreatePortfolioRequestBodySchema.safeParseAsync(payload);
+export const createPortfolioRouter = Effect.gen(function* () {
+  const portfolioRouter = new Hono<HonoEnv>();
 
-    if (!parseResult.success) {
-      return c.json(
-        { error: "Invalid request body", details: parseResult.error },
-        400,
-      );
-    }
-    return parseResult.data;
-  }),
-  async (c) => {
-    const body = c.req.valid("json");
-    console.log("creating portfolio with body:", body);
-    await c.var.services.portfolio.create(body);
+  const runtime = yield* Effect.runtime<
+    TimeService | YahooPriceRepository | YahooFinance
+  >();
 
-    return c.json({ message: "Portfolio created" });
-  },
-);
+  portfolioRouter.post(
+    "/",
+    validator("json", async (payload, c) => {
+      const parseResult =
+        await CreatePortfolioRequestBodySchema.safeParseAsync(payload);
 
-portfolioRouter.post("/xtb-file", async (c) => {
-  const excelize = await init("./node_modules/excelize-wasm/excelize.wasm.gz");
+      if (!parseResult.success) {
+        return c.json(
+          { error: "Invalid request body", details: parseResult.error },
+          400,
+        );
+      }
+      return parseResult.data;
+    }),
+    async (c) => {
+      const body = c.req.valid("json");
+      console.log("creating portfolio with body:", body);
+      await c.var.services.portfolio.create(body);
 
-  const body = await c.req.parseBody();
-  const file = body["file"];
-  if (!file || !(file instanceof File)) {
-    return c.body(null, 400);
-  }
+      return c.json({ message: "Portfolio created" });
+    },
+  );
 
-  const fileBytes = await file.bytes();
-
-  return Effect.gen(function* () {
-    const parsedCSV = yield* parseCSV(fileBytes, { excelize });
-
-    const result = yield* portfolioService.calculatePortfolioDailyValue(
-      parsedCSV.cashOperations.successes,
+  portfolioRouter.post("/xtb-file", async (c) => {
+    const excelize = await init(
+      "./node_modules/excelize-wasm/excelize.wasm.gz",
     );
 
-    return c.json(result, 200);
-  }).pipe(
-    Effect.catchTags({
-      CSVParsingError: (e) =>
-        Effect.succeed(
-          c.json(
-            {
-              success: false,
-              message: "CSVParsingError",
-            },
-            400,
+    const body = await c.req.parseBody();
+    const file = body["file"];
+    if (!file || !(file instanceof File)) {
+      return c.body(null, 400);
+    }
+
+    const fileBytes = await file.bytes();
+
+    return Effect.gen(function* () {
+      const parsedCSV = yield* parseCSV(fileBytes, { excelize });
+
+      const result = yield* portfolioService.calculatePortfolioDailyValue(
+        parsedCSV.cashOperations.successes,
+      );
+
+      return c.json(result, 200);
+    }).pipe(
+      Effect.catchTags({
+        CSVParsingError: (e) =>
+          Effect.succeed(
+            c.json(
+              {
+                success: false,
+                message: "CSVParsingError",
+              },
+              400,
+            ),
           ),
-        ),
-      HeaderParsingError: () => {
-        return Effect.succeed(
-          c.json(
-            {
-              success: false,
-              message: "Header parsing error",
-            },
-            400,
-          ),
-        );
-      },
-      DatabaseError: () => {
-        return Effect.succeed(
-          c.json(
-            {
-              success: false,
-              message: "DatabaseError",
-            },
-            500,
-          ),
-        );
-      },
-    }),
-    MainRuntimeLive.runPromise,
-  );
+        HeaderParsingError: () => {
+          return Effect.succeed(
+            c.json(
+              {
+                success: false,
+                message: "Header parsing error",
+              },
+              400,
+            ),
+          );
+        },
+        DatabaseError: () => {
+          return Effect.succeed(
+            c.json(
+              {
+                success: false,
+                message: "DatabaseError",
+              },
+              500,
+            ),
+          );
+        },
+      }),
+      Runtime.runPromise(runtime),
+    );
+  });
+
+  return portfolioRouter;
 });
