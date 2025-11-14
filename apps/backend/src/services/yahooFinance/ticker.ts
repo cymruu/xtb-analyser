@@ -2,7 +2,7 @@ import { TickerCtor, type Ticker } from "../../domains/stock/types";
 import type { BrandedType } from "../../types";
 
 export type YahooTicker = BrandedType<string, "YahooTicker">;
-const YahooTickerCtor = (s: string): YahooTicker => s as YahooTicker;
+export const YahooTickerCtor = (s: string): YahooTicker => s as YahooTicker;
 
 export const tickerToYahooTicker = (ticker: Ticker): YahooTicker => {
   const TICKER_MAP: Record<Ticker, YahooTicker> = {

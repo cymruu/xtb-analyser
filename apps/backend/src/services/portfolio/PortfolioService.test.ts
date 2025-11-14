@@ -4,17 +4,16 @@ import { init } from "excelize-wasm";
 
 import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
 
-import { createPortfolioService } from ".";
-import { TickerCtor, TransactionTimeKeyCtor } from "../../domains/stock/types";
+import { TransactionTimeKeyCtor } from "../../domains/stock/types";
 import { YahooPriceRepositoryMock } from "../../repositories/yahooPrice/mock";
 import { YahooPriceRepositoryLive } from "../../repositories/yahooPrice/YahooPriceRepository";
 import { TimeServiceLive, TimeServiceMock } from "../time/time";
 import { YahooFinanceLive } from "../yahooFinance";
 import { YahooFinanceMock } from "../yahooFinance/mock";
+import { YahooTickerCtor } from "../yahooFinance/ticker";
+import { calculatePortfolioDailyValue } from "./calculatePortfolioDailyValue";
 import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
 import { createMissingPricesIndex, createPriceIndex } from "./priceIndex";
-
-const PortfolioService = createPortfolioService();
 
 describe("PortfolioService", () => {
   describe("calculatePortfolioDailyValue", () => {
@@ -29,7 +28,7 @@ describe("PortfolioService", () => {
         parseCSV(await file.bytes(), { excelize }),
       );
 
-      const effect = PortfolioService.calculatePortfolioDailyValue(
+      const effect = calculatePortfolioDailyValue(
         parsed.cashOperations.successes,
       );
 
@@ -47,7 +46,7 @@ describe("PortfolioService", () => {
     });
 
     it("calculatePortfolioDailyValue", async () => {
-      const effect = PortfolioService.calculatePortfolioDailyValue([
+      const effect = calculatePortfolioDailyValue([
         {
           id: 1,
           comment: "",
@@ -106,12 +105,12 @@ describe("createPriceIndex", () => {
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
         current: {
-          [TickerCtor("PKN")]: 10,
+          [YahooTickerCtor("PKN")]: 10,
         },
       },
     ]);
 
-    expect(index[TickerCtor("PKN")]).toEqual([
+    expect(index[YahooTickerCtor("PKN")]).toEqual([
       {
         start: new Date("1970-01-01"),
         end: null,
@@ -124,18 +123,18 @@ describe("createPriceIndex", () => {
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
         current: {
-          [TickerCtor("PKN")]: 10,
+          [YahooTickerCtor("PKN")]: 10,
         },
       },
       {
         key: TransactionTimeKeyCtor("1970-02-01"),
         current: {
-          [TickerCtor("PKN")]: 0,
+          [YahooTickerCtor("PKN")]: 0,
         },
       },
     ]);
 
-    expect(index[TickerCtor("PKN")]).toEqual([
+    expect(index[YahooTickerCtor("PKN")]).toEqual([
       {
         start: new Date("1970-01-01"),
         end: new Date("1970-02-01"),
@@ -148,25 +147,25 @@ describe("createPriceIndex", () => {
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
         current: {
-          [TickerCtor("PKN")]: 10,
+          [YahooTickerCtor("PKN")]: 10,
         },
       },
 
       {
         key: TransactionTimeKeyCtor("1970-02-01"),
         current: {
-          [TickerCtor("PKN")]: 0,
+          [YahooTickerCtor("PKN")]: 0,
         },
       },
       {
         key: TransactionTimeKeyCtor("1970-03-01"),
         current: {
-          [TickerCtor("PKN")]: 5,
+          [YahooTickerCtor("PKN")]: 5,
         },
       },
     ]);
 
-    expect(index[TickerCtor("PKN")]).toEqual([
+    expect(index[YahooTickerCtor("PKN")]).toEqual([
       {
         start: new Date("1970-01-01"),
         end: new Date("1970-02-01"),
@@ -180,30 +179,30 @@ describe("createPriceIndex", () => {
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
         current: {
-          [TickerCtor("PKN")]: 10,
+          [YahooTickerCtor("PKN")]: 10,
         },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-10"),
         current: {
-          [TickerCtor("DINO")]: 15,
+          [YahooTickerCtor("DINO")]: 15,
         },
       },
       {
         key: TransactionTimeKeyCtor("1970-02-01"),
         current: {
-          [TickerCtor("PKN")]: 0,
+          [YahooTickerCtor("PKN")]: 0,
         },
       },
     ]);
 
-    expect(index[TickerCtor("PKN")]).toEqual([
+    expect(index[YahooTickerCtor("PKN")]).toEqual([
       {
         start: new Date("1970-01-01"),
         end: new Date("1970-02-01"),
       },
     ]);
-    expect(index[TickerCtor("DINO")]).toEqual([
+    expect(index[YahooTickerCtor("DINO")]).toEqual([
       {
         start: new Date("1970-01-10"),
         end: null,
@@ -216,24 +215,24 @@ describe("createPriceIndex", () => {
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
         current: {
-          [TickerCtor("PKN")]: 10,
+          [YahooTickerCtor("PKN")]: 10,
         },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-05"),
         current: {
-          [TickerCtor("PKN")]: 20,
+          [YahooTickerCtor("PKN")]: 20,
         },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-10"),
         current: {
-          [TickerCtor("PKN")]: 15,
+          [YahooTickerCtor("PKN")]: 15,
         },
       },
     ]);
 
-    expect(index[TickerCtor("PKN")]).toEqual([
+    expect(index[YahooTickerCtor("PKN")]).toEqual([
       {
         start: new Date("1970-01-01"),
         end: null,
@@ -246,12 +245,12 @@ describe("createPriceIndex", () => {
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
         current: {
-          [TickerCtor("PKN")]: 0,
+          [YahooTickerCtor("PKN")]: 0,
         },
       },
     ]);
 
-    expect(index[TickerCtor("PKN")]).toEqual([]);
+    expect(index[YahooTickerCtor("PKN")]).toEqual([]);
   });
 
   it("ignores zero updates when no open period exists", async () => {
@@ -259,12 +258,12 @@ describe("createPriceIndex", () => {
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
         current: {
-          [TickerCtor("PKN")]: 0,
+          [YahooTickerCtor("PKN")]: 0,
         },
       },
     ]);
 
-    expect(index[TickerCtor("PKN")]).toEqual([]);
+    expect(index[YahooTickerCtor("PKN")]).toEqual([]);
   });
 });
 
@@ -273,11 +272,11 @@ describe("createMissingPricesIndex", () => {
     const index = createPriceIndex([
       {
         key: TransactionTimeKeyCtor("2025-01-01"),
-        current: { [TickerCtor("PKN")]: 10 },
+        current: { [YahooTickerCtor("PKN")]: 10 },
       },
       {
         key: TransactionTimeKeyCtor("2025-01-05"),
-        current: { [TickerCtor("PKN")]: 15 },
+        current: { [YahooTickerCtor("PKN")]: 15 },
       },
     ]);
 
@@ -288,7 +287,7 @@ describe("createMissingPricesIndex", () => {
     );
 
     expect(result).toEqual({
-      [TickerCtor("PKN")]: [
+      [YahooTickerCtor("PKN")]: [
         { start: new Date("2025-01-01"), end: new Date("2025-01-04") },
       ],
     });
@@ -298,11 +297,11 @@ describe("createMissingPricesIndex", () => {
     const index = createPriceIndex([
       {
         key: TransactionTimeKeyCtor("2025-02-01"),
-        current: { [TickerCtor("AAPL")]: 100 },
+        current: { [YahooTickerCtor("AAPL")]: 100 },
       },
       {
         key: TransactionTimeKeyCtor("2025-02-10"),
-        current: { [TickerCtor("AAPL")]: 105 },
+        current: { [YahooTickerCtor("AAPL")]: 105 },
       },
     ]);
 
@@ -314,7 +313,7 @@ describe("createMissingPricesIndex", () => {
     );
 
     expect(result).toEqual({
-      [TickerCtor("AAPL")]: [
+      [YahooTickerCtor("AAPL")]: [
         { start: new Date("2025-02-01"), end: new Date("2025-03-31") },
       ],
     });
@@ -324,11 +323,11 @@ describe("createMissingPricesIndex", () => {
     const index = createPriceIndex([
       {
         key: TransactionTimeKeyCtor("2025-03-01"),
-        current: { [TickerCtor("PKN")]: 10 },
+        current: { [YahooTickerCtor("PKN")]: 10 },
       },
       {
         key: TransactionTimeKeyCtor("2025-03-31"),
-        current: { [TickerCtor("PKN")]: 15 },
+        current: { [YahooTickerCtor("PKN")]: 15 },
       },
     ]);
 
@@ -342,7 +341,7 @@ describe("createMissingPricesIndex", () => {
     );
 
     expect(result).toEqual({
-      [TickerCtor("PKN")]: [
+      [YahooTickerCtor("PKN")]: [
         { start: new Date("2025-03-16"), end: new Date("2025-03-31") },
       ],
     });
@@ -352,11 +351,11 @@ describe("createMissingPricesIndex", () => {
     const index = createPriceIndex([
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
-        current: { [TickerCtor("PKN")]: 10 },
+        current: { [YahooTickerCtor("PKN")]: 10 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-03"),
-        current: { [TickerCtor("PKN")]: -10 },
+        current: { [YahooTickerCtor("PKN")]: -10 },
       },
     ]);
 
@@ -377,11 +376,11 @@ describe("createMissingPricesIndex", () => {
     const index = createPriceIndex([
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
-        current: { [TickerCtor("PKN")]: 10 },
+        current: { [YahooTickerCtor("PKN")]: 10 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-15"),
-        current: { [TickerCtor("PKN")]: -10 },
+        current: { [YahooTickerCtor("PKN")]: -10 },
       },
     ]);
 
@@ -395,7 +394,7 @@ describe("createMissingPricesIndex", () => {
     );
 
     expect(result).toEqual({
-      [TickerCtor("PKN")]: [
+      [YahooTickerCtor("PKN")]: [
         { start: new Date("1970-01-03"), end: new Date("1970-01-15") },
       ],
     });
@@ -407,11 +406,11 @@ describe("fillDailyPortfolioGaps", () => {
     const effect = fillDailyPortfolioGaps([
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
-        current: { [TickerCtor("PKN")]: 5 },
+        current: { [YahooTickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-05"),
-        current: { [TickerCtor("PKN")]: 6 },
+        current: { [YahooTickerCtor("PKN")]: 6 },
       },
     ]);
 
@@ -422,27 +421,27 @@ describe("fillDailyPortfolioGaps", () => {
     expect(result).toMatchObject([
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
-        current: { [TickerCtor("PKN")]: 5 },
+        current: { [YahooTickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-02"),
-        current: { [TickerCtor("PKN")]: 5 },
+        current: { [YahooTickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-03"),
-        current: { [TickerCtor("PKN")]: 5 },
+        current: { [YahooTickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-04"),
-        current: { [TickerCtor("PKN")]: 5 },
+        current: { [YahooTickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-05"),
-        current: { [TickerCtor("PKN")]: 6 },
+        current: { [YahooTickerCtor("PKN")]: 6 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-06"),
-        current: { [TickerCtor("PKN")]: 6 },
+        current: { [YahooTickerCtor("PKN")]: 6 },
       },
     ]);
   });
@@ -451,11 +450,11 @@ describe("fillDailyPortfolioGaps", () => {
     const effect = fillDailyPortfolioGaps([
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
-        current: { [TickerCtor("PKN")]: 5 },
+        current: { [YahooTickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-05"),
-        current: { [TickerCtor("PKN")]: 6 },
+        current: { [YahooTickerCtor("PKN")]: 6 },
       },
     ]);
 
@@ -466,23 +465,23 @@ describe("fillDailyPortfolioGaps", () => {
     expect(result).toMatchObject([
       {
         key: TransactionTimeKeyCtor("1970-01-01"),
-        current: { [TickerCtor("PKN")]: 5 },
+        current: { [YahooTickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-02"),
-        current: { [TickerCtor("PKN")]: 5 },
+        current: { [YahooTickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-03"),
-        current: { [TickerCtor("PKN")]: 5 },
+        current: { [YahooTickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-04"),
-        current: { [TickerCtor("PKN")]: 5 },
+        current: { [YahooTickerCtor("PKN")]: 5 },
       },
       {
         key: TransactionTimeKeyCtor("1970-01-05"),
-        current: { [TickerCtor("PKN")]: 6 },
+        current: { [YahooTickerCtor("PKN")]: 6 },
       },
     ]);
   });

@@ -5,14 +5,11 @@ import z from "zod";
 import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
 import { Effect, Runtime } from "effect";
 import { init } from "excelize-wasm";
-import { createPortfolioService } from "../../services/portfolio";
-import type { HonoEnv } from "../../types";
-import { MainRuntimeLive } from "../../runtime";
-import type { TimeService } from "../../services/time/time";
 import type { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
+import { calculatePortfolioDailyValue } from "../../services/portfolio/calculatePortfolioDailyValue";
+import type { TimeService } from "../../services/time/time";
 import type { YahooFinance } from "../../services/yahooFinance";
-
-const portfolioService = createPortfolioService();
+import type { HonoEnv } from "../../types";
 
 const PortfolioSchemaV1 = z.object({
   volume: z.number(),
@@ -80,7 +77,7 @@ export const createPortfolioRouter = Effect.gen(function* () {
     return Effect.gen(function* () {
       const parsedCSV = yield* parseCSV(fileBytes, { excelize });
 
-      const result = yield* portfolioService.calculatePortfolioDailyValue(
+      const result = yield* calculatePortfolioDailyValue(
         parsedCSV.cashOperations.successes,
       );
 
