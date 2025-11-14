@@ -1,33 +1,28 @@
-import { Hono, type Context, type Next } from "hono";
-import { createMiddleware } from "hono/factory";
+import { Effect } from "effect";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { validator } from "hono/validator";
 import z from "zod";
 
-import { cors } from "hono/cors";
-import { validator } from "hono/validator";
+import { AppURL } from "./lib/config/AppConfigSchema";
 import { portfolioRouter } from "./routes/portfolio";
-import type { IServices } from "./services";
 import type { HonoEnv } from "./types";
-
-export const useServices = (services: IServices) =>
-  createMiddleware<HonoEnv>(async (c: Context<HonoEnv>, next: Next) => {
-    c.set("services", services);
-    await next();
-  });
 
 const MetricSchema = z.object({
   name: z.string(),
   payload: z.any(),
 });
 
-export const createApp = (services: IServices) => {
+export const createApp = Effect.gen(function* () {
+  const appUrl = yield* AppURL;
+
   const app = new Hono<HonoEnv>();
   app.use(logger());
-  app.use(useServices(services));
 
   app.get("/health", (c) => c.text("OK", 200));
 
-  app.use(cors({ origin: "https://dev.xtb-analyser.com" }));
+  app.use(cors({ origin: appUrl.toString() }));
 
   app.route("/portfolio", portfolioRouter);
 
@@ -52,4 +47,4 @@ export const createApp = (services: IServices) => {
   );
 
   return app;
-};
+});

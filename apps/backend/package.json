@@ -9,6 +9,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@effect/platform-bun": "^0.83.0",
     "@prisma/client": "^6.19.0",
     "@xtb-analyser/xtb-csv-parser": "workspace:packages",
     "date-fns": "^4.1.0",

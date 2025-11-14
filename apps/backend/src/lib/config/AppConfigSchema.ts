@@ -1,6 +1,7 @@
-import z from "zod";
+import { Config } from "effect";
 
-export const AppConfigSchema = z.object({
-  PORT: z.coerce.number().positive().gte(1).lte(65535).default(3000),
-  DATABASE_URL: z.string().url(),
-});
+export const HTTPServerPort = Config.number("PORT").pipe(
+  Config.withDefault(3000),
+);
+
+export const AppURL = Config.url("APP_URL").pipe();
