@@ -17,7 +17,7 @@ import { createMissingPricesIndex, createPriceIndex } from "./priceIndex";
 
 describe("PortfolioService", () => {
   describe("calculatePortfolioDailyValue", () => {
-    it.skip("b", async () => {
+    it.if(!process.env.CI)("b", async () => {
       const file = Bun.file(
         "/Users/filipbachul/Downloads/account_2888512_en_xlsx_2005-12-31_2025-11-08/account_2888512_en_xlsx_2005-12-31_2025-11-08.xlsx",
       );
