@@ -1,5 +1,5 @@
 import { BunRuntime } from "@effect/platform-bun";
-import { Effect } from "effect";
+import { Effect, Logger, LogLevel } from "effect";
 
 import { createApp } from "./app";
 import { HTTPServerPort } from "./lib/config/AppConfigSchema";
@@ -22,5 +22,9 @@ const main = Effect.gen(function* () {
 });
 
 BunRuntime.runMain(
-  main.pipe(Effect.provide(HTTPServer.Default), Effect.provide(MainLayerLive)),
+  main.pipe(
+    Effect.provide(HTTPServer.Default),
+    Effect.provide(MainLayerLive),
+    Logger.withMinimumLogLevel(LogLevel.Debug),
+  ),
 );
