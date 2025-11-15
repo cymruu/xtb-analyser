@@ -7,6 +7,7 @@ import type { TypedEntries } from "../../types";
 import { prismaClient } from "../../lib/db";
 import type { TickerPriceIndex } from "../../services/portfolio/priceIndex";
 import { endOfDay, startOfDay } from "date-fns";
+import { DatabaseURL } from "./config";
 
 export class DatabaseError extends Data.TaggedError("DatabaseError")<{
   error: unknown;
@@ -34,6 +35,7 @@ export const YahooPriceRepositoryLive = Layer.effect(
   YahooPriceRepository,
   Effect.gen(function* () {
     const timeService = yield* TimeService;
+    yield* DatabaseURL;
 
     return {
       getPricesFromDb: (
