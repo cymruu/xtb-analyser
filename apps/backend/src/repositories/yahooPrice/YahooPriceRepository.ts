@@ -1,12 +1,12 @@
 import { Array, Context, Data, Effect, Layer } from "effect";
 
+import { endOfDay, startOfDay } from "date-fns";
 import type { Prisma, PrismaClient } from "../../generated/prisma/client";
+import { prismaClient } from "../../lib/db";
+import type { TickerPriceIndex } from "../../services/portfolio/priceIndex";
 import type { YahooPrice } from "../../services/price";
 import { TimeService } from "../../services/time/time";
 import type { TypedEntries } from "../../types";
-import { prismaClient } from "../../lib/db";
-import type { TickerPriceIndex } from "../../services/portfolio/priceIndex";
-import { endOfDay, startOfDay } from "date-fns";
 import { DatabaseURL } from "./config";
 
 export class DatabaseError extends Data.TaggedError("DatabaseError")<{

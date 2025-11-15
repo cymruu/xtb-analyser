@@ -1,7 +1,7 @@
 services:
   backend:
     environment:
-      - DATABASE_URL=postgresql://root:root@localhost:5432/analyser?schema=market-data
+      - DATABASE_URL=mysql://root:root@db:3306/xtb-analyser
       - CORS_ENABLED=false
     build:
       context: .
@@ -9,28 +9,15 @@ services:
     ports:
       - "3000:3000"
   db:
-    image: postgres:17-alpine
+    image: mysql
     restart: always
     environment:
-      POSTGRES_DB: analyser
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=xtb-analyser
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - db-data:/var/lib/postgresql/data
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: root@example.com
-      PGADMIN_DEFAULT_PASSWORD: root
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
-    ports:
-      - "8080:80"
+      - db-data-mysql:/var/lib/mysql
 
 volumes:
-  pgadmin-data:
-  db-data:
+  db-data-mysql:
