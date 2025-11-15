@@ -4,7 +4,7 @@ import { cors } from "hono/cors";
 import { validator } from "hono/validator";
 import z from "zod";
 
-import { AppURL } from "./lib/config/AppConfigSchema";
+import { CorsConfig } from "./lib/config/AppConfigSchema";
 import type { HonoEnv } from "./types";
 import { createPortfolioRouter } from "./routes/portfolio";
 
@@ -34,7 +34,7 @@ const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
   });
 
 export const createApp = Effect.gen(function* () {
-  const appUrl = yield* AppURL;
+  const corsConfig = yield* CorsConfig;
 
   const app = new Hono<HonoEnv>();
 
@@ -42,7 +42,7 @@ export const createApp = Effect.gen(function* () {
 
   app.get("/health", (c) => c.text("OK", 200));
 
-  app.use(cors({ origin: appUrl.toString() }));
+  app.use(cors({ origin: corsConfig.CORS_ORIGIN.toString() }));
 
   const portfolioRouter = yield* createPortfolioRouter;
   app.route("/portfolio", portfolioRouter);
