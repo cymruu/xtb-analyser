@@ -14,7 +14,7 @@ RUN bun install --frozen-lockfile --production
 FROM base AS app
 WORKDIR /home/bun/app/
 COPY --from=prod /tmp/build/node_modules/ ./node_modules/
-COPY --from=prod /tmp/build/apps/backend/src/ ./apps/backend/src/
+COPY --from=build /tmp/build/apps/backend/src/ ./apps/backend/src/
 COPY --from=prod /tmp/build/apps/backend/package.json ./apps/backend/
 COPY --from=prod /tmp/build/apps/backend/node_modules/ ./apps/backend/node_modules/
 

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "start": "bun run dist/server.js",
+    "start": "bun run src/server.ts",
     "build": "bun build --target=bun --outdir=dist/ ./src/server.ts",
     "dev": "bun --watch run src/server.ts",
     "test": "bun test"
