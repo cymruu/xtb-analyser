@@ -1,20 +1,27 @@
 import { describe, expect, it } from "bun:test";
 
-import { Effect } from "effect";
+import { ConfigProvider, Effect } from "effect";
 import { createApp } from "./app";
 import { TimeServiceMock } from "./services/time/time";
 import { YahooFinanceMock } from "./services/yahooFinance/mock";
 import { YahooPriceRepositoryMock } from "./repositories/yahooPrice/mock";
+
+const MOCK_CONFIG_PROVIDER = ConfigProvider.fromMap(
+  new Map([["CORS_ENABLED", "false"]]),
+);
 
 describe("app", () => {
   describe("/health", () => {
     it("Should return 200 response", async () => {
       const req = new Request("http://localhost/health");
       const app = await Effect.runPromise(
-        createApp.pipe(
-          Effect.provide(YahooPriceRepositoryMock),
-          Effect.provide(YahooFinanceMock),
-          Effect.provide(TimeServiceMock(new Date(0))),
+        Effect.withConfigProvider(
+          createApp.pipe(
+            Effect.provide(YahooPriceRepositoryMock),
+            Effect.provide(YahooFinanceMock),
+            Effect.provide(TimeServiceMock(new Date(0))),
+          ),
+          MOCK_CONFIG_PROVIDER,
         ),
       );
 
@@ -38,10 +45,13 @@ describe("app", () => {
           body: formData,
         });
         const app = await Effect.runPromise(
-          createApp.pipe(
-            Effect.provide(YahooPriceRepositoryMock),
-            Effect.provide(YahooFinanceMock),
-            Effect.provide(TimeServiceMock(new Date(0))),
+          Effect.withConfigProvider(
+            createApp.pipe(
+              Effect.provide(YahooPriceRepositoryMock),
+              Effect.provide(YahooFinanceMock),
+              Effect.provide(TimeServiceMock(new Date(0))),
+            ),
+            MOCK_CONFIG_PROVIDER,
           ),
         );
 
@@ -55,10 +65,13 @@ describe("app", () => {
           method: "POST",
         });
         const app = await Effect.runPromise(
-          createApp.pipe(
-            Effect.provide(YahooPriceRepositoryMock),
-            Effect.provide(YahooFinanceMock),
-            Effect.provide(TimeServiceMock(new Date(0))),
+          Effect.withConfigProvider(
+            createApp.pipe(
+              Effect.provide(YahooPriceRepositoryMock),
+              Effect.provide(YahooFinanceMock),
+              Effect.provide(TimeServiceMock(new Date(0))),
+            ),
+            MOCK_CONFIG_PROVIDER,
           ),
         );
 
