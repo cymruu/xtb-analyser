@@ -31,6 +31,8 @@ export function drawChart(
   console.log({ mappedData, deposits });
 
   const plot = Plot.plot({
+    marginLeft: 70,
+    width: window.screen.width,
     y: {
       grid: true,
     },
@@ -42,8 +44,7 @@ export function drawChart(
         y: "value",
         interval: "week",
       }),
-
-      // Plot.crosshairX(mappedData, { x: "date", y: "value" }),
+      Plot.crosshairX(mappedData, { x: "date", y: "value" }),
       Plot.ruleY([0]),
     ],
   });
