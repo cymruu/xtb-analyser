@@ -40,9 +40,6 @@ describe("PortfolioService", () => {
           Effect.provide(TimeServiceLive),
         ),
       );
-
-      const a = Bun.file("out2.json");
-      a.write(JSON.stringify(result));
     });
 
     it("calculatePortfolioDailyValue", async () => {

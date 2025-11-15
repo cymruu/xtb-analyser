@@ -12,9 +12,17 @@ export const CorsConfig = Effect.gen(function* () {
     return { CORS_ORIGIN: "*" };
   }
 
-  const origin = (yield* Config.url("CORS_ORIGIN")).toString();
+  const origin = (yield* Config.string("CORS_ORIGIN")).toString();
+  yield* Effect.try({
+    try: () => {
+      new URL(origin);
+    },
+    catch: () => {
+      return Effect.fail("invalid value for CORS_ORIGIN");
+    },
+  });
+
   return {
-    CORS_ORIGIN:
-      origin.substr(-1) === "/" ? origin.substr(0, origin.length - 1) : origin,
+    CORS_ORIGIN: origin,
   };
 });
