@@ -1,7 +1,8 @@
 import { IMetricsService } from "../../services/metricsService";
 import { drawChart } from "./drawChart";
 
-export type RenderContext = {};
+export type RenderContext = { key: string; value: number }[];
+
 export type Renderer = ReturnType<ReturnType<typeof createRenderer>>;
 export const createRenderer =
   (deps: { metricsService: IMetricsService }) =>
@@ -16,7 +17,7 @@ export const createRenderer =
       throw new Error("Container element is not defined.");
     }
 
-    let renderContext: RenderContext = {};
+    let renderContext: RenderContext = [];
 
     return {
       setRenderContext(newRendererContext: RenderContext) {

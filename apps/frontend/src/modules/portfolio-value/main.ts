@@ -33,16 +33,22 @@ import { createRenderer } from "./renderer";
       return (errorMessageDiv.innerHTML = "invalid files");
     }
     metricsService.collectMetrics("files_dropped", { count: 1 });
-    console.log("dropped files", { files: file });
     const formData = new FormData();
     formData.append("file", file);
 
     const endpoint = new URL("/portfolio/xtb-file", appConfig.backendHost!);
-    return fetch(endpoint, {
+    const response = await fetch(endpoint, {
       method: "POST",
       body: formData,
     });
-  });
 
-  renderer.render();
+    if (response.status !== 200) {
+      errorMessageDiv.innerHTML = `[${response.status}] - ${response.statusText} `;
+      return;
+    }
+    const data = await response.json();
+
+    renderer.setRenderContext(data);
+    renderer.render();
+  });
 })();

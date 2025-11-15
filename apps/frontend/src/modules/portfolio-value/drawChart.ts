@@ -1,34 +1,20 @@
 import * as Plot from "@observablehq/plot";
 import { RenderContext, Renderer } from "./renderer";
 
-import data from "./response.json";
-import { eachDayOfInterval, subDays, eachMonthOfInterval } from "date-fns";
+import { parseISO } from "date-fns";
 
 export function drawChart(
   renderContext: RenderContext,
   renderer: Renderer,
   settings: {},
 ) {
+  const data = renderContext;
   console.log("drawChart called with data:", renderContext);
-  console.log(data);
 
-  const mappedData = eachDayOfInterval({
-    start: subDays(new Date(), data.length - 1),
-    end: new Date(),
-  }).map((date, i) => {
-    console.log(data[i]);
-
-    return { date, value: data[i].value };
-  });
-
-  const deposits = eachMonthOfInterval({
-    start: subDays(new Date(), data.length - 1),
-    end: new Date(),
-  }).map((date, i) => {
-    return { date, value: i * 1000 };
-  });
-
-  console.log({ mappedData, deposits });
+  const mappedData = data.map((x) => ({
+    date: parseISO(x.key),
+    value: x.value,
+  }));
 
   const plot = Plot.plot({
     marginLeft: 70,
@@ -39,7 +25,7 @@ export function drawChart(
     marks: [
       Plot.areaY(mappedData, { x: "date", y: "value", fillOpacity: 0.3 }),
       Plot.lineY(mappedData, { x: "date", y: "value" }),
-      Plot.rectY(deposits, {
+      Plot.rectY([], {
         x: "date",
         y: "value",
         interval: "week",
