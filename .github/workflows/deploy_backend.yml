@@ -59,7 +59,14 @@ jobs:
             ${{ env.ARTIFACT_REGISTRY_REPO_URL }}/xtb-analyser:${{ github.sha }}
           cache-from: type=gha,scope=build-backend
           cache-to: type=gha,scope=build-backend,mode=max
-
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Run database migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+        run: |
+          cd ./apps/backend/ && bun install && bunx prisma migrate deploy
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
