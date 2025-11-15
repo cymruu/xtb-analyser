@@ -2,6 +2,8 @@ import { config } from "../../config";
 import { createMetricsService } from "../../services/metricsService";
 import { createRenderer } from "./renderer";
 
+const data = require("./data.json");
+
 (() => {
   const appConfig = config;
   const metricsService = createMetricsService(appConfig.backendHost);
@@ -51,4 +53,6 @@ import { createRenderer } from "./renderer";
     renderer.setRenderContext(data);
     renderer.render();
   });
+  renderer.setRenderContext(data);
+  renderer.render();
 })();
