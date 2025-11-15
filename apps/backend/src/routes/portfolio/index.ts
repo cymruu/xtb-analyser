@@ -83,8 +83,9 @@ export const createPortfolioRouter = Effect.gen(function* () {
 
       return c.json(result, 200);
     }).pipe(
+      Effect.tapError(Effect.logError),
       Effect.catchTags({
-        CSVParsingError: (e) =>
+        CSVParsingError: () =>
           Effect.succeed(
             c.json(
               {
