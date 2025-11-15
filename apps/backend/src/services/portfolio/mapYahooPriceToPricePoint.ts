@@ -10,7 +10,7 @@ export const mapYahooPriceToPricePoint = (
   }) as TransactionTimeKey;
 
   return {
-    symbol: yahooPrice.xtbTicker,
+    symbol: yahooPrice.ticker,
     dateKey,
     open: yahooPrice.open,
     high: yahooPrice.high,
