@@ -53,8 +53,8 @@ jobs:
           file: ./apps/backend/Dockerfile
           push: true
           tags: |
-            ${{ vars.ARTIFACT_REGISTRY_REPO_URL }}/xtb-analyser:latest
-            ${{ vars.ARTIFACT_REGISTRY_REPO_URL }}/xtb-analyser:${{ github.sha }}
+            ${{ vars.ARTIFACT_REGISTRY_REPO_ID }}/xtb-analyser:latest
+            ${{ vars.ARTIFACT_REGISTRY_REPO_ID }}/xtb-analyser:${{ github.sha }}
           cache-from: type=gha,scope=build-backend
           cache-to: type=gha,scope=build-backend,mode=max
       - uses: oven-sh/setup-bun@v2
@@ -71,7 +71,7 @@ jobs:
         with:
           service: xtb-analyser-backend
           region: europe-west1
-          image: ${{ vars.ARTIFACT_REGISTRY_REPO_URL }}/xtb-analyser:${{ github.sha }}
+          image: ${{ vars.ARTIFACT_REGISTRY_REPO_ID }}/xtb-analyser:${{ github.sha }}
 
       - name: Output Service URL
         run: 'echo "Cloud Run Service URL: ${{ steps.deploy.outputs.url }}"'
