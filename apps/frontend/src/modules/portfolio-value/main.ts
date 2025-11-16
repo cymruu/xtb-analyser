@@ -2,7 +2,7 @@ import { config } from "../../config";
 import { createMetricsService } from "../../services/metricsService";
 import { createRenderer } from "./renderer";
 
-const data = require("./data.json");
+const data = [];
 
 (() => {
   const appConfig = config;
