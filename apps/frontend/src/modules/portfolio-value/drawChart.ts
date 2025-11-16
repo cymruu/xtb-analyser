@@ -23,8 +23,6 @@ export function drawChart(
     value: x.value,
   }));
 
-  const dots = [{ date: new Date("2025-02-01"), value: 1000 }];
-
   const plot = Plot.plot({
     marginLeft: 70,
     width: window.screen.width,
@@ -45,16 +43,6 @@ export function drawChart(
         interval: "week",
         fill: "red",
       }),
-
-      // Plot.dot(
-      //   [{ date: new Date("2025-01-01"), value: 1000 }],
-      //   Plot.pointer({ x: "date", y: "value", fill: "red", r: 8 }),
-      // ),
-      // Plot.dot(
-      //   dots,
-      //   Plot.pointer({ x: "date", y: "value", fill: "red", r: 8 }),
-      // ),
-      // Plot.dot(dots, { x: "date", y: "value", tip: "xy" }),
       Plot.crosshairX(mappedValue, { x: "date", y: "value" }),
       Plot.ruleY([0]),
     ],
