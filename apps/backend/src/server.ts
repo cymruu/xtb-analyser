@@ -1,26 +1,30 @@
+import { BunRuntime } from "@effect/platform-bun";
+import { Effect, Logger, LogLevel } from "effect";
+
 import { createApp } from "./app";
-import { AppConfigSchema } from "./lib/config/AppConfigSchema";
-import { createServices } from "./services";
+import { HTTPServerPort } from "./lib/config/AppConfigSchema";
+import { MainLayerLive } from "./runtime";
 
-(async () => {
-  const configParseResult = AppConfigSchema.safeParse(process.env);
-  if (!configParseResult.success) {
-    throw configParseResult.error;
-  }
+export class HTTPServer extends Effect.Service<HTTPServer>()("HTTPServer", {
+  effect: Effect.gen(function* () {
+    const app = yield* createApp;
+    return app;
+  }),
+}) {}
 
-  const services = await createServices();
-  const app = createApp(services);
+const main = Effect.gen(function* () {
+  const app = yield* HTTPServer;
+  const port = yield* HTTPServerPort;
 
-  const server = Bun.serve({
-    fetch: app.fetch,
-    port: configParseResult.data.PORT,
-  });
+  Bun.serve({ fetch: app.fetch, port });
 
-  console.log(`Server listening on port ${configParseResult.data.PORT}`);
+  yield* Effect.logInfo(`Server listening on port ${port} hono`);
+});
 
-  process.on("SIGINT", async () => {
-    console.info("received SIGINT... shutting down");
-    await server.stop();
-    process.exit();
-  });
-})();
+BunRuntime.runMain(
+  main.pipe(
+    Effect.provide(HTTPServer.Default),
+    Effect.provide(MainLayerLive),
+    Logger.withMinimumLogLevel(LogLevel.Debug),
+  ),
+);

@@ -3,19 +3,25 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "start": "bun run dist/server.js",
-    "build": "bun build --target=bun --sourcemap=linked --outdir=dist/ --outfile=server.js ./src/server.ts",
+    "start": "bun run src/server.ts",
+    "build": "bun build --target=bun --outdir=dist/ ./src/server.ts",
     "dev": "bun --watch run src/server.ts",
     "test": "bun test"
   },
   "dependencies": {
-    "@prisma/client": "^6.18.0",
-    "hono": "^4.10.3",
+    "@effect/platform-bun": "^0.83.0",
+    "@prisma/client": "^6.19.0",
+    "@xtb-analyser/xtb-csv-parser": "workspace:packages",
+    "date-fns": "^4.1.0",
+    "effect": "^3.19.3",
+    "excelize-wasm": "^0.1.0",
+    "hono": "^4.10.5",
+    "yahoo-finance2": "^3.10.1",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "prisma": "^6.18.0",
+    "prisma": "^6.19.0",
     "typescript": "^5"
   }
 }

@@ -1,4 +1,4 @@
-import { ParsedOpenPositionRow } from "../../XTBParser/openPositions/parseOpenPositionRows";
+import { ParsedOpenPositionRow } from "@xtb-analyser/xtb-csv-parser";
 
 type OpenPositionSummaryRow = {
   volume: number;

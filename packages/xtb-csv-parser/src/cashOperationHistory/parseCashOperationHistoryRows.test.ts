@@ -44,6 +44,7 @@ describe("parseCashOperationRowsV3", () => {
         amount: i,
       })),
     );
+
     expect(result.failures.flatMap((x) => x.parseError.issues)).toMatchObject([
       {
         internal_code: ReportableZodIssueInternalCode,

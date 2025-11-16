@@ -1,3 +1,5 @@
+import { Context, Effect, Layer } from "effect";
+
 export interface ITimeService {
   now(): Date;
 }
@@ -13,3 +15,18 @@ export const timeServiceMock = {
     return new Date(0);
   },
 };
+
+export class TimeService extends Context.Tag("TimeService")<
+  TimeService,
+  {
+    now: () => Date;
+  }
+>() {}
+
+export const TimeServiceLive = Layer.succeed(TimeService, timeService);
+export const TimeServiceMock = (mockedNow: Date) =>
+  Layer.succeed(TimeService, {
+    now() {
+      return mockedNow;
+    },
+  });

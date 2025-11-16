@@ -5,10 +5,10 @@ import { Effect, Match, Option, pipe } from "effect/index";
 import {
   ParsedCashOperationRow,
   ParsedClosedOperation,
+  ParsedOpenPositionRow,
 } from "@xtb-analyser/xtb-csv-parser";
 
 import { parseTicker } from "../../XTBParser/cashOperationHistory/parseTicker";
-import { ParsedOpenPositionRow } from "../../XTBParser/openPositions/parseOpenPositionRows";
 
 const formatPortfolioPerformanceDate = (datetime: Date) => {
   return format(datetime, "yyyy-MM-dd'T'HH:mm");

@@ -1,11 +1,13 @@
 import { Data, Effect, Option } from "effect";
 import { init, NewFile } from "excelize-wasm";
+
 import { parseCashOperationRows } from "./cashOperationHistory/parseCashOperationHistoryRows";
 import { parseClosedOperationHistoryRows } from "./closedPositionsHistory/parseClosedOperationHistoryRows";
 import { findSheetIndexEffect } from "./findSheetIndex";
 import { parseHeader } from "./header/parseHeader";
 import { parseOpenPositionRows } from "./openPositions/parseOpenPositionsRows";
 import { removeXLSXHeaderColumns } from "./utils/removeXLSXHeaderRows";
+import { sortParsedResults } from "./utils/parseResult";
 
 const CLOSED_POSITIONS_SHEET_NAME = "CLOSED POSITION HISTORY";
 const OPEN_POSITIONS_SHEET_REGEX = /^OPEN POSITION \d+$/;
@@ -34,7 +36,19 @@ export const parseCSV = (
   { excelize }: { excelize: Awaited<ReturnType<typeof init>> },
 ) =>
   Effect.gen(function* () {
-    const xlsxFile = yield* Effect.try(() => excelize.OpenReader(bytes));
+    const xlsxFile = yield* Effect.try({
+      try: () => {
+        const result = excelize.OpenReader(bytes);
+        if (result.error) {
+          throw new Error(result.error);
+        }
+        return result;
+      },
+      catch: (error) =>
+        new CSVParsingError({
+          message: (error as Error)?.message || "unknown error",
+        }),
+    });
     const getSheetRows = createGetSheetRows(xlsxFile);
 
     const closedPositionRows = yield* getSheetRows(CLOSED_POSITIONS_SHEET_NAME);
@@ -53,20 +67,29 @@ export const parseCSV = (
     );
     const cashOperationRows = yield* getSheetRows(CASH_OPERATIONS_SHEET_NAME);
 
-    const closedPositions = yield* parseClosedOperationHistoryRows(
+    const closedPositions = parseClosedOperationHistoryRows(
       removeXLSXHeaderColumns(closedPositionRows),
     );
-    const openPositions = yield* parseOpenPositionRows(
+    const openPositions = parseOpenPositionRows(
       removeXLSXHeaderColumns(openPositionRows),
     );
-    const cashOperations = yield* parseCashOperationRows(
+    const cashOperations = parseCashOperationRows(
       removeXLSXHeaderColumns(cashOperationRows),
     );
 
     return {
       header,
-      closedPositions,
-      openPositions,
-      cashOperations,
+      closedPositions: yield* sortParsedResults(
+        closedPositions,
+        (row) => row.open_time,
+      ),
+      openPositions: yield* sortParsedResults(
+        openPositions,
+        (row) => row.open_time,
+      ),
+      cashOperations: yield* sortParsedResults(
+        cashOperations,
+        (row) => row.time,
+      ),
     };
   });

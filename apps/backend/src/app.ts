@@ -1,32 +1,51 @@
-import { Context, Hono, Next } from "hono";
-import { createMiddleware } from "hono/factory";
-import { logger } from "hono/logger";
-import z from "zod/v4";
-
-import { IServices } from "./services";
-import { HonoEnv } from "./types";
-import { validator } from "hono/validator";
+import { Effect } from "effect";
+import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { validator } from "hono/validator";
+import z from "zod";
 
-export const useServices = (services: IServices) =>
-  createMiddleware<HonoEnv>(async (c: Context<HonoEnv>, next: Next) => {
-    c.set("services", services);
-    await next();
-  });
+import { CorsConfig } from "./lib/config/AppConfigSchema";
+import type { HonoEnv } from "./types";
+import { createPortfolioRouter } from "./routes/portfolio";
 
 const MetricSchema = z.object({
   name: z.string(),
   payload: z.any(),
 });
 
-export const createApp = (services: IServices) => {
+const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
+  Effect.gen(function* () {
+    app.use("/*", async (c, next) => {
+      const { method, path } = c.req;
+
+      await Effect.gen(function* () {
+        yield* Effect.logInfo(`[Request] ${method} ${path}`);
+
+        yield* Effect.promise(next);
+
+        yield* Effect.logInfo(`[Response] ${method} ${path} (${c.res.status})`);
+      }).pipe(
+        Effect.withSpan(`${method} ${path}`),
+        Effect.withLogSpan("duration"),
+        Effect.annotateLogs({ method, path }),
+        Effect.runPromise,
+      );
+    });
+  });
+
+export const createApp = Effect.gen(function* () {
+  const corsConfig = yield* CorsConfig;
+
   const app = new Hono<HonoEnv>();
-  app.use(logger());
-  app.use(useServices(services));
+
+  yield* LoggerMiddlewareWithRuntime({ app });
 
   app.get("/health", (c) => c.text("OK", 200));
 
-  app.use(cors({ origin: "https://dev.xtb-analyser.com" }));
+  app.use(cors({ origin: corsConfig.CORS_ORIGIN.toString() }));
+
+  const portfolioRouter = yield* createPortfolioRouter;
+  app.route("/portfolio", portfolioRouter);
 
   app.post(
     "/metrics",
@@ -49,4 +68,4 @@ export const createApp = (services: IServices) => {
   );
 
   return app;
-};
+});
