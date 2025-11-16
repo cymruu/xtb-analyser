@@ -37,7 +37,10 @@ export const createPriceIndex = (
     flattenedDailyStocks,
     Array.reduce({} as TickerPriceIndex, (index, curr) => {
       const d = new Date(curr.key);
-      if (!index[curr.symbol]) index[curr.symbol] = [];
+      if (!index[curr.symbol]) {
+        if (curr.amount <= 0) return index; // stock was sold the same day it was bought. no need price for it
+        index[curr.symbol] = [];
+      }
 
       const tickerPeriods = index[curr.symbol]!;
       const lastPeriod = tickerPeriods[tickerPeriods.length - 1];

@@ -247,20 +247,7 @@ describe("createPriceIndex", () => {
       },
     ]);
 
-    expect(index[YahooTickerCtor("PKN")]).toEqual([]);
-  });
-
-  it("ignores zero updates when no open period exists", async () => {
-    const index = createPriceIndex([
-      {
-        key: TransactionTimeKeyCtor("1970-01-01"),
-        current: {
-          [YahooTickerCtor("PKN")]: 0,
-        },
-      },
-    ]);
-
-    expect(index[YahooTickerCtor("PKN")]).toEqual([]);
+    expect(index[YahooTickerCtor("PKN")]).toEqual(undefined);
   });
 });
 
