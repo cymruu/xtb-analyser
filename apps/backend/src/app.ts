@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Runtime } from "effect";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { requestId } from "hono/request-id";
@@ -16,6 +16,8 @@ const MetricSchema = z.object({
 
 const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
   Effect.gen(function* () {
+    const runtime = yield* Effect.runtime<never>();
+
     app.use("/*", async (c, next) => {
       const { method, path } = c.req;
       const requestId = c.get("requestId");
@@ -30,13 +32,14 @@ const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
         Effect.withSpan(`${method} ${path}`),
         Effect.withLogSpan("duration"),
         Effect.annotateLogs({ method, path, requestId }),
-        Effect.runPromise,
+        Runtime.runPromise(runtime),
       );
     });
   });
 
 export const createApp = Effect.gen(function* () {
   const corsConfig = yield* CorsConfig;
+  const runtime = yield* Effect.runtime();
 
   const app = new Hono<HonoEnv>();
 
@@ -46,7 +49,12 @@ export const createApp = Effect.gen(function* () {
 
   app.get("/health", (c) => c.text("OK", 200));
 
-  app.use(cors({ origin: corsConfig.CORS_ORIGIN.toString() }));
+  app.use(
+    cors({
+      origin: corsConfig.CORS_ORIGIN.toString(),
+      exposeHeaders: ["X-Request-Id"],
+    }),
+  );
 
   const portfolioRouter = yield* createPortfolioRouter;
   app.route("/portfolio", portfolioRouter);
@@ -66,7 +74,8 @@ export const createApp = Effect.gen(function* () {
     }),
     async (c) => {
       const body = c.req.valid("json");
-      console.log(body);
+      await Runtime.runPromise(runtime)(Effect.logInfo(body));
+
       return c.text("OK", 200);
     },
   );

@@ -43,7 +43,11 @@ import { createRenderer } from "./renderer";
     });
 
     if (response.status !== 200) {
-      errorMessageDiv.innerHTML = `[${response.status}] - ${response.statusText} `;
+      console.log(response.headers);
+
+      const requestId = response.headers.get("X-Request-Id");
+
+      errorMessageDiv.innerHTML = `[${response.status}] - ${response.statusText}. Please reach out for assistance. Please provide following code with your request ${requestId}`;
       return;
     }
     const data = await response.json();

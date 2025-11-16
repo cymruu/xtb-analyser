@@ -101,13 +101,13 @@ export const calculatePortfolioDailyValue = (
 
     const dbPrices = yield* yahooPriceRepository.getPricesFromDb(priceIndex);
 
-    yield* Effect.logDebug(`Retrieved ${dbPrices.length} prices from db cache`);
+    yield* Effect.logInfo(`Retrieved ${dbPrices.length} prices from db cache`);
 
     const missingPriceIndex = yield* createMissingPricesIndex(
       priceIndex,
       dbPrices,
     );
-    yield* Effect.logDebug("Created missingPriceIndex", missingPriceIndex);
+    yield* Effect.logInfo("Created missingPriceIndex", missingPriceIndex);
 
     const prices = yield* fetchPrices(missingPriceIndex);
     const pricePoints = Array.map(prices.successes, mapYahooPriceToPricePoint);
@@ -151,7 +151,7 @@ export const calculatePortfolioDailyValue = (
         saveResult.left,
       );
     } else {
-      yield* Effect.logDebug("saved prices to database", saveResult.right);
+      yield* Effect.logInfo("saved prices to database", saveResult.right);
     }
 
     return yield* effects;

@@ -7,7 +7,7 @@ import { MainLayerLive } from "./runtime";
 
 export class HTTPServer extends Effect.Service<HTTPServer>()("HTTPServer", {
   effect: Effect.gen(function* () {
-    const app = yield* createApp;
+    const app = yield* createApp.pipe(Effect.provide(Logger.json));
     return app;
   }),
 }) {}
@@ -26,6 +26,7 @@ BunRuntime.runMain(
     Effect.provide(HTTPServer.Default),
     Effect.provide(MainLayerLive),
     Logger.withMinimumLogLevel(LogLevel.Debug),
+    Effect.provide(Logger.json),
   ),
   { disablePrettyLogger: true },
 );
