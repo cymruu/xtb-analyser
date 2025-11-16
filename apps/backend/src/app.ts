@@ -1,12 +1,13 @@
 import { Effect } from "effect";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { requestId } from "hono/request-id";
 import { validator } from "hono/validator";
 import z from "zod";
 
 import { CorsConfig } from "./lib/config/AppConfigSchema";
-import type { HonoEnv } from "./types";
 import { createPortfolioRouter } from "./routes/portfolio";
+import type { HonoEnv } from "./types";
 
 const MetricSchema = z.object({
   name: z.string(),
@@ -17,6 +18,7 @@ const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
   Effect.gen(function* () {
     app.use("/*", async (c, next) => {
       const { method, path } = c.req;
+      const requestId = c.get("requestId");
 
       await Effect.gen(function* () {
         yield* Effect.logInfo(`[Request] ${method} ${path}`);
@@ -27,7 +29,7 @@ const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
       }).pipe(
         Effect.withSpan(`${method} ${path}`),
         Effect.withLogSpan("duration"),
-        Effect.annotateLogs({ method, path }),
+        Effect.annotateLogs({ method, path, requestId }),
         Effect.runPromise,
       );
     });
@@ -37,6 +39,8 @@ export const createApp = Effect.gen(function* () {
   const corsConfig = yield* CorsConfig;
 
   const app = new Hono<HonoEnv>();
+
+  app.use("*", requestId());
 
   yield* LoggerMiddlewareWithRuntime({ app });
 

@@ -27,4 +27,5 @@ BunRuntime.runMain(
     Effect.provide(MainLayerLive),
     Logger.withMinimumLogLevel(LogLevel.Debug),
   ),
+  { disablePrettyLogger: true },
 );
