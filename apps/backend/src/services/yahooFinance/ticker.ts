@@ -31,5 +31,9 @@ export const tickerToYahooTicker = (ticker: Ticker): YahooTicker => {
     return YahooTickerCtor(`${symbol}.HE`);
   }
 
+  if (exchange === "NL") {
+    return YahooTickerCtor(`${symbol}.AS`);
+  }
+
   return YahooTickerCtor(ticker);
 };
