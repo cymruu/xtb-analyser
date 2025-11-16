@@ -79,7 +79,7 @@ export const calculatePortfolioDailyValue = (
         ),
       ),
     );
-    yield* Effect.logDebug("transactionsByDay", transactionsByDay);
+    yield* Effect.logDebug("transactionsByDay");
 
     const [_, dailyPortfolioStocks] = Array.mapAccum(
       Object.entries(transactionsByDay) as TypedEntries<

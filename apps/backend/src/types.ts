@@ -1,8 +1,12 @@
-import type { IServices } from "./services";
+import type { Runtime } from "effect";
+
+import type { YahooPriceRepository } from "./repositories/yahooPrice/YahooPriceRepository";
+import type { TimeService } from "./services/time/time";
+import type { YahooFinance } from "./services/yahooFinance";
 
 export type HonoEnv = {
   Variables: {
-    services: IServices;
+    runtime: Runtime.Runtime<TimeService | YahooPriceRepository | YahooFinance>;
   };
 };
 

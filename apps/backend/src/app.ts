@@ -1,4 +1,4 @@
-import { Effect, Runtime } from "effect";
+import { Effect, Logger, Runtime } from "effect";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { requestId } from "hono/request-id";
@@ -8,6 +8,9 @@ import z from "zod";
 import { CorsConfig } from "./lib/config/AppConfigSchema";
 import { createPortfolioRouter } from "./routes/portfolio";
 import type { HonoEnv } from "./types";
+import type { TimeService } from "./services/time/time";
+import type { YahooPriceRepository } from "./repositories/yahooPrice/YahooPriceRepository";
+import type { YahooFinance } from "./services/yahooFinance";
 
 const MetricSchema = z.object({
   name: z.string(),
@@ -16,8 +19,6 @@ const MetricSchema = z.object({
 
 const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
   Effect.gen(function* () {
-    const runtime = yield* Effect.runtime<never>();
-
     app.use("/*", async (c, next) => {
       const { method, path } = c.req;
       const requestId = c.get("requestId");
@@ -32,16 +33,24 @@ const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
         Effect.withSpan(`${method} ${path}`),
         Effect.withLogSpan("duration"),
         Effect.annotateLogs({ method, path, requestId }),
-        Runtime.runPromise(runtime),
+        Runtime.runPromise(c.var.runtime),
       );
     });
   });
 
 export const createApp = Effect.gen(function* () {
   const corsConfig = yield* CorsConfig;
-  const runtime = yield* Effect.runtime();
+
+  const runtime = yield* Effect.runtime<
+    TimeService | YahooPriceRepository | YahooFinance
+  >();
 
   const app = new Hono<HonoEnv>();
+
+  app.use(async (c, next) => {
+    c.set("runtime", runtime);
+    await next();
+  });
 
   app.use("*", requestId());
 
@@ -74,7 +83,7 @@ export const createApp = Effect.gen(function* () {
     }),
     async (c) => {
       const body = c.req.valid("json");
-      await Runtime.runPromise(runtime)(Effect.logInfo(body));
+      await Runtime.runPromise(c.var.runtime)(Effect.logInfo(body));
 
       return c.text("OK", 200);
     },

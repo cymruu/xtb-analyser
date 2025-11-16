@@ -5,13 +5,10 @@ import z from "zod";
 import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
 import { Effect, Runtime } from "effect";
 import { init } from "excelize-wasm";
-import type { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
 import { calculatePortfolioDailyValue } from "../../services/portfolio/calculatePortfolioDailyValue";
-import type { TimeService } from "../../services/time/time";
-import type { YahooFinance } from "../../services/yahooFinance";
-import type { HonoEnv } from "../../types";
 import { getDeposits } from "../../services/portfolio/getDeposits";
 import { getWithdrawals } from "../../services/portfolio/getWithdrawals";
+import type { HonoEnv } from "../../types";
 
 const PortfolioSchemaV1 = z.object({
   volume: z.number(),
@@ -36,10 +33,6 @@ export const CreatePortfolioRequestBodySchema = z.discriminatedUnion(
 export const createPortfolioRouter = Effect.gen(function* () {
   const portfolioRouter = new Hono<HonoEnv>();
 
-  const runtime = yield* Effect.runtime<
-    TimeService | YahooPriceRepository | YahooFinance
-  >();
-
   portfolioRouter.post(
     "/",
     validator("json", async (payload, c) => {
@@ -57,7 +50,6 @@ export const createPortfolioRouter = Effect.gen(function* () {
     async (c) => {
       const body = c.req.valid("json");
       console.log("creating portfolio with body:", body);
-      await c.var.services.portfolio.create(body);
 
       return c.json({ message: "Portfolio created" });
     },
@@ -128,7 +120,7 @@ export const createPortfolioRouter = Effect.gen(function* () {
           );
         },
       }),
-      Runtime.runPromise(runtime),
+      Runtime.runPromise(c.var.runtime),
     );
   });
 
