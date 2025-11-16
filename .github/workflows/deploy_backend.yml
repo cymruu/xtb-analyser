@@ -14,12 +14,10 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment: development
     permissions:
       contents: "read"
       id-token: "write"
-
-    env:
-      ARTIFACT_REGISTRY_REPO_URL: europe-west1-docker.pkg.dev/xtb-analyser-dev/cloud-run-source-deploy
 
     steps:
       - name: Checkout Repository
@@ -64,7 +62,7 @@ jobs:
           bun-version: latest
       - name: Run database migrations
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           cd ./apps/backend/ && bunx prisma migrate deploy
       - name: Deploy to Cloud Run
