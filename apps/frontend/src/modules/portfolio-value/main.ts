@@ -2,8 +2,6 @@ import { config } from "../../config";
 import { createMetricsService } from "../../services/metricsService";
 import { createRenderer } from "./renderer";
 
-const data = [];
-
 (() => {
   const appConfig = config;
   const metricsService = createMetricsService(appConfig.backendHost);
@@ -53,6 +51,4 @@ const data = [];
     renderer.setRenderContext(data);
     renderer.render();
   });
-  renderer.setRenderContext(data);
-  renderer.render();
 })();

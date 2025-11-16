@@ -10,6 +10,8 @@ import { calculatePortfolioDailyValue } from "../../services/portfolio/calculate
 import type { TimeService } from "../../services/time/time";
 import type { YahooFinance } from "../../services/yahooFinance";
 import type { HonoEnv } from "../../types";
+import { getDeposits } from "../../services/portfolio/getDeposits";
+import { getWithdrawals } from "../../services/portfolio/getWithdrawals";
 
 const PortfolioSchemaV1 = z.object({
   volume: z.number(),
@@ -77,11 +79,19 @@ export const createPortfolioRouter = Effect.gen(function* () {
     return Effect.gen(function* () {
       const parsedCSV = yield* parseCSV(fileBytes, { excelize });
 
-      const result = yield* calculatePortfolioDailyValue(
+      const portfolioValueResult = yield* calculatePortfolioDailyValue(
         parsedCSV.cashOperations.successes,
       );
 
-      return c.json(result, 200);
+      const deposits = yield* getDeposits(parsedCSV.cashOperations.successes);
+      const withdrawals = yield* getWithdrawals(
+        parsedCSV.cashOperations.successes,
+      );
+
+      return c.json(
+        { deposits, withdrawals, value: portfolioValueResult },
+        200,
+      );
     }).pipe(
       Effect.tapError(Effect.logError),
       Effect.catchTags({

@@ -9,3 +9,13 @@ export type PortfolioTransaction = {
 export type PortfolioDayElements = {
   [key: YahooTicker]: number;
 };
+
+export type PortfolioDeposit = {
+  key: Date;
+  value: number;
+};
+
+export type PortfolioWithdrawal = {
+  key: Date;
+  value: number;
+};
