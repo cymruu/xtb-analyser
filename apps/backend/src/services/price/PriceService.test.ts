@@ -3,13 +3,12 @@ import { Effect, Option } from "effect";
 
 import { createPriceResolver, MissingPriceError } from ".";
 import {
-  TickerCtor,
   TransactionTimeKeyCtor,
-  type Ticker,
   type TransactionTimeKey,
 } from "../../domains/stock/types";
+import { YahooTickerCtor, type YahooTicker } from "../yahooFinance/ticker";
 
-const createPricePoint = (dateKey: TransactionTimeKey, symbol: Ticker) => {
+const createPricePoint = (dateKey: TransactionTimeKey, symbol: YahooTicker) => {
   return {
     dateKey,
     symbol,
@@ -28,12 +27,12 @@ describe("priceResolver", () => {
       const priceResolver = createPriceResolver([
         createPricePoint(
           TransactionTimeKeyCtor("1970-01-01"),
-          TickerCtor("PKN"),
+          YahooTickerCtor("PKN"),
         ),
       ]);
 
       const result = priceResolver.getPrice(
-        TickerCtor("PKN"),
+        YahooTickerCtor("PKN"),
         TransactionTimeKeyCtor("1970-01-01"),
       );
 
@@ -44,12 +43,12 @@ describe("priceResolver", () => {
       const priceService = createPriceResolver([
         createPricePoint(
           TransactionTimeKeyCtor("1970-01-01"),
-          TickerCtor("PKN"),
+          YahooTickerCtor("PKN"),
         ),
       ]);
 
       const result = priceService.getPrice(
-        TickerCtor("DINO"),
+        YahooTickerCtor("DINO"),
         TransactionTimeKeyCtor("1970-01-01"),
       );
 
@@ -60,12 +59,12 @@ describe("priceResolver", () => {
       const priceService = createPriceResolver([
         createPricePoint(
           TransactionTimeKeyCtor("1970-01-03"),
-          TickerCtor("PKN"),
+          YahooTickerCtor("PKN"),
         ),
       ]);
 
       const result = priceService.getPrice(
-        TickerCtor("PKN"),
+        YahooTickerCtor("PKN"),
         TransactionTimeKeyCtor("1970-02-01"),
       );
 
@@ -77,12 +76,12 @@ describe("priceResolver", () => {
         const priceResolver = createPriceResolver([
           createPricePoint(
             TransactionTimeKeyCtor("1970-01-01"),
-            TickerCtor("PKN"),
+            YahooTickerCtor("PKN"),
           ),
         ]);
 
         const result = priceResolver.getPrice(
-          TickerCtor("PKN"),
+          YahooTickerCtor("PKN"),
           TransactionTimeKeyCtor("1970-01-02"),
         );
 
@@ -93,12 +92,12 @@ describe("priceResolver", () => {
         const priceResolver = createPriceResolver([
           createPricePoint(
             TransactionTimeKeyCtor("2025-11-10"),
-            TickerCtor("PKN"),
+            YahooTickerCtor("PKN"),
           ),
         ]);
 
         const result = priceResolver.getPrice(
-          TickerCtor("PKN"),
+          YahooTickerCtor("PKN"),
           TransactionTimeKeyCtor("2025-11-16"),
         );
 
@@ -111,18 +110,18 @@ describe("priceResolver", () => {
       const priceService = createPriceResolver([
         createPricePoint(
           TransactionTimeKeyCtor("1970-01-01"),
-          TickerCtor("PKN"),
+          YahooTickerCtor("PKN"),
         ),
         createPricePoint(
           TransactionTimeKeyCtor("1970-01-01"),
-          TickerCtor("DINO"),
+          YahooTickerCtor("DINO"),
         ),
       ]);
 
       const result = await Effect.runPromise(
         priceService.calculateValue(TransactionTimeKeyCtor("1970-01-01"), {
-          [TickerCtor("PKN")]: 5,
-          [TickerCtor("DINO")]: 10,
+          [YahooTickerCtor("PKN")]: 5,
+          [YahooTickerCtor("DINO")]: 10,
         }),
       );
 
@@ -133,20 +132,20 @@ describe("priceResolver", () => {
       const priceService = createPriceResolver([
         createPricePoint(
           TransactionTimeKeyCtor("1970-01-01"),
-          TickerCtor("PKN"),
+          YahooTickerCtor("PKN"),
         ),
       ]);
 
       const result = await Effect.runPromise(
         priceService.calculateValue(TransactionTimeKeyCtor("1970-01-01"), {
-          [TickerCtor("DINO")]: 5,
+          [YahooTickerCtor("DINO")]: 5,
         }),
       );
 
       expect(result).toEqual({
         failures: [
           new MissingPriceError({
-            symbol: TickerCtor("DINO"),
+            symbol: YahooTickerCtor("DINO"),
             date: TransactionTimeKeyCtor("1970-01-01"),
           }),
         ],
