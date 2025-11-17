@@ -1,5 +1,5 @@
 import { addDays, isAfter, isEqual, startOfDay, subDays } from "date-fns";
-import { Array, Effect, Option, pipe } from "effect";
+import { Array, Effect, Option, Order, pipe } from "effect";
 
 import type { TransactionTimeKey } from "../../domains/stock/types";
 import type { TypedEntries } from "../../types";
@@ -7,6 +7,8 @@ import { TimeService } from "../time/time";
 import type { YahooTicker } from "../yahooFinance/ticker";
 import type { PortfolioDayElements } from "./types";
 import type { DbPrice } from "../../repositories/yahooPrice/YahooPriceRepository";
+import type { PricePoint } from "../price";
+import type { Currency } from "../price/currencyConversion";
 
 export type TickerPriceIndice = { start: Date; end: Date | null };
 
@@ -113,3 +115,39 @@ export const createMissingPricesIndex = (
     );
   });
 };
+
+export const createCurrencyIndex = (
+  baseCurrency: Currency,
+  allPrices: PricePoint[],
+) =>
+  Effect.gen(function* () {
+    const timeService = yield* TimeService;
+    const currencies = new Set(Array.map(allPrices, (x) => x.currency));
+
+    const start = pipe(
+      Array.sort(
+        allPrices,
+        Order.mapInput(Order.Date, (p: PricePoint) => new Date(p.dateKey)),
+      ),
+      Array.head,
+    );
+
+    if (Option.isNone(start)) {
+      return {} as TickerPriceIndex;
+    }
+
+    return Array.reduce(currencies, {} as TickerPriceIndex, (acc, currency) => {
+      if (currency === baseCurrency) return acc;
+      const tickerParts = Array.sort([baseCurrency, currency], Order.string);
+      const ticker = `${tickerParts.join("")}=X`.toUpperCase() as YahooTicker;
+
+      acc[ticker] = [
+        {
+          start: new Date(start.value.dateKey),
+          end: subDays(startOfDay(timeService.now()), 1),
+        },
+      ];
+
+      return acc;
+    });
+  });

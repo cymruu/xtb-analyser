@@ -11,9 +11,11 @@ import type { PortfolioDayElements } from "../portfolio/types";
 import { TimeService } from "../time/time";
 import { YahooFinance } from "../yahooFinance";
 import type { YahooTicker } from "../yahooFinance/ticker";
+import type { Currency } from "./currencyConversion";
 
 type PriceEntry = {
   symbol: YahooTicker;
+  currency: Currency;
   open: number;
   high: number;
   low: number;
@@ -101,6 +103,7 @@ export const createPriceResolver = (flatPrices: PricePoint[]) => {
 
       acc[key][pricePoint.symbol] = {
         symbol: pricePoint.symbol,
+        currency: pricePoint.currency,
         open: pricePoint.open,
         high: pricePoint.high,
         low: pricePoint.low,

@@ -1,100 +1,16 @@
 import { describe, expect, it } from "bun:test";
-import { Effect, Logger, LogLevel } from "effect";
-import { init } from "excelize-wasm";
-
-import { parseCSV } from "@xtb-analyser/xtb-csv-parser";
+import { Effect } from "effect";
 
 import { TransactionTimeKeyCtor } from "../../domains/stock/types";
-import { YahooPriceRepositoryMock } from "../../repositories/yahooPrice/mock";
-import { YahooPriceRepositoryLive } from "../../repositories/yahooPrice/YahooPriceRepository";
-import { TimeServiceLive, TimeServiceMock } from "../time/time";
-import { YahooFinanceLive } from "../yahooFinance";
-import { YahooFinanceMock } from "../yahooFinance/mock";
+import type { Currency } from "../price/currencyConversion";
+import { TimeServiceMock } from "../time/time";
 import { YahooTickerCtor } from "../yahooFinance/ticker";
-import { calculatePortfolioDailyValue } from "./calculatePortfolioDailyValue";
 import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
-import { createMissingPricesIndex, createPriceIndex } from "./priceIndex";
-
-describe("PortfolioService", () => {
-  describe("calculatePortfolioDailyValue", () => {
-    it.if(!process.env.CI)("b", async () => {
-      const file = Bun.file(
-        "/Users/filipbachul/Downloads/account_2888512_en_xlsx_2005-12-31_2025-11-08/account_2888512_en_xlsx_2005-12-31_2025-11-08.xlsx",
-      );
-      const excelize = await init(
-        "./node_modules/excelize-wasm/excelize.wasm.gz",
-      );
-      const parsed = await Effect.runPromise(
-        parseCSV(await file.bytes(), { excelize }),
-      );
-
-      const effect = calculatePortfolioDailyValue(
-        parsed.cashOperations.successes,
-      );
-
-      const result = await Effect.runPromise(
-        effect.pipe(
-          Logger.withMinimumLogLevel(LogLevel.Debug),
-          Effect.provide(YahooFinanceLive),
-          Effect.provide(YahooPriceRepositoryLive),
-          Effect.provide(TimeServiceLive),
-        ),
-      );
-    });
-
-    it("calculatePortfolioDailyValue", async () => {
-      const effect = calculatePortfolioDailyValue([
-        {
-          id: 1,
-          comment: "",
-          symbol: "UPS",
-          type: "Stock purchase",
-          amount: 500,
-          quantity: 5,
-          time: new Date("1970-01-01"),
-        },
-        {
-          id: 1,
-          comment: "",
-          symbol: "META",
-          type: "Stock purchase",
-          amount: 500,
-          quantity: 5,
-          time: new Date("1970-01-01"),
-        },
-        {
-          id: 1,
-          comment: "",
-          symbol: "META",
-          type: "Stock purchase",
-          amount: 500,
-          quantity: 5,
-          time: new Date("1970-01-01"),
-        },
-        {
-          id: 1,
-          comment: "",
-          symbol: "UPS",
-          type: "Stock purchase",
-          amount: 500,
-          quantity: 50,
-          time: new Date("1970-01-05"),
-        },
-      ]);
-
-      const result = await Effect.runPromise(
-        effect.pipe(
-          Logger.withMinimumLogLevel(LogLevel.Debug),
-          Effect.provide(YahooFinanceMock),
-          Effect.provide(TimeServiceLive),
-          Effect.provide(YahooPriceRepositoryMock),
-        ),
-      );
-
-      console.dir({ result }, { depth: 5 });
-    });
-  });
-});
+import {
+  createCurrencyIndex,
+  createMissingPricesIndex,
+  createPriceIndex,
+} from "./priceIndex";
 
 describe("createPriceIndex", () => {
   it("starts a new period when a stock appears", async () => {
@@ -380,6 +296,56 @@ describe("createMissingPricesIndex", () => {
     expect(result).toEqual({
       [YahooTickerCtor("PKN")]: [
         { start: new Date("1970-01-03"), end: new Date("1970-01-15") },
+      ],
+    });
+  });
+});
+
+describe("createCurrencyIndex", () => {
+  it("should return empty index if all elements are in base currency", async () => {
+    const effect = createCurrencyIndex("PLN" as Currency, [
+      { currency: "PLN", dateKey: new Date(0) } as any,
+      { currency: "PLN", dateKey: new Date(0) } as any,
+    ]);
+
+    const result = await Effect.runPromise(
+      effect.pipe(Effect.provide(TimeServiceMock(new Date("1970-05-01")))),
+    );
+
+    expect(result).toEqual({});
+  });
+
+  it("should return empty index if allPrices array is empty", async () => {
+    const effect = createCurrencyIndex("PLN" as Currency, []);
+
+    const result = await Effect.runPromise(
+      effect.pipe(Effect.provide(TimeServiceMock(new Date("1970-05-01")))),
+    );
+
+    expect(result).toEqual({});
+  });
+
+  it("should create correct tickers and date ranges for multiple currencies", async () => {
+    const effect = createCurrencyIndex("PLN" as Currency, [
+      { currency: "GBP", dateKey: new Date("1970-03-12") } as any,
+      { currency: "PLN", dateKey: new Date("1970-04-01") } as any,
+      { currency: "EUR", dateKey: new Date("1970-04-03") } as any,
+      { currency: "EUR", dateKey: new Date("1970-04-03") } as any,
+    ]);
+
+    const result = await Effect.runPromise(
+      effect.pipe(Effect.provide(TimeServiceMock(new Date("1970-05-02")))),
+    );
+
+    expect(result).toEqual({
+      [YahooTickerCtor("GBPPLN=X")]: [
+        {
+          start: new Date("1970-03-12"),
+          end: new Date("1970-05-01"),
+        },
+      ],
+      [YahooTickerCtor("EURPLN=X")]: [
+        { start: new Date("1970-03-12"), end: new Date("1970-05-01") },
       ],
     });
   });

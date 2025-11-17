@@ -19,12 +19,17 @@ import type { TypedEntries } from "../../types";
 import { createPriceResolver, fetchPrices } from "../price";
 import { tickerToYahooTicker } from "../yahooFinance/ticker.ts";
 import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
-import { createMissingPricesIndex, createPriceIndex } from "./priceIndex.ts";
+import {
+  createCurrencyIndex,
+  createMissingPricesIndex,
+  createPriceIndex,
+} from "./priceIndex.ts";
 import {
   mapDbPriceToPricePoint,
   mapYahooPriceToPricePoint,
 } from "./priceMappers";
 import type { PortfolioDayElements, PortfolioTransaction } from "./types";
+import type { Currency } from "../price/currencyConversion.ts";
 
 export const calculatePortfolioDailyValue = (
   operations: ParsedCashOperationRow[],
@@ -114,10 +119,15 @@ export const calculatePortfolioDailyValue = (
     );
     const pricePoints = Array.map(prices.successes, mapYahooPriceToPricePoint);
     const dbPricePoints = Array.map(dbPrices, mapDbPriceToPricePoint);
-    const priceResolver = createPriceResolver([
-      ...pricePoints,
-      ...dbPricePoints,
-    ]);
+    const allPrices = [...pricePoints, ...dbPricePoints];
+    const currencyIndex = yield* createCurrencyIndex(
+      "PLN" as Currency,
+
+      allPrices,
+    );
+    yield* Effect.logInfo("Created currencyIndex", currencyIndex);
+
+    const priceResolver = createPriceResolver(allPrices);
 
     const effects = pipe(
       fillDailyPortfolioGaps(dailyPortfolioStocks),

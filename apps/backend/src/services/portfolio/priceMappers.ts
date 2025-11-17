@@ -1,8 +1,9 @@
 import { formatISO } from "date-fns";
-import type { PricePoint, YahooPrice } from "../price";
 import type { TransactionTimeKey } from "../../domains/stock/types";
-import type { YahooTicker } from "../yahooFinance/ticker";
 import type { DbPrice } from "../../repositories/yahooPrice/YahooPriceRepository";
+import type { PricePoint, YahooPrice } from "../price";
+import type { Currency } from "../price/currencyConversion";
+import type { YahooTicker } from "../yahooFinance/ticker";
 
 export const mapYahooPriceToPricePoint = (
   yahooPrice: YahooPrice,
@@ -13,6 +14,7 @@ export const mapYahooPriceToPricePoint = (
 
   return {
     symbol: yahooPrice.ticker,
+    currency: yahooPrice.currency as Currency,
     dateKey,
     open: yahooPrice.open,
     high: yahooPrice.high,
@@ -29,6 +31,7 @@ export const mapDbPriceToPricePoint = (price: DbPrice): PricePoint => {
       representation: "date",
     }) as TransactionTimeKey,
     symbol: price.symbol as YahooTicker,
+    currency: price.currency as Currency,
     open: price.open,
     high: price.high,
     low: price.low,
