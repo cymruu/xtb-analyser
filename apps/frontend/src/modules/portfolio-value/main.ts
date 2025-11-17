@@ -12,6 +12,7 @@ import { createRenderer } from "./renderer";
 
   const container = document.getElementById("container");
   const dropArea = document.body!;
+  const loader = document.getElementById("loader")!;
   const errorMessageDiv = document.getElementById("error-message")!;
   if (!appConfig.backendHost) {
     return (errorMessageDiv.innerHTML = "backendHost not configured");
@@ -28,6 +29,7 @@ import { createRenderer } from "./renderer";
 
   dropArea.addEventListener("drop", async (event) => {
     event.preventDefault();
+    loader.style.display = "block";
     const file = event.dataTransfer?.files[0];
     if (!file) {
       return (errorMessageDiv.innerHTML = "invalid files");
@@ -41,10 +43,9 @@ import { createRenderer } from "./renderer";
       method: "POST",
       body: formData,
     });
+    loader.style.display = "none";
 
     if (response.status !== 200) {
-      console.log(response.headers);
-
       const requestId = response.headers.get("X-Request-Id");
 
       errorMessageDiv.innerHTML = `[${response.status}] - ${response.statusText}. Please reach out for assistance. Please provide following code with your request ${requestId}`;
