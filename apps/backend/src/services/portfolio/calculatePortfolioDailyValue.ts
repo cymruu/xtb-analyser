@@ -109,7 +109,9 @@ export const calculatePortfolioDailyValue = (
     );
     yield* Effect.logInfo("Created missingPriceIndex", missingPriceIndex);
 
-    const prices = yield* fetchPrices(missingPriceIndex);
+    const prices = yield* fetchPrices(missingPriceIndex).pipe(
+      Effect.tapError(Effect.logError),
+    );
     const pricePoints = Array.map(prices.successes, mapYahooPriceToPricePoint);
     const dbPricePoints = Array.map(dbPrices, (price): PricePoint => {
       return {
