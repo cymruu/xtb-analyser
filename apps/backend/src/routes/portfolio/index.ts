@@ -9,6 +9,8 @@ import { calculatePortfolioDailyValue } from "../../services/portfolio/calculate
 import { getDeposits } from "../../services/portfolio/getDeposits";
 import { getWithdrawals } from "../../services/portfolio/getWithdrawals";
 import type { HonoEnv } from "../../types";
+import { addScoped } from "effect/Logger";
+import { WithHTTPLogger } from "../../httpLogger";
 
 const PortfolioSchemaV1 = z.object({
   volume: z.number(),
@@ -68,7 +70,7 @@ export const createPortfolioRouter = Effect.gen(function* () {
 
     const fileBytes = await file.bytes();
 
-    return Effect.gen(function* () {
+    const effect = Effect.gen(function* () {
       const parsedCSV = yield* parseCSV(fileBytes, { excelize });
 
       const portfolioValueResult = yield* calculatePortfolioDailyValue(
@@ -120,8 +122,12 @@ export const createPortfolioRouter = Effect.gen(function* () {
           );
         },
       }),
-      Runtime.runPromise(c.var.runtime),
     );
+
+    const result = await Runtime.runPromise(c.var.runtime)(
+      WithHTTPLogger(c, effect),
+    );
+    return result;
   });
 
   return portfolioRouter;

@@ -1,16 +1,17 @@
-import { Effect, Logger, Runtime } from "effect";
+import { Effect, Runtime } from "effect";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { requestId } from "hono/request-id";
 import { validator } from "hono/validator";
 import z from "zod";
 
+import { WithHTTPLogger } from "./httpLogger";
 import { CorsConfig } from "./lib/config/AppConfigSchema";
-import { createPortfolioRouter } from "./routes/portfolio";
-import type { HonoEnv } from "./types";
-import type { TimeService } from "./services/time/time";
 import type { YahooPriceRepository } from "./repositories/yahooPrice/YahooPriceRepository";
+import { createPortfolioRouter } from "./routes/portfolio";
+import type { TimeService } from "./services/time/time";
 import type { YahooFinance } from "./services/yahooFinance";
+import type { HonoEnv } from "./types";
 
 const MetricSchema = z.object({
   name: z.string(),
@@ -21,20 +22,19 @@ const LoggerMiddlewareWithRuntime = ({ app }: { app: Hono<HonoEnv> }) =>
   Effect.gen(function* () {
     app.use("/*", async (c, next) => {
       const { method, path } = c.req;
-      const requestId = c.get("requestId");
 
-      await Effect.gen(function* () {
-        yield* Effect.logInfo(`[Request] ${method} ${path}`);
+      await WithHTTPLogger(
+        c,
+        Effect.gen(function* () {
+          yield* Effect.logInfo(`[Request] ${method} ${path}`);
 
-        yield* Effect.promise(next);
+          yield* Effect.promise(next);
 
-        yield* Effect.logInfo(`[Response] ${method} ${path} (${c.res.status})`);
-      }).pipe(
-        Effect.withSpan(`${method} ${path}`),
-        Effect.withLogSpan("duration"),
-        Effect.annotateLogs({ method, path, requestId }),
-        Runtime.runPromise(c.var.runtime),
-      );
+          yield* Effect.logInfo(
+            `[Response] ${method} ${path} (${c.res.status})`,
+          );
+        }).pipe(Effect.withLogSpan("duration")),
+      ).pipe(Runtime.runPromise(c.var.runtime));
     });
   });
 
@@ -83,7 +83,9 @@ export const createApp = Effect.gen(function* () {
     }),
     async (c) => {
       const body = c.req.valid("json");
-      await Runtime.runPromise(c.var.runtime)(Effect.logInfo(body));
+      await Runtime.runPromise(c.var.runtime)(
+        WithHTTPLogger(c, Effect.logInfo(body)),
+      );
 
       return c.text("OK", 200);
     },
