@@ -2,11 +2,11 @@ import { addDays, isAfter, isEqual, startOfDay, subDays } from "date-fns";
 import { Array, Effect, Option, pipe } from "effect";
 
 import type { TransactionTimeKey } from "../../domains/stock/types";
-import type { PrismaClient } from "../../generated/prisma/client";
 import type { TypedEntries } from "../../types";
 import { TimeService } from "../time/time";
 import type { YahooTicker } from "../yahooFinance/ticker";
 import type { PortfolioDayElements } from "./types";
+import type { DbPrice } from "../../repositories/yahooPrice/YahooPriceRepository";
 
 export type TickerPriceIndice = { start: Date; end: Date | null };
 
@@ -15,13 +15,13 @@ export type TickerPriceIndex = {
 };
 
 export const createPriceIndex = (
-  dailyPortfolioStocksEffect: {
+  dailyPortfolioStocks: {
     key: TransactionTimeKey;
     current: PortfolioDayElements;
   }[],
 ) => {
   const flattenedDailyStocks = pipe(
-    dailyPortfolioStocksEffect,
+    dailyPortfolioStocks,
     Array.flatMap((v) =>
       (Object.entries(v.current) as TypedEntries<typeof v.current>).map(
         ([symbol, amount]) => ({
@@ -62,7 +62,7 @@ export const createPriceIndex = (
 
 export const createMissingPricesIndex = (
   priceIndex: TickerPriceIndex,
-  dbPrices: Awaited<ReturnType<PrismaClient["yahooPrice"]["findMany"]>>,
+  dbPrices: DbPrice[],
 ) => {
   return Effect.gen(function* () {
     const timeService = yield* TimeService;

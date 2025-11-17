@@ -13,18 +13,18 @@ import {
 
 import type { ParsedCashOperationRow } from "@xtb-analyser/xtb-csv-parser";
 
-import type { TypedEntries } from "../../types";
-import { createPriceResolver, fetchPrices, type PricePoint } from "../price";
-import { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
-import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
-import { mapYahooPriceToPricePoint } from "./mapYahooPriceToPricePoint";
-import type { PortfolioDayElements, PortfolioTransaction } from "./types";
-import {
-  tickerToYahooTicker,
-  type YahooTicker,
-} from "../yahooFinance/ticker.ts";
 import type { Ticker, TransactionTimeKey } from "../../domains/stock/types.ts";
+import { YahooPriceRepository } from "../../repositories/yahooPrice/YahooPriceRepository";
+import type { TypedEntries } from "../../types";
+import { createPriceResolver, fetchPrices } from "../price";
+import { tickerToYahooTicker } from "../yahooFinance/ticker.ts";
+import { fillDailyPortfolioGaps } from "./fillDailyPortfolioGaps";
 import { createMissingPricesIndex, createPriceIndex } from "./priceIndex.ts";
+import {
+  mapDbPriceToPricePoint,
+  mapYahooPriceToPricePoint,
+} from "./priceMappers";
+import type { PortfolioDayElements, PortfolioTransaction } from "./types";
 
 export const calculatePortfolioDailyValue = (
   operations: ParsedCashOperationRow[],
@@ -113,20 +113,7 @@ export const calculatePortfolioDailyValue = (
       Effect.tapError(Effect.logError),
     );
     const pricePoints = Array.map(prices.successes, mapYahooPriceToPricePoint);
-    const dbPricePoints = Array.map(dbPrices, (price): PricePoint => {
-      return {
-        dateKey: formatISO(price.datetime, {
-          representation: "date",
-        }) as TransactionTimeKey,
-        symbol: price.symbol as YahooTicker,
-        open: price.open,
-        high: price.high,
-        low: price.low,
-        close: price.close,
-        close_adjusted: price.close_adj,
-        source: "yahoo",
-      };
-    });
+    const dbPricePoints = Array.map(dbPrices, mapDbPriceToPricePoint);
     const priceResolver = createPriceResolver([
       ...pricePoints,
       ...dbPricePoints,

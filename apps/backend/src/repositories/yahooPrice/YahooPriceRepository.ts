@@ -31,6 +31,10 @@ export class YahooPriceRepository extends Context.Tag("YahooPriceRepository")<
   }
 >() {}
 
+export type DbPrice = Awaited<
+  ReturnType<PrismaClient["yahooPrice"]["findMany"]>
+>[number];
+
 export const YahooPriceRepositoryLive = Layer.effect(
   YahooPriceRepository,
   Effect.gen(function* () {
