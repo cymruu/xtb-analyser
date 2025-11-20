@@ -27,12 +27,20 @@ export const tickerToYahooTicker = (ticker: Ticker): YahooTicker => {
     return YahooTickerCtor(`${symbol}.GB`);
   }
 
+  if (exchange === "FR") {
+    return YahooTickerCtor(`${symbol}.PA`);
+  }
+
   if (exchange === "FI") {
     return YahooTickerCtor(`${symbol}.HE`);
   }
 
   if (exchange === "NL") {
     return YahooTickerCtor(`${symbol}.AS`);
+  }
+
+  if (exchange === "PT") {
+    return YahooTickerCtor(`${symbol}.LS`);
   }
 
   return YahooTickerCtor(ticker);

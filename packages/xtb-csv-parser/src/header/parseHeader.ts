@@ -1,9 +1,4 @@
-import { Array, Data, Effect, Option, pipe } from "effect/index";
-
-type XTBCSVHeader = {
-  currency: string;
-  account: string;
-};
+import { Array, Data, Effect, Option, pipe, Schema } from "effect/index";
 
 export class HeaderParsingError extends Data.TaggedError("HeaderParsingError")<{
   message: string;
@@ -40,12 +35,20 @@ const getValueBelowHeader = (rows: string[][], lookup: string) =>
     }),
   );
 
-export const parseHeader = (
-  rows: string[][],
-): Effect.Effect<XTBCSVHeader, HeaderParsingError, never> =>
+const CurrencySchema = Schema.Literal("USD", "EUR", "PLN");
+
+export const parseHeader = (rows: string[][]) =>
   Effect.gen(function* () {
     const currency = yield* getValueBelowHeader(rows, "Currency");
+    const decodedCurrency = yield* Schema.decodeUnknownEither(CurrencySchema)(
+      currency,
+    ).pipe(
+      Effect.mapError(
+        (x) => new HeaderParsingError({ message: "Invalid currency value" }),
+      ),
+    );
+
     const account = yield* getValueBelowHeader(rows, "Account");
 
-    return { currency, account };
+    return { currency: decodedCurrency, account };
   });

@@ -11,6 +11,7 @@ import { getWithdrawals } from "../../services/portfolio/getWithdrawals";
 import type { HonoEnv } from "../../types";
 import { addScoped } from "effect/Logger";
 import { WithHTTPLogger } from "../../httpLogger";
+import type { Currency } from "../../services/price/currencyConversion";
 
 const PortfolioSchemaV1 = z.object({
   volume: z.number(),
@@ -75,6 +76,7 @@ export const createPortfolioRouter = Effect.gen(function* () {
 
       const portfolioValueResult = yield* calculatePortfolioDailyValue(
         parsedCSV.cashOperations.successes,
+        parsedCSV.header.currency as Currency,
       );
 
       const deposits = yield* getDeposits(parsedCSV.cashOperations.successes);

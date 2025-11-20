@@ -29,10 +29,14 @@ import {
   mapYahooPriceToPricePoint,
 } from "./priceMappers";
 import type { PortfolioDayElements, PortfolioTransaction } from "./types";
-import type { Currency } from "../price/currencyConversion.ts";
+import {
+  getTotalInCurrency,
+  type Currency,
+} from "../price/currencyConversion.ts";
 
 export const calculatePortfolioDailyValue = (
   operations: ParsedCashOperationRow[],
+  outCurrency: Currency,
 ) => {
   return Effect.gen(function* () {
     const yahooPriceRepository = yield* YahooPriceRepository;
@@ -120,29 +124,60 @@ export const calculatePortfolioDailyValue = (
     const pricePoints = Array.map(prices.successes, mapYahooPriceToPricePoint);
     const dbPricePoints = Array.map(dbPrices, mapDbPriceToPricePoint);
     const allPrices = [...pricePoints, ...dbPricePoints];
-    const currencyIndex = yield* createCurrencyIndex(
-      "PLN" as Currency,
 
-      allPrices,
-    );
+    const currencyIndex = yield* createCurrencyIndex(outCurrency, allPrices);
     yield* Effect.logInfo("Created currencyIndex", currencyIndex);
+    const dbCurrencyRates =
+      yield* yahooPriceRepository.getPricesFromDb(currencyIndex);
+
+    yield* Effect.logInfo(
+      `Retrieved ${dbCurrencyRates.length} currency rates from db cache`,
+    );
+
+    const missingCurrencyRatesIndex = yield* createMissingPricesIndex(
+      currencyIndex,
+      dbCurrencyRates,
+    );
+
+    const currencyRates = yield* fetchPrices(missingCurrencyRatesIndex);
+    yield* Effect.logDebug(
+      `fetched ${currencyRates.successes.length} currency rates`,
+    );
 
     const priceResolver = createPriceResolver(allPrices);
+    const currencyRateResolver = createPriceResolver([
+      ...Array.map(dbCurrencyRates, mapDbPriceToPricePoint),
+      ...Array.map(currencyRates.successes, mapYahooPriceToPricePoint),
+    ]);
 
     const effects = pipe(
       fillDailyPortfolioGaps(dailyPortfolioStocks),
       Effect.map((v) => {
         return Array.map(v, ({ key, current }) => {
-          return priceResolver
-            .calculateValue(key, current)
-            .pipe(Effect.map((result) => ({ key, value: result.value })));
+          return priceResolver.calculateValue(key, current).pipe(
+            Effect.flatMap((result) =>
+              pipe(
+                getTotalInCurrency(currencyRateResolver)(
+                  result.total,
+                  outCurrency,
+                ),
+                Effect.map((value) => ({
+                  key,
+                  value,
+                })),
+              ),
+            ),
+          );
         });
       }),
       Effect.flatMap(Effect.all),
     );
 
     const saveResult = yield* Effect.either(
-      yahooPriceRepository.saveBulkPrices(prices.successes),
+      yahooPriceRepository.saveBulkPrices([
+        ...prices.successes,
+        ...currencyRates.successes,
+      ]),
     );
     if (Either.isLeft(saveResult)) {
       yield* Effect.logError(

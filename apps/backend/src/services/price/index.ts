@@ -91,6 +91,7 @@ export const fetchPrices = (priceIndex: TickerPriceIndex) =>
     );
   });
 
+export type PriceResolver = ReturnType<typeof createPriceResolver>;
 export const createPriceResolver = (flatPrices: PricePoint[]) => {
   const pricesByDate = Array.reduce(
     flatPrices,
@@ -132,12 +133,12 @@ export const createPriceResolver = (flatPrices: PricePoint[]) => {
           if (!v) {
             return Option.none();
           }
-          return Option.some(v.close);
+          return Option.some(v);
         },
       );
       return pipe(lookup, Array.findFirst(Option.isSome), Option.flatten);
     }
-    return Option.some(price.close);
+    return Option.some(price);
   };
 
   const calculateValue = (
@@ -157,14 +158,18 @@ export const createPriceResolver = (flatPrices: PricePoint[]) => {
             );
           },
           onSome(v) {
-            return Effect.succeed(v * amount);
+            return Effect.succeed({
+              value: v.close * amount,
+              currency: v.currency,
+              date: date,
+            });
           },
         });
       },
     ).pipe(
       Effect.map(([failures, successes]) => ({
         failures,
-        value: Array.reduce(successes, 0, (acc, v) => acc + v),
+        total: Array.groupBy(successes, (x) => x.currency),
       })),
     );
   };

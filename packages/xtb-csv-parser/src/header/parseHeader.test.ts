@@ -51,5 +51,13 @@ describe("parseHeader", () => {
         "Currency value not found in header",
       );
     });
+
+    it("should fail if currency value is invalid", async () => {
+      const effect = parseHeader([["Currency"], ["PLD"]]);
+
+      expect(Effect.runPromise(effect)).rejects.toThrow(
+        "Invalid currency value",
+      );
+    });
   });
 });
