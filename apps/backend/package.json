@@ -9,15 +9,15 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@effect/platform-bun": "^0.83.0",
+    "@effect/platform-bun": "^0.87.0",
     "@prisma/client": "^6.19.0",
     "@xtb-analyser/xtb-csv-parser": "workspace:packages",
     "date-fns": "^4.1.0",
-    "effect": "^3.19.3",
-    "excelize-wasm": "^0.1.0",
-    "hono": "^4.10.5",
-    "yahoo-finance2": "^3.10.1",
-    "zod": "^4.1.12"
+    "effect": "^3.19.13",
+    "excelize-wasm": "^0.1.1",
+    "hono": "^4.11.1",
+    "yahoo-finance2": "^3.10.2",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@types/bun": "latest",

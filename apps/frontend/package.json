@@ -24,8 +24,8 @@
     "@xtb-analyser/xtb-csv-parser": "workspace:packages",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
-    "effect": "^3.18.4",
-    "excelize-wasm": "^0.1.0",
-    "zod": "^4.1.12"
+    "effect": "^3.19.13",
+    "excelize-wasm": "^0.1.1",
+    "zod": "^4.2.1"
   }
 }
