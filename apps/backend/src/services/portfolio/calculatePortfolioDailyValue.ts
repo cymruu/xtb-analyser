@@ -173,19 +173,22 @@ export const calculatePortfolioDailyValue = (
       Effect.flatMap(Effect.all),
     );
 
-    const saveResult = yield* Effect.either(
-      yahooPriceRepository.saveBulkPrices([
-        ...prices.successes,
-        ...currencyRates.successes,
-      ]),
-    );
-    if (Either.isLeft(saveResult)) {
-      yield* Effect.logError(
-        "Error saving prices to database",
-        saveResult.left,
+    const pricesToSave = [
+      ...prices.successes,
+      ...currencyRates.successes,
+    ]
+    if (pricesToSave.length > 0) {
+      const saveResult = yield* Effect.either(
+        yahooPriceRepository.saveBulkPrices(pricesToSave),
       );
-    } else {
-      yield* Effect.logInfo("saved prices to database", saveResult.right);
+      if (Either.isLeft(saveResult)) {
+        yield* Effect.logError(
+          "Error saving prices to database",
+          saveResult.left,
+        );
+      } else {
+        yield* Effect.logInfo("saved prices to database", saveResult.right);
+      }
     }
 
     return yield* effects;
