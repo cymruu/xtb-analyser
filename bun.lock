@@ -10,7 +10,6 @@
       "version": "0.0.1",
       "dependencies": {
         "@effect/platform-bun": "^0.83.0",
-        "@prisma/client": "^6.19.0",
         "@xtb-analyser/xtb-csv-parser": "workspace:packages",
         "date-fns": "^4.1.0",
         "drizzle-orm": "^0.45.1",
@@ -24,7 +23,6 @@
       "devDependencies": {
         "@types/bun": "latest",
         "drizzle-kit": "^0.31.8",
-        "prisma": "^6.19.0",
         "typescript": "^5",
       },
     },

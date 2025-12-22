@@ -6,7 +6,6 @@ COPY . .
 
 FROM build_base AS build
 RUN bun install --frozen-lockfile
-RUN cd ./apps/backend/ && bunx prisma@6 generate
 
 FROM build_base as prod
 RUN bun install --frozen-lockfile --production
