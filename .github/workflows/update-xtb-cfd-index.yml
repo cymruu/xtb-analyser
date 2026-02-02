@@ -1,0 +1,29 @@
+name: Update XTB CFD index value
+
+on:
+  workflow_call:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/379454455141/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
+          service_account: sheet-editor-sa@xtb-cfd-index.iam.gserviceaccount.com
+          project_id: xtb-cfd-index
+          token_format: access_token
+
+      - run: |
+          curl -X POST \
+          'https://sheets.googleapis.com/v4/spreadsheets/1azjMl9aYmvfel31wbdwNig9DxWjHJLEt1Ms4_QCxPuM/values/Arkusz1!A1:append?valueInputOption=USER_ENTERED' \
+          -H "Authorization: Bearer ${{steps.auth.outputs.access_token}}" \
+          -H "Content-Type: application/json" \
+          -d '{
+          "values": [
+          ["=TODAY()", "5"]
+          ]
+          }'
