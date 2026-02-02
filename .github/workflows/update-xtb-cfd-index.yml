@@ -2,6 +2,7 @@ name: Update XTB CFD index value
 
 on:
   workflow_call:
+  push:
 
 jobs:
   build-and-deploy:
