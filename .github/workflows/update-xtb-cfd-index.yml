@@ -27,6 +27,8 @@ jobs:
       - run: |
           EXPORT_DATE=$(date +"%Y-%m-%d")
           INDEX_DATA=$(curl --fail https://xstation5.xtb.com/i18n/_en-core-2.91.0.json | jq -c '.ESMA_DISCLAIMER | to_entries | map({code: .key, v: .value["2"] | scan("\\d+")})' | jq 'map(["$EXPORT_DATE", .code, (.v)])')
+          echo $EXPORT_DATE
+          echo  $INDEX_DATA
           curl -X POST \
           'https://sheets.googleapis.com/v4/spreadsheets/1azjMl9aYmvfel31wbdwNig9DxWjHJLEt1Ms4_QCxPuM/values/Arkusz1!A1:append?valueInputOption=USER_ENTERED' \
           -H "Authorization: Bearer ${{steps.auth.outputs.access_token}}" \
