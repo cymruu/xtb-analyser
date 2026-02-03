@@ -22,6 +22,7 @@ jobs:
           service_account: sheet-editor-sa@xtb-cfd-index.iam.gserviceaccount.com
           project_id: xtb-cfd-index
           token_format: access_token
+          create_credentials_file: false
 
       - run: |
           curl -X POST \
