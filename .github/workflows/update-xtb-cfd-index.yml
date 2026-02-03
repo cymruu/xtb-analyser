@@ -24,8 +24,9 @@ jobs:
           token_format: access_token
           access_token_scopes: https://www.googleapis.com/auth/spreadsheets
 
-      - run: |
-          EXPORT_DATE=$(date +"%Y-%m-%d")
+      - name: get data and update spreadsheet
+        run: |
+          EXPORT_DATE=$(date +"%Y-%m-%d %T")
           INDEX_DATA=$(curl --fail https://xstation5.xtb.com/i18n/_en-core-2.91.0.json | jq -c '.ESMA_DISCLAIMER | to_entries | map({code: .key, v: .value["2"] | scan("\\d+")})' | jq --arg dt "$EXPORT_DATE" -c 'map([$dt, .code, (.v)])')
           echo $EXPORT_DATE
           echo  $INDEX_DATA
