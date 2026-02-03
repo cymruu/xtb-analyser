@@ -4,8 +4,13 @@ on:
   workflow_call:
   push:
 
+permissions:
+  contents: read
+  id-token: write
+
+
 jobs:
-  build-and-deploy:
+  update:
     runs-on: ubuntu-latest
 
     steps:
