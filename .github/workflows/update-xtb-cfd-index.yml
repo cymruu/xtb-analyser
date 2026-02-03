@@ -2,7 +2,8 @@ name: Update XTB CFD index value
 
 on:
   workflow_call:
-  push:
+  schedule:
+    - cron: "0 16 * * *"
 
 permissions:
   contents: read
