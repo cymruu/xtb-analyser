@@ -1,0 +1,40 @@
+name: Update XTB CFD index value
+
+on:
+  workflow_call:
+  schedule:
+    - cron: "0 16 * * *"
+
+permissions:
+  contents: read
+  id-token: write
+
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/379454455141/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
+          service_account: sheet-editor-sa@xtb-cfd-index.iam.gserviceaccount.com
+          project_id: xtb-cfd-index
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/spreadsheets
+
+      - name: get data and update spreadsheet
+        run: |
+          EXPORT_DATE=$(date +"%Y-%m-%d %T")
+          INDEX_DATA=$(curl --fail https://xstation5.xtb.com/i18n/_en-core-2.91.0.json | jq -c '.ESMA_DISCLAIMER | to_entries | map({code: .key, v: .value["2"] | scan("\\d+")})' | jq --arg dt "$EXPORT_DATE" -c 'map([$dt, .code, (.v)])')
+          echo $EXPORT_DATE
+          echo  $INDEX_DATA
+          curl -X POST \
+          'https://sheets.googleapis.com/v4/spreadsheets/1azjMl9aYmvfel31wbdwNig9DxWjHJLEt1Ms4_QCxPuM/values/Arkusz1!A1:append?valueInputOption=USER_ENTERED' \
+          -H "Authorization: Bearer ${{steps.auth.outputs.access_token}}" \
+          -H "Content-Type: application/json" \
+          -d "{
+          \"values\": $INDEX_DATA
+          }"
