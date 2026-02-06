@@ -27,10 +27,37 @@ jobs:
 
       - name: get data and update spreadsheet
         run: |
+          set -e
           EXPORT_DATE=$(date +"%Y-%m-%d %T")
-          INDEX_DATA=$(curl --fail https://xstation5.xtb.com/i18n/_en-core-2.91.0.json | jq -c '.ESMA_DISCLAIMER | to_entries | map({code: .key, v: .value["2"] | scan("\\d+")})' | jq --arg dt "$EXPORT_DATE" -c 'map([$dt, .code, (.v)])')
           echo $EXPORT_DATE
-          echo  $INDEX_DATA
+          DATA=$(curl --fail https://xstation5.xtb.com/i18n/_en-core-2.91.0.json | jq -c '.ESMA_DISCLAIMER | to_entries | map({code: .key, v: .value["2"] | scan("\\d+")})')
+          INDEX_DATA=$(echo $DATA | jq --arg dt "$EXPORT_DATE" -c 'map([$dt, .code, (.v)])')
+          RESULT_MAP=$(echo $DATA | jq 'map({(.code): .v}) | add')
+
+          # get previous values 
+          PREVIOUS_RESULT_MAP=$(curl -X GET \
+            'https://sheets.googleapis.com/v4/spreadsheets/1azjMl9aYmvfel31wbdwNig9DxWjHJLEt1Ms4_QCxPuM/values/_meta!A1' \
+            -H "Authorization: Bearer ${{steps.auth.outputs.access_token}}" \
+            -H "Content-Type: application/json" | jq '.values[0][0] | fromjson')
+
+          echo "Differences:"
+
+          echo "$RESULT_MAP" | jq --argjson d1 "$PREVIOUS_RESULT_MAP" '
+          [ to_entries[] |
+              .key as $k |
+              ((.value | tonumber) - (($d1[$k] // 0) | tonumber)) as $diff |
+              select($diff != 0) |
+              {($k): $diff}
+            ] | add // {}
+          '
+
+          # update spreadsheets
+          PAYLOAD=$(jq -c -n --arg val "$RESULT_MAP" '{values: [[$val]]}')
+          curl -X PUT \
+            'https://sheets.googleapis.com/v4/spreadsheets/1azjMl9aYmvfel31wbdwNig9DxWjHJLEt1Ms4_QCxPuM/values/_meta!A1?valueInputOption=USER_ENTERED' \
+            -H "Authorization: Bearer ${{steps.auth.outputs.access_token}}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
           curl -X POST \
           'https://sheets.googleapis.com/v4/spreadsheets/1azjMl9aYmvfel31wbdwNig9DxWjHJLEt1Ms4_QCxPuM/values/Arkusz1!A1:append?valueInputOption=USER_ENTERED' \
           -H "Authorization: Bearer ${{steps.auth.outputs.access_token}}" \
