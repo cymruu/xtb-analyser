@@ -30,7 +30,11 @@ jobs:
           set -o pipefail
           EXPORT_DATE=$(date +"%Y-%m-%d %T")
           echo $EXPORT_DATE
-          DATA=$(curl --fail https://xstation5.xtb.com/i18n/_en-core-2.92.0.json | jq -c '.ESMA_DISCLAIMER | to_entries | map({code: .key, v: .value["2"] | scan("\\d+")})')
+          XTB_STARTER_SCRIPT_URL=$(curl https://xstation5.xtb.com | grep 'id="__starter"' | sed -n 's/.*src="\([^"]*\)".*/\1/p')
+          XTB_VERSION=$(curl $XTB_STARTER_SCRIPT_URL | sed -n 's/.*window\.version="\([^"]*\)".*/\1/p')
+          echo XTB_VERSION: $XTB_VERSION
+
+          DATA=$(curl --fail https://xstation5.xtb.com/i18n/_en-core-${XTB_VERSION}.json | jq -c '.ESMA_DISCLAIMER | to_entries | map({code: .key, v: .value["2"] | scan("\\d+")})')
           INDEX_DATA=$(echo $DATA | jq --arg dt "$EXPORT_DATE" -c 'map([$dt, .code, (.v)])')
           RESULT_MAP=$(echo $DATA | jq 'map({(.code): .v}) | add')
 
